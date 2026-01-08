@@ -8,7 +8,7 @@ export default function Navbar() {
 
   return (
     <nav className="relaive z-50 flex items-center justify-between px-6 py-4 md:px-12">
-      <h1 className="text-lg font-bold">Lakhey Labs</h1>
+      <h1 className="text-2xl md:text-[52px] font-black leading-[1.1] md:tracking-[-0.05em]">Lakhey Labs</h1>
 
       {/* Desktop */}
       <div className="hidden md:flex items-center gap-6">
