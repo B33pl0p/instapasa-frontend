@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -46,7 +45,6 @@ jobs:
           NEXT_PUBLIC_API_URL=https://api.lakhey.tech
         cache-from: type=registry,ref=bhusalsaurav0/landing-page-frontend:buildcache
         cache-to: type=registry,ref=bhusalsaurav0/landing-page-frontend:buildcache,mode=max
-
 
   deploy-to-ec2:
     needs: build-and-push
