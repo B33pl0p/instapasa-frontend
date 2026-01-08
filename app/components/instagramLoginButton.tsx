@@ -2,7 +2,7 @@
 import React from "react";
 
 const META_APP_ID = "869172442507684";
-const REDIRECT_URI = "https://your-frontend.com/meta-success";
+const REDIRECT_URI = "https://lakhey.tech/meta-success";
 
 const InstagramLoginButton: React.FC = () => {
   const handleClick = () => {
@@ -20,11 +20,12 @@ const InstagramLoginButton: React.FC = () => {
       "scope",
       [
         "instagram_basic",
-        "instagram_content_publish",
-        "instagram_manage_comments",
-        "instagram_manage_insights",
+        "instagram_manage_messages",
         "pages_show_list",
+        "pages_messaging",
         "pages_read_engagement",
+        //adding business management as extra debu
+        "business_management"
       ].join(",")
     );
 
