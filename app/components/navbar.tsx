@@ -7,7 +7,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-4 md:px-12">
+    <nav className="relaive z-50 flex items-center justify-between px-6 py-4 md:px-12">
       <h1 className="text-lg font-bold">Lakhey Labs</h1>
 
       {/* Desktop */}
