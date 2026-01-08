@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import InstagramLoginButton from "./instagramLoginButton";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -14,9 +15,7 @@ export default function Navbar() {
         <a className="hover:text-brand">Services</a>
         <a className="hover:text-brand">About Us</a>
         <a className="hover:text-brand">Contact</a>
-        <button className="bg-brand px-4 py-2 rounded-md text-sm">
-          Connect with Instagram
-        </button>
+        <InstagramLoginButton />
       </div>
 
       {/* Mobile */}
@@ -32,9 +31,7 @@ export default function Navbar() {
           <a>Services</a>
           <a>About Us</a>
           <a>Contact</a>
-          <button className="bg-brand px-4 py-2 rounded-md">
-            Connect with Instagram
-          </button>
+          <InstagramLoginButton />
         </div>
       )}
     </nav>
