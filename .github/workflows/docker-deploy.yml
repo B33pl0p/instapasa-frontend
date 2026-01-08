@@ -47,6 +47,7 @@ jobs:
         cache-from: type=registry,ref=bhusalsaurav0/landing-page-frontend:buildcache
         cache-to: type=registry,ref=bhusalsaurav0/landing-page-frontend:buildcache,mode=max
 
+
   deploy-to-ec2:
     needs: build-and-push
     runs-on: ubuntu-latest
