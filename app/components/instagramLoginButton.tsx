@@ -32,7 +32,7 @@ const InstagramLoginButton: React.FC = () => {
   };
 
   return <button onClick={handleClick}
-        className="bg-brand/90 text-white px-4 py-2 rounded-md text-sm
+        className="bg-[#8A38F5] text-white px-4 py-2 rounded-md text-sm
              hover:bg-brand hover:text-white/90
              transition-all duration-200">
         Login with Instagram
