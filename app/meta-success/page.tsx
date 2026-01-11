@@ -49,25 +49,11 @@ const MetaSuccess = () => {
 
   const handleInstagramOAuth = () => {
     const url =
-      "https://www.instagram.com/oauth/authorize" +
-      "?force_reauth=true" +
-      "&client_id=851475697514434" +
-      "&redirect_uri=" +
-      encodeURIComponent(
-        "https://api.lakhey.tech/api/v2/auth/instagram/callback"
-      ) +
-      "&response_type=code" +
-      "&scope=" +
-      encodeURIComponent(
-        [
-          "instagram_business_basic",
-          "instagram_business_manage_messages",
-          "instagram_business_manage_comments",
-          "instagram_business_content_publish",
-          "instagram_business_manage_insights",
-        ].join(",")
-      );
-
+      `const handleInstagramOAuth = () => {
+  window.location.href =
+    "https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=851475697514434&redirect_uri=https://api.lakhey.tech/api/v2/auth/instagram/callback&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights";
+};
+`
     window.location.href = url;
   };
 
