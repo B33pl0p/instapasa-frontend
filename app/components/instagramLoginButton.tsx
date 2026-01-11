@@ -21,6 +21,8 @@ const InstagramLoginButton: React.FC = () => {
       [
         "instagram_basic",
         "instagram_manage_messages",
+        "instagram_business_basic",
+        "instagram_business_manage_insights",
         "pages_show_list",
         "pages_messaging",
         "pages_read_engagement",
