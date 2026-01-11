@@ -26,7 +26,6 @@ export default function Navbar() {
         <Link
               href="/services"
               className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">Our Services</Link>
-        {/* <InstagramLoginButton /> */}
       </div>
 
       {/* Mobile */}

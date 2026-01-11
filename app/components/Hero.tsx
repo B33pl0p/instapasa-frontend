@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+
 export default function Hero() {
   return (
     <section
@@ -20,9 +23,12 @@ export default function Hero() {
           <button className="bg-black border border-transparent hover:border-white text-white px-4 py-3 rounded-md">
             Get in Touch
           </button>
-          <button className="border border-white bg-gray-200/20 px-4 py-3 rounded-md">
+          <Link 
+          href="/services"
+          className="border border-white bg-gray-200/20 px-4 py-3 rounded-md">
             Our Services
-          </button>
+          </Link>
+
         </div>
       </div>
     </section>
