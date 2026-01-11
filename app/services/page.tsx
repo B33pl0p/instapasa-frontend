@@ -1,5 +1,6 @@
+"use client"
 import PrivacyHero from "../components/privacy-hero";
-
+import InstagramLoginButton from "../components/instagramLoginButton";
 
 export default function PrivacyPolicyPage() {
   return (
@@ -27,6 +28,7 @@ export default function PrivacyPolicyPage() {
                 <br /> <br />
                 <span className="font-bold">Are you a self made startup? - Let us help you make your customers feel heard
                 </span>
+
               </p>
             </div>
 
@@ -39,6 +41,7 @@ export default function PrivacyPolicyPage() {
                      className="w-[651.81px] h-[642.35px]"
                       />
               </div>
+              <InstagramLoginButton></InstagramLoginButton>
             </div>
 
 
