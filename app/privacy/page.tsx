@@ -11,16 +11,10 @@ export default function PrivacyPolicyPage() {
   return (
 
     <main className="min-h-screen w-full bg-[#111111] text-gray-100">
-
-      {<header className="border-b border-gray-800 bg-[#111111]">
-         { /* <Navbar/> */}
-         <PrivacyHeader/>
-       </header>
-      }
     <PrivacyHero/>
     <PrivacyPolicies/>
-    <Footer/>
     </main>
+
   );
 
 }
