@@ -13,7 +13,6 @@ const MetaSuccess = () => {
       : window.location.hash;
 
     const params = new URLSearchParams(hash);
-    const longLivedToken = params.get("long_lived_token");
     const accessToken = params.get("access_token");
     const errorReason = params.get("error_reason");
 
@@ -22,8 +21,8 @@ const MetaSuccess = () => {
       return;
     }
 
-    if (!longLivedToken) {
-      setStatus("Missing Meta long-lived token in redirect.");
+    if (!accessToken) {
+      setStatus("Missing Meta access token in redirect.");
       return;
     }
 
@@ -32,8 +31,7 @@ const MetaSuccess = () => {
         const res = await axios.post(
           "https://api.lakhey.tech/api/v2/auth/meta/complete",
           {
-            long_lived_token: longLivedToken,
-            short_lived_token: accessToken,
+            short_lived_token: accessToken, // frontend sends it as-is
           }
         );
 

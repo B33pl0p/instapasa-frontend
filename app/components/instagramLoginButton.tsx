@@ -10,7 +10,7 @@ const InstagramLoginButton: React.FC = () => {
 
     url.searchParams.set("client_id", META_APP_ID);
     url.searchParams.set("display", "page");
-    url.searchParams.set(
+    url.searchParams.set( 
       "extras",
       JSON.stringify({ setup: { channel: "IG_API_ONBOARDING" } })
     );
