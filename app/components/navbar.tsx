@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-// import InstagramLoginButton from "./instagramLoginButton";
 import Link from "next/link";
 
 
@@ -41,8 +40,6 @@ export default function Navbar() {
           <a>About Us</a>
           <a>Contact</a>
           <a>Our Services</a>
-
-          {/* <InstagramLoginButton /> */}
         </div>
       )}
     </nav>
