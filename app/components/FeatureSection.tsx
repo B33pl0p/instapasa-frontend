@@ -1,6 +1,5 @@
 import Image from "next/image";
 import mobile from "@/public/mobile.png";
-
 export default function FeatureSection() {
   return (
     <section className="py-20 px-6 md:px-12">
