@@ -3,15 +3,15 @@ import InstagramLoginButton from "../components/instagramLoginButton";
 
 export default function Instaservice() {
   return (
-    <div className="flex flex-col px-18 py-20 items-start self-stretch gap-16">
+    <div className="flex flex-col items-start max-w-7xl mx-auto px-4 md:px-16 py-4 md:py-8">
 
-          <div className="flex text-[36px] items-start gap-4 self-stretch font-bold font-sans leading-[1.2] tracking-[-0.72px]">
+          <div className="flex text-[36px] items-start gap-4 py-8 font-bold font-sans leading-[1.2] tracking-[-0.72px]">
             Instagram Chat Bot
           </div>
 
-          <div className="flex items-start gap-12">
+          <div className="flex flex-col md:flex-row items-start gap-12">
 
-            <div className="flex flex-col gap-8 justify-between items-start w-[476.19px]">
+            <div className="flex flex-col gap-8 justify-between items-start w-full md:w-[476.19px]">
               <div className="text-[24px] font-extrabold leading-[1.45] tracking-[-0.12] ">
                 Smart DM automation for growing brands
               </div>
@@ -34,7 +34,7 @@ export default function Instaservice() {
                  <img
                       src="/image 7.png"
                       alt="Instagram mock up"
-                     className="w-[651.81px] h-[642.35px] rounded-lg bg-cover bg-center"
+                      className=" md:h-[642.35px] rounded-lg "
                       />
               </div>
             </div>
