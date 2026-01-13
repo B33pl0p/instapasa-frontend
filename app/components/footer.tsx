@@ -3,9 +3,15 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className="border-t border-zinc-800 py-8 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center gap-4">
-      <span className="font-semibold">Lakhey Labs</span>
+      
       <div className="flex gap-6 text-sm text-gray-400">
-  
+        <Link
+            href="/"
+            className=" hover:text-gray-100 underline-offset-4 hover:underline" >
+            <span className="font-semibold">Lakhey Labs</span>
+          </Link>
+        
+
         <Link
             href="/services"
             className=" hover:text-gray-100 underline-offset-4 hover:underline" >
@@ -22,6 +28,13 @@ export default function Footer() {
         <a>About Us</a>
         <a>Contact</a>
       </div>
+
+      <div className="flex items-center gap-6">
+        <img src="/Social link 1.svg" alt="Instagram" className="h-5 w-5" />
+        <img src="/Social link 2.svg" alt="Instagram" className="h-5 w-5" />
+        <img src="/Social link 3.svg" alt="Instagram" className="h-5 w-5" />
+      </div>
+
     </footer>
   );
 }
