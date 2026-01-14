@@ -17,7 +17,7 @@ import generic from '@/public/generic.png'
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
-import { sidebarItems } from './(components)/sidebarItems';
+import { sidebarItems, type SidebarItem } from './(components)/sidebarItems';
 import { useRouter } from 'next/navigation';
 const drawerWidth = 240;
 
@@ -119,10 +119,7 @@ export default function DashboardLayout({
   const router = useRouter();
 
   return (    
-  <html lang="en">
-      <body
-        className={` flex flex-col justify-between antialiased min-h-screen bg-[#161616] text-[#E8E8E8] font-sans`}
-      >
+  
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
       <Drawer variant="permanent" open={open}>
@@ -146,8 +143,8 @@ export default function DashboardLayout({
                 src={generic} 
                 alt="Company Logo" 
                 width={28}
-                    height={28}
-                    className="rounded-full object-cover"
+                height={28}
+                className="rounded-full object-cover"
                 />
             {open && (
               <Typography variant="subtitle1" noWrap sx={{ ml: 1 }}>
@@ -158,73 +155,98 @@ export default function DashboardLayout({
         </DrawerHeader>
 
         <List>
-          {sidebarItems.map((item) => {
-            const isActive = pathname === item.href;
-            
-            return (
-              <ListItem key={item.label} disablePadding sx={{ display: 'block' }}>
-                <ListItemButton
-                  onClick={() => router.push(item.href)}
-                  sx={[
-                    {
-                      minHeight: 48,
-                      px: 2.5,
-                      bgcolor: isActive ? '#dbd9d9' : 'transparent',
-                      '&:hover': {
-                        bgcolor: isActive ? '#dbd9d9' : 'action.hover',
-                      },
-                    },
-                    open
-                      ? {
-                          justifyContent: 'initial',
-                        }
-                      : {
-                          justifyContent: 'center',
-                        },
-                  ]}
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: 'center',
-                      },
-                      open
-                        ? {
-                            mr: 3,
-                          }
-                        : {
-                            mr: 'auto',
-                          },
-                    ]}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    sx={[
-                      open
-                        ? {
-                            opacity: 1,
-                          }
-                        : {
-                            opacity: 0,
-                          },
-                    ]}
-                  />
-                </ListItemButton>
-              </ListItem>
-            );
-          })}
+          {(['General', 'Messages', 'Services'] as SidebarItem['section'][]).map(
+            (section) => {
+              const itemsForSection = sidebarItems.filter(
+                (item) => item.section === section,
+              );
+
+              if (!itemsForSection.length) return null;
+
+              return (
+                <Box key={section} sx={{ mb: 1 }}>
+                  {open && (
+                    <Typography
+                      variant="caption"
+                      sx={{ px: 2.5, py: 1, color: 'text.secondary' }}
+                    >
+                      {section}
+                    </Typography>
+                  )}
+                  {itemsForSection.map((item) => {
+                    const isActive = pathname === item.href;
+
+                    return (
+                      <ListItem
+                        key={item.label}
+                        disablePadding
+                        sx={{ display: 'block' }}
+                      >
+                        <ListItemButton
+                          onClick={() => router.push(item.href)}
+                          sx={[
+                            {
+                              minHeight: 48,
+                              px: 2.5,
+                              bgcolor: isActive ? '#dbd9d9' : 'transparent',
+                              '&:hover': {
+                                bgcolor: isActive ? '#dbd9d9' : 'action.hover',
+                              },
+                            },
+                            open
+                              ? {
+                                  justifyContent: 'initial',
+                                }
+                              : {
+                                  justifyContent: 'center',
+                                },
+                          ]}
+                        >
+                          <ListItemIcon
+                            sx={[
+                              {
+                                minWidth: 0,
+                                justifyContent: 'center',
+                              },
+                              open
+                                ? {
+                                    mr: 3,
+                                  }
+                                : {
+                                    mr: 'auto',
+                                  },
+                            ]}
+                          >
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={item.label}
+                            sx={[
+                              open
+                                ? {
+                                    opacity: 1,
+                                  }
+                                : {
+                                    opacity: 0,
+                                  },
+                            ]}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
+                </Box>
+              );
+            },
+          )}
         </List>
        
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Box component="main" sx={{ flexGrow: 1}}>
 
         {children}
       </Box>
     </Box>
-    </body>
-    </html>
+  
   );
 }
