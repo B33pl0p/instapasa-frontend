@@ -1,36 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
-
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Lakhey Labs",
   description: "We Build, Your Dreams",
 };
 
-export default function RootLayout({
+export default function SiteLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    
-    <html lang="en">
-      <body
-        className={`${inter.variable} flex flex-col justify-between antialiased min-h-screen bg-[#161616] text-[#E8E8E8] font-sans`}
-      >
-       <Navbar/>
-        {children}
-        <Footer /> 
-
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col justify-between bg-[#161616] font-sans text-[#E8E8E8] antialiased">
+      <Navbar />
+      {children}
+      <Footer />
+    </div>
   );
 }
