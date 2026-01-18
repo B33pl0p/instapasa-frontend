@@ -2,7 +2,7 @@
 import React from "react";
 
 const META_APP_ID = "869172442507684";
-const REDIRECT_URI = "https://api.lakhey.tech/api/v2/meta/complete";
+const REDIRECT_URI = "https://api.lakhey.tech/api/v2/auth/meta/complete";
 
 type InstagramLoginButtonProps = {
   disabled?: boolean;
