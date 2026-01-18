@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 
+type NavbarProps = {
+  isLogin?: boolean;
+};
 
-
-export default function Navbar() {
+export default function Navbar({ isLogin = false }: NavbarProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -18,15 +20,19 @@ export default function Navbar() {
           </Link>
       </h1>
 
-      {/* Desktop */}
+      {!isLogin && (
+      //  desktop
       <div className="hidden md:flex items-center gap-6">
         <a className="hover:text-brand">About Us</a>
         <a className="hover:text-brand">Contact</a>
         <Link
               href="/services"
-              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">Our Services</Link>
+              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white hover:underline px-4 py-1 rounded-md">Our Services</Link>
+        <Link
+              href="/login"
+              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white hover:underline px-4 py-1 rounded-md">Log in</Link>
       </div>
-
+      )}
       {/* Mobile */}
       <button
         className="md:hidden"

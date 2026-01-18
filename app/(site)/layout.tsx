@@ -14,7 +14,8 @@ export default function SiteLayout({
 }>) {
   return (
     <div className="flex min-h-screen flex-col justify-between bg-[#161616] font-sans text-[#E8E8E8] antialiased">
-      <Navbar />
+      <Navbar 
+      isLogin={false}/>
       {children}
       <Footer />
     </div>

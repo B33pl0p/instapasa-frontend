@@ -3,9 +3,11 @@ import InstagramLoginButton from "./instagramLoginButton";
 
 export default function Enterpriseservice() {
   return (
-    <div className="flex flex-col w-full max-w-7xl mx-auto px-4 md:px-16 py-4 md:py-8">
+    <>
+     <div className="flex flex-col h-[64px] px-16 py-8 items-start gap-16 self-stretch bg-[#1B1B1B]"></div>
+    <div className="flex flex-col items-start gap-16 max-w-7xl mx-auto px-4 md:px-16 py-4 md:py-8">
 
-          <div className="flex text-[36px] items-center gap-4 py-8 font-bold font-sans leading-[1.2] tracking-[-0.72px]">
+          <div className="flex text-[36px] items-start gap-4 font-bold font-sans leading-[1.2] tracking-[-0.72px]">
             Enterprise Chat Bot
           </div>
 
@@ -37,5 +39,6 @@ export default function Enterpriseservice() {
 
           </div>
         </div>
+    </>
   )
 }
