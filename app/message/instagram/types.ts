@@ -1,0 +1,48 @@
+// Types for Instagram Messages API responses
+
+export interface Participant {
+  username: string;
+  id: string;
+}
+
+export interface LastMessage {
+  id: string;
+  created_time: string;
+  text: string;
+  from: Participant;
+  to: Participant[];
+}
+
+export interface Conversation {
+  platform: string;
+  conversation_id: string;
+  updated_time: string;
+  participants: Participant[];
+  last_message: LastMessage;
+}
+
+export interface MessagesOverviewResponse {
+  instagram_user_id: string;
+  instagram_username: string;
+  page_id: string;
+  platform: string;
+  conversations: Conversation[];
+}
+
+export interface Message {
+  id: string;
+  created_time: string;
+  text: string;
+  from: Participant;
+  to: Participant[];
+  is_from_business: boolean;
+}
+
+export interface ConversationDetailResponse {
+  instagram_user_id: string;
+  instagram_username: string;
+  page_id: string;
+  platform: string;
+  conversation_id: string;
+  messages: Message[];
+}

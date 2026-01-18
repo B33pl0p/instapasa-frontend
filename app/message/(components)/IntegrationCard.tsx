@@ -1,16 +1,23 @@
+'use client'
+import InstagramLoginButton from "@/app/(site)/components/instagramLoginButton";
+import InstagramDisconnectButton from "./InstagramDisconnectButton";
+
 type IntegrationCardProps = {
   name: string;
   image?: React.ReactNode;
-  status: 'connected' | 'not connected';
+  status: 'connected' | 'connecting' | 'not connected';
+  onDisconnect?: () => void;
 };
 
 export default function IntegrationCard({
   name,
   image,
   status,
+  onDisconnect,
 }: IntegrationCardProps) {
   const isConnected = status === 'connected';
-
+  const isConnecting = status === 'connecting';
+ 
   return (
     <div className="w-full max-w-xs rounded-xl bg-[#F3E5F5] p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-2">
@@ -30,6 +37,8 @@ export default function IntegrationCard({
           className={`rounded-full px-2 py-1 text-xs font-medium ${
             isConnected
               ? 'bg-green-100 text-green-700'
+              : isConnecting
+              ? 'bg-yellow-100 text-yellow-700'
               : 'bg-gray-100 text-gray-600'
           }`}
         >
@@ -37,9 +46,18 @@ export default function IntegrationCard({
         </span>
       </div>
 
-      <button className="mt-4 w-full rounded-md bg-linear-to-r from-purple-500 to-fuchsia-500 py-2 text-sm font-semibold text-white shadow hover:opacity-90">
-        CONNECT
-      </button>
+      {name === 'Instagram' && (
+        <div className="mt-4 w-full">
+          {isConnected ? (
+            <InstagramDisconnectButton 
+              onDisconnect={onDisconnect || (() => {})} 
+              disabled={isConnecting}
+            />
+          ) : (
+            <InstagramLoginButton disabled={isConnecting} />
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -13,12 +13,20 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import generic from '@/public/generic.png'
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 import { sidebarItems, type SidebarItem } from './(components)/sidebarItems';
 import { useRouter } from 'next/navigation';
+import RouteGuard from './(components)/RouteGuard';
+import { useAuth } from '@/app/(site)/lib/auth';
+import { useInstagramAuth } from './(components)/useInstagramAuth';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -117,136 +125,272 @@ export default function DashboardLayout({
 
 
   const router = useRouter();
+  const { logout } = useAuth();
+  const { profilePictureUrl } = useInstagramAuth();
+  const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
+  const [imageError, setImageError] = React.useState(false);
 
-  return (    
-  
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <Drawer variant="permanent" open={open}>
-        <DrawerHeader>
-          <Button
-            onClick={handleDrawerToggle}
-            sx={{
-              width: '100%',
+  // Reset image error when profilePictureUrl changes
+  React.useEffect(() => {
+    setImageError(false);
+  }, [profilePictureUrl]);
+
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLogoutDialogOpen(false);
+    logout();
+  };
+
+  const handleLogoutCancel = () => {
+    setLogoutDialogOpen(false);
+  };
+
+  return (
+    <RouteGuard>
+      <Box sx={{ display: 'flex' }}>
+        <CssBaseline />
+        <Drawer
+          variant="permanent"
+          open={open}
+          sx={{
+            '& .MuiDrawer-paper': {
+              display: 'flex',
+              flexDirection: 'column',
               height: '100%',
-              justifyContent: 'flex-start',
-              textTransform: 'none',
-              color: 'text.primary',
-              bgcolor: '#F3E5F5',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
-              padding: 2,
-            }}
-          >
-             <Image 
-                src={generic} 
-                alt="Company Logo" 
-                width={28}
-                height={28}
-                className="rounded-full object-cover"
+            },
+          }}
+        >
+          <DrawerHeader>
+            <Button
+              onClick={handleDrawerToggle}
+              sx={{
+                width: '100%',
+                height: '100%',
+                justifyContent: 'flex-start',
+                textTransform: 'none',
+                color: 'text.primary',
+                bgcolor: '#F3E5F5',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+                padding: 2,
+              }}
+            >
+              {profilePictureUrl && !imageError ? (
+                <img
+                  src={profilePictureUrl}
+                  alt="Instagram Profile"
+                  width={28}
+                  height={28}
+                  className="rounded-full object-cover"
+                  onError={() => {
+                    setImageError(true);
+                  }}
                 />
-            {open && (
-              <Typography variant="subtitle1" noWrap sx={{ ml: 1 }}>
-                Placeholder Company name
-              </Typography>
-            )}
-          </Button>
-        </DrawerHeader>
+              ) : (
+                <AccountCircleIcon
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    color: 'text.secondary',
+                  }}
+                />
+              )}
+              {open && (
+                <Typography variant="subtitle1" noWrap sx={{ ml: 1 }}>
+                  Placeholder Company name
+                </Typography>
+              )}
+            </Button>
+          </DrawerHeader>
 
-        <List>
-          {(['General', 'Messages', 'Services'] as SidebarItem['section'][]).map(
-            (section) => {
-              const itemsForSection = sidebarItems.filter(
-                (item) => item.section === section,
-              );
+          <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+            <List sx={{ overflowY: 'auto', height: '100%' }}>
+            {(['General', 'Messages', 'Services'] as SidebarItem['section'][]).map(
+              (section) => {
+                const itemsForSection = sidebarItems.filter(
+                  (item) => item.section === section,
+                );
 
-              if (!itemsForSection.length) return null;
+                if (!itemsForSection.length) return null;
 
-              return (
-                <Box key={section} sx={{ mb: 1 }}>
-                  {open && (
-                    <Typography
-                      variant="caption"
-                      sx={{ px: 2.5, py: 1, color: 'text.secondary' }}
-                    >
-                      {section}
-                    </Typography>
-                  )}
-                  {itemsForSection.map((item) => {
-                    const isActive = pathname === item.href;
-
-                    return (
-                      <ListItem
-                        key={item.label}
-                        disablePadding
-                        sx={{ display: 'block' }}
+                return (
+                  <Box key={section} sx={{ mb: 1 }}>
+                    {open && (
+                      <Typography
+                        variant="caption"
+                        sx={{ px: 2.5, py: 1, color: 'text.secondary' }}
                       >
-                        <ListItemButton
-                          onClick={() => router.push(item.href)}
-                          sx={[
-                            {
-                              minHeight: 48,
-                              px: 2.5,
-                              bgcolor: isActive ? '#dbd9d9' : 'transparent',
-                              '&:hover': {
-                                bgcolor: isActive ? '#dbd9d9' : 'action.hover',
-                              },
-                            },
-                            open
-                              ? {
-                                  justifyContent: 'initial',
-                                }
-                              : {
-                                  justifyContent: 'center',
-                                },
-                          ]}
+                        {section}
+                      </Typography>
+                    )}
+                    {itemsForSection.map((item) => {
+                      const isActive = pathname === item.href;
+
+                      return (
+                        <ListItem
+                          key={item.label}
+                          disablePadding
+                          sx={{ display: 'block' }}
                         >
-                          <ListItemIcon
+                          <ListItemButton
+                            onClick={() => router.push(item.href)}
                             sx={[
                               {
-                                minWidth: 0,
-                                justifyContent: 'center',
+                                minHeight: 48,
+                                px: 2.5,
+                                bgcolor: isActive ? '#dbd9d9' : 'transparent',
+                                '&:hover': {
+                                  bgcolor: isActive ? '#dbd9d9' : 'action.hover',
+                                },
                               },
                               open
                                 ? {
-                                    mr: 3,
+                                    justifyContent: 'initial',
                                   }
                                 : {
-                                    mr: 'auto',
+                                    justifyContent: 'center',
                                   },
                             ]}
                           >
-                            {item.icon}
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={item.label}
-                            sx={[
-                              open
-                                ? {
-                                    opacity: 1,
-                                  }
-                                : {
-                                    opacity: 0,
-                                  },
-                            ]}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    );
-                  })}
-                </Box>
-              );
-            },
-          )}
-        </List>
-       
-      </Drawer>
-      <Box component="main" sx={{ flexGrow: 1}}>
-
-        {children}
+                            <ListItemIcon
+                              sx={[
+                                {
+                                  minWidth: 0,
+                                  justifyContent: 'center',
+                                },
+                                open
+                                  ? {
+                                      mr: 3,
+                                    }
+                                  : {
+                                      mr: 'auto',
+                                    },
+                              ]}
+                            >
+                              {item.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={item.label}
+                              sx={[
+                                open
+                                  ? {
+                                      opacity: 1,
+                                    }
+                                  : {
+                                      opacity: 0,
+                                    },
+                              ]}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </Box>
+                );
+              },
+            )}
+            </List>
+          </Box>
+          
+          {/* Logout Button at Bottom */}
+          <Box
+            sx={{
+              mt: 'auto',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                onClick={handleLogoutClick}
+                sx={[
+                  {
+                    minHeight: 48,
+                    px: 2.5,
+                    color: 'error.main',
+                    '&:hover': {
+                      bgcolor: 'error.light',
+                      color: 'error.contrastText',
+                    },
+                  },
+                  open
+                    ? {
+                        justifyContent: 'initial',
+                      }
+                    : {
+                        justifyContent: 'center',
+                      },
+                ]}
+              >
+                <ListItemIcon
+                  sx={[
+                    {
+                      minWidth: 0,
+                      justifyContent: 'center',
+                      color: 'inherit',
+                    },
+                    open
+                      ? {
+                          mr: 3,
+                        }
+                      : {
+                          mr: 'auto',
+                        },
+                  ]}
+                >
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Logout"
+                  sx={[
+                    open
+                      ? {
+                          opacity: 1,
+                        }
+                      : {
+                          opacity: 0,
+                        },
+                  ]}
+                />
+              </ListItemButton>
+            </ListItem>
+          </Box>
+        </Drawer>
+        <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            {children}
+          </Box>
+        </Box>
       </Box>
-    </Box>
-  
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={handleLogoutCancel}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+      >
+        <DialogTitle id="logout-dialog-title">
+          Confirm Logout
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            Are you sure you want to logout? You will need to login again to access your dashboard.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleLogoutCancel} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleLogoutConfirm} color="error" variant="contained" autoFocus>
+            Logout
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </RouteGuard>
   );
 }

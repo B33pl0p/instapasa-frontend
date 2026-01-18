@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "../lib/auth";
 
 
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   return (
     <nav className="relative z-50 flex items-center justify-between px-6 py-4 md:px-12">
@@ -25,6 +27,21 @@ export default function Navbar() {
         <Link
               href="/services"
               className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">Our Services</Link>
+        {isAuthenticated ? (
+          <Link
+            href="/message"
+            className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+          >
+            Dashboard
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+          >
+            Login
+          </Link>
+        )}
       </div>
 
       {/* Mobile */}
@@ -44,6 +61,21 @@ export default function Navbar() {
            className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">
            Our Services
           </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/message"
+              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+            >
+              Login
+            </Link>
+          )}
         </div>
       )}
     </nav>
