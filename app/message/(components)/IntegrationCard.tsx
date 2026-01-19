@@ -1,6 +1,8 @@
 'use client'
 import InstagramLoginButton from "@/app/(site)/components/instagramLoginButton";
 import InstagramDisconnectButton from "./InstagramDisconnectButton";
+import MessengerLoginButton from "@/app/(site)/components/messengerLoginButton";
+import MessengerDisconnectButton from "./MessengerDisconnectButton";
 
 type IntegrationCardProps = {
   name: string;
@@ -46,15 +48,26 @@ export default function IntegrationCard({
         </span>
       </div>
 
-      {name === 'Instagram' && (
+      {(name === 'Instagram' || name === 'Messenger') && (
         <div className="mt-4 w-full">
           {isConnected ? (
-            <InstagramDisconnectButton 
-              onDisconnect={onDisconnect || (() => {})} 
-              disabled={isConnecting}
-            />
+            name === 'Instagram' ? (
+              <InstagramDisconnectButton 
+                onDisconnect={onDisconnect || (() => {})} 
+                disabled={isConnecting}
+              />
+            ) : (
+              <MessengerDisconnectButton 
+                onDisconnect={onDisconnect || (() => {})} 
+                disabled={isConnecting}
+              />
+            )
           ) : (
-            <InstagramLoginButton disabled={isConnecting} />
+            name === 'Instagram' ? (
+              <InstagramLoginButton disabled={isConnecting} />
+            ) : (
+              <MessengerLoginButton disabled={isConnecting} />
+            )
           )}
         </div>
       )}

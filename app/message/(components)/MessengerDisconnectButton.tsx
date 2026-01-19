@@ -1,28 +1,22 @@
 'use client';
 
-import React from 'react';
 import Button from '@mui/material/Button';
-import InstagramIcon from '@mui/icons-material/Instagram';
+import MessageIcon from '@mui/icons-material/Message';
 
-type InstagramDisconnectButtonProps = {
+type MessengerDisconnectButtonProps = {
   onDisconnect: () => void;
   disabled?: boolean;
 };
 
-const InstagramDisconnectButton: React.FC<InstagramDisconnectButtonProps> = ({
+export default function MessengerDisconnectButton({
   onDisconnect,
   disabled = false,
-}) => {
-  const handleDisconnect = () => {
-    if (disabled) return;
-    onDisconnect();
-  };
-
+}: MessengerDisconnectButtonProps) {
   return (
     <Button
       variant="outlined"
-      startIcon={<InstagramIcon />}
-      onClick={handleDisconnect}
+      startIcon={<MessageIcon />}
+      onClick={onDisconnect}
       disabled={disabled}
       sx={{
         width: '100%',
@@ -45,6 +39,4 @@ const InstagramDisconnectButton: React.FC<InstagramDisconnectButtonProps> = ({
       Disconnect
     </Button>
   );
-};
-
-export default InstagramDisconnectButton;
+}
