@@ -1,3 +1,4 @@
+import Link from "next/link";
 
 export default function LoginPage() {
   return (
@@ -42,6 +43,10 @@ export default function LoginPage() {
         <div className="flex flex-col gap-2 self-stretch">
           <button className="px-4 py-2 gap-2 items-center rounded-lg bg-[#8A38F5]">Sign in</button>
           <button>Forgot password</button>
+          <Link 
+          href="/signup" className="text-center">
+          <button>Sign up</button>
+          </Link>
         </div>
 
       </div>
