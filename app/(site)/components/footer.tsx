@@ -30,9 +30,9 @@ export default function Footer() {
       </div>
 
       <div className="flex items-center gap-6">
-        <img src="/Social link 1.svg" alt="Instagram" className="h-5 w-5" />
-        <img src="/Social link 2.svg" alt="Instagram" className="h-5 w-5" />
-        <img src="/Social link 3.svg" alt="Instagram" className="h-5 w-5" />
+        <img src="/insta.svg" alt="Instagram" className="h-5 w-5" />
+        <img src="/linkedin.svg" alt="Linkedin" className="h-5 w-5" />
+        <img src="/Xtwitter.svg" alt="X" className="h-5 w-5" />
       </div>
 
     </footer>
