@@ -31,7 +31,6 @@ const InstagramLoginButton: React.FC<InstagramLoginButtonProps> = ({
         "instagram_manage_messages",
         "pages_show_list",
         "pages_messaging",
-        "pages_read_engagement",
         //adding business management as extra debu
         "business_management"
       ].join(",")

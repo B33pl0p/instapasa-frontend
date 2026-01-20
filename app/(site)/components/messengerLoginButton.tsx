@@ -34,7 +34,6 @@ const MessengerLoginButton: React.FC<MessengerLoginButtonProps> = ({
         'instagram_manage_messages',
         'pages_show_list',
         'pages_messaging',
-        'pages_read_engagement',
         'business_management',
       ].join(',')
     );
