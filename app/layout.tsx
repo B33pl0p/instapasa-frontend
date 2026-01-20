@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { StoreProvider } from "./lib/StoreProvider";
 
 
 
@@ -25,7 +26,9 @@ export default function RootLayout({
       <body
         className={`${inter.variable} `}
       >
-        {children}
+        <StoreProvider>
+          {children}
+        </StoreProvider>
 
       </body>
     </html>

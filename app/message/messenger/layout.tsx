@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/lib/hooks';
-import { fetchConversations } from '@/app/lib/slices/instagramMessagesSlice';
+import { fetchMessengerConversations } from '@/app/lib/slices/messengerMessagesSlice';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 
-export default function InstagramLayout({
+export default function MessengerLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -21,8 +21,8 @@ export default function InstagramLayout({
   const [showMobileList, setShowMobileList] = useState(!selectedConversationId);
 
   const dispatch = useAppDispatch();
-  const { conversations, businessUsername, loading, error, conversationsLoaded } = useAppSelector(
-    (state) => state.instagramMessages
+  const { conversations, loading, error, conversationsLoaded } = useAppSelector(
+    (state) => state.messengerMessages
   );
 
   // On mobile, hide list when conversation is selected
@@ -36,14 +36,14 @@ export default function InstagramLayout({
   useEffect(() => {
     // Only fetch if not already loaded
     if (!conversationsLoaded && !loading) {
-      dispatch(fetchConversations());
+      dispatch(fetchMessengerConversations());
     }
   }, [dispatch, conversationsLoaded, loading]);
 
   // Refresh conversations list (no sync, just refresh the list)
   const handleRefresh = async () => {
     try {
-      await dispatch(fetchConversations()).unwrap();
+      await dispatch(fetchMessengerConversations()).unwrap();
     } catch (err) {
       // Error already handled in Redux
     }
@@ -52,7 +52,7 @@ export default function InstagramLayout({
   const handleSelectConversation = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
-    router.push(`/message/instagram?${params.toString()}`);
+    router.push(`/message/messenger?${params.toString()}`);
     // On mobile, hide list after selection
     if (window.innerWidth < 768) {
       setShowMobileList(false);
@@ -60,18 +60,14 @@ export default function InstagramLayout({
   };
 
   const handleBackToList = () => {
-    router.push('/message/instagram');
+    router.push('/message/messenger');
     setShowMobileList(true);
   };
 
   const getParticipantName = (conversation: typeof conversations[0]): string => {
-    if (!businessUsername) {
-      return conversation.participants[1]?.username || conversation.participants[0]?.username || 'Unknown User';
-    }
-    const otherParticipant = conversation.participants.find(
-      (p) => p.username !== businessUsername
-    );
-    return otherParticipant?.username || 'Unknown User';
+    if (conversation.participants.length === 0) return 'Unknown User';
+    // For Messenger, we typically show the first participant that's not the business
+    return conversation.participants[0]?.username || conversation.participants[0]?.id || 'Unknown User';
   };
 
   const formatTime = (timeString: string): string => {
@@ -103,7 +99,7 @@ export default function InstagramLayout({
       >
         <div className="flex h-full flex-col bg-white" style={{ height: '100%', maxHeight: '100vh' }}>
           <div className="border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-3 shrink-0 flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Instagram Chats</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Messenger Chats</h2>
             <Tooltip title="Refresh conversations">
               <IconButton
                 size="small"
@@ -129,7 +125,7 @@ export default function InstagramLayout({
           {loading ? (
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
-                <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-[#8A38F5] border-t-transparent"></div>
+                <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-[#0084ff] border-t-transparent"></div>
                 <p className="text-sm text-gray-500">Loading conversations...</p>
               </div>
             </div>
@@ -154,7 +150,7 @@ export default function InstagramLayout({
                     key={uniqueKey}
                     onClick={() => handleSelectConversation(conversation.conversation_id)}
                     className={`cursor-pointer border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 transition-colors hover:bg-gray-50 ${
-                      isSelected ? 'bg-purple-50' : ''
+                      isSelected ? 'bg-blue-50' : ''
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -204,7 +200,7 @@ export default function InstagramLayout({
             <IconButton size="small" onClick={handleBackToList}>
               <ArrowBackIcon />
             </IconButton>
-            <h2 className="text-sm sm:text-base font-semibold text-gray-900">Instagram Chats</h2>
+            <h2 className="text-sm sm:text-base font-semibold text-gray-900">Messenger Chats</h2>
           </div>
         )}
         <div 
@@ -225,8 +221,6 @@ export default function InstagramLayout({
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }

@@ -27,6 +27,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
+import { useAppSelector, useAppDispatch } from '@/app/lib/hooks';
+import { useEffect } from 'react';
+import { setCustomer } from '@/app/lib/slices/customerSlice';
+import { getCustomerFromToken } from '@/app/lib/utils/jwt';
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -129,6 +133,20 @@ export default function DashboardLayout({
   const { profilePictureUrl } = useInstagramAuth();
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
+  
+  const dispatch = useAppDispatch();
+  const businessName = useAppSelector((state) => state.customer.business_name);
+  const customerLoaded = useAppSelector((state) => state.customer.isLoaded);
+
+  // Load customer data from JWT token
+  useEffect(() => {
+    if (!customerLoaded) {
+      const customerData = getCustomerFromToken();
+      if (customerData) {
+        dispatch(setCustomer(customerData));
+      }
+    }
+  }, [customerLoaded, dispatch]);
 
   // Reset image error when profilePictureUrl changes
   React.useEffect(() => {
@@ -150,7 +168,7 @@ export default function DashboardLayout({
 
   return (
     <RouteGuard>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
         <CssBaseline />
         <Drawer
           variant="permanent"
@@ -159,7 +177,8 @@ export default function DashboardLayout({
             '& .MuiDrawer-paper': {
               display: 'flex',
               flexDirection: 'column',
-              height: '100%',
+              height: '100vh',
+              position: 'relative',
             },
           }}
         >
@@ -201,7 +220,7 @@ export default function DashboardLayout({
               )}
               {open && (
                 <Typography variant="subtitle1" noWrap sx={{ ml: 1 }}>
-                  Placeholder Company name
+                  {businessName || 'Company'}
                 </Typography>
               )}
             </Button>
@@ -360,8 +379,18 @@ export default function DashboardLayout({
             </ListItem>
           </Box>
         </Drawer>
-        <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <Box 
+          component="main" 
+          sx={{ 
+            flexGrow: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            minHeight: 0,
+            height: '100vh',
+            overflow: 'hidden'
+          }}
+        >
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', height: '100%' }}>
             {children}
           </Box>
         </Box>
