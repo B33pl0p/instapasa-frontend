@@ -35,6 +35,7 @@ const MessengerLoginButton: React.FC<MessengerLoginButtonProps> = ({
         'pages_show_list',
         'pages_messaging',
         'business_management',
+        
       ].join(',')
     );
 
