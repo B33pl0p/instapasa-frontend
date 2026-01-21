@@ -29,18 +29,26 @@ export default function Navbar() {
               className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">Our Services</Link>
         {isAuthenticated ? (
           <Link
-            href="/message"
+            href="/dashboard/message"
             className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
           >
             Dashboard
           </Link>
         ) : (
-          <Link
-            href="/login"
-            className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
-          >
-            Login
-          </Link>
+          <>
+            <Link
+              href="/login"
+              className="hover:text-brand border border-white bg-gray-200/20 px-4 py-1 rounded-md"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
+              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+            >
+              Sign Up
+            </Link>
+          </>
         )}
       </div>
 
@@ -63,18 +71,26 @@ export default function Navbar() {
           </Link>
           {isAuthenticated ? (
             <Link
-              href="/message"
+              href="/dashboard/message"
               className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
             >
               Dashboard
             </Link>
           ) : (
-            <Link
-              href="/login"
-              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                href="/login"
+                className="hover:text-brand border border-white bg-gray-200/20 px-4 py-1 rounded-md"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+              >
+                Sign Up
+              </Link>
+            </>
           )}
         </div>
       )}

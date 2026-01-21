@@ -148,7 +148,7 @@ export default function SignupPage() {
         submitData.contact_person_role = formData.contact_person_role.trim();
 
       await signup(submitData);
-      router.push('/message');
+      router.push('/dashboard/message');
     } catch (error: any) {
       setIsLoading(false);
       if (error.response?.status === 400) {
