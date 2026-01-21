@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import apiClient from '@/app/lib/apiClient';
+import apiClient from '@/app/dashboard/lib/apiClient';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const INSTAGRAM_STORAGE_KEY = 'instagram_connected';

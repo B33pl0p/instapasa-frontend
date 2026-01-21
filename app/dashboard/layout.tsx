@@ -4,7 +4,6 @@ import * as React from 'react';
 import { styled, Theme, CSSObject } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import MuiDrawer from '@mui/material/Drawer';
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import List from '@mui/material/List';
 import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
@@ -15,11 +14,11 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { usePathname } from 'next/navigation';
 
-import { sidebarItems, type SidebarItem } from './(components)/sidebarItems';
+import { sidebarItems, type SidebarItem } from './message/(components)/sidebarItems';
 import { useRouter } from 'next/navigation';
-import RouteGuard from './(components)/RouteGuard';
+import RouteGuard from './message/(components)/RouteGuard';
 import { useAuth } from '@/app/(site)/lib/auth';
-import { useInstagramAuth } from './(components)/useInstagramAuth';
+import { useInstagramAuth } from './message/(components)/useInstagramAuth';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Dialog from '@mui/material/Dialog';
@@ -27,10 +26,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
-import { useAppSelector, useAppDispatch } from '@/app/lib/hooks';
+import Image from 'next/image';
+import { useAppSelector, useAppDispatch } from '@/app/dashboard/lib/hooks';
 import { useEffect } from 'react';
-import { setCustomer } from '@/app/lib/slices/customerSlice';
-import { getCustomerFromToken } from '@/app/lib/utils/jwt';
+import { setCustomer } from '@/app/dashboard/lib/slices/customerSlice';
+import { getCustomerFromToken } from '@/app/dashboard/lib/utils/jwt';
+
 const drawerWidth = 240;
 
 const openedMixin = (theme: Theme): CSSObject => ({
@@ -62,33 +63,6 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   ...theme.mixins.toolbar,
 }));
 
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-}
-
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})<AppBarProps>(({ theme }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        marginLeft: drawerWidth,
-        width: `calc(100% - ${drawerWidth}px)`,
-        transition: theme.transitions.create(['width', 'margin'], {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-      },
-    },
-  ],
-}));
-
 const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme }) => ({
     width: drawerWidth,
@@ -114,8 +88,6 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
-
-
 export default function DashboardLayout({
     children,
 }:{
@@ -126,7 +98,6 @@ export default function DashboardLayout({
   const handleDrawerToggle = () => {
     setOpen(!open);
   };
-
 
   const router = useRouter();
   const { logout } = useAuth();
@@ -199,7 +170,7 @@ export default function DashboardLayout({
               }}
             >
               {profilePictureUrl && !imageError ? (
-                <img
+                <Image
                   src={profilePictureUrl}
                   alt="Instagram Profile"
                   width={28}
@@ -228,7 +199,7 @@ export default function DashboardLayout({
 
           <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
             <List sx={{ overflowY: 'auto', height: '100%' }}>
-            {(['General', 'Messages', 'Services'] as SidebarItem['section'][]).map(
+            {(['General', 'Messages', 'Services','Prodcuts'] as SidebarItem['section'][]).map(
               (section) => {
                 const itemsForSection = sidebarItems.filter(
                   (item) => item.section === section,

@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import apiClient from '../apiClient';
-import type { Conversation, ConversationDetailResponse, Message } from '@/app/message/instagram/types';
+import type { Conversation, ConversationDetailResponse, Message } from '@/app/dashboard/message/instagram/types';
 
 interface InstagramMessagesState {
   conversations: Conversation[];

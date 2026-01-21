@@ -5,8 +5,8 @@ import instagramIcon from '@/public/instagramIcon.svg';
 import Image from 'next/image';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import messenger from '@/public/messengerIcon.svg';
-
-type SidebarSection = 'General' | 'Messages' | 'Services';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+type SidebarSection = 'General' | 'Messages' | 'Services' | 'Prodcuts';
 
 export type SidebarItem = {
   label: string;
@@ -19,25 +19,31 @@ export const sidebarItems: SidebarItem[] = [
   {
     label: 'Integrations',
     icon: <ViewModuleIcon />,
-    href: '/message',
+    href: '/dashboard/message',
     section: 'General',
   },
   {
     label: 'Instagram',
     icon: <Image src={instagramIcon} alt="instgram" />,
-    href: '/message/instagram',
+    href: '/dashboard/message/instagram',
     section: 'Messages',
   },
   {
     label: 'Messenger',
     icon: <Image src={messenger} alt="instagram" />,
-    href: '/message/messenger',
+    href: '/dashboard/message/messenger',
     section: 'Messages',
   },
   {
     label: 'Analytics',
     icon: <SpaceDashboardIcon />,
-    href: '/message/analytics',
+    href: '/dashboard/message/analytics',
     section: 'Services',
   },
+  {
+    label:'Products',
+    icon: <ShoppingCartIcon />,
+    href: '/dashboard/products',
+    section: 'Prodcuts',
+  }
 ];

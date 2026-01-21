@@ -1,56 +1,70 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import apiClient, { type ApiRequestConfig } from '@/app/lib/apiClient';
+import apiClient, { type ApiRequestConfig } from '@/app/dashboard/lib/apiClient';
 
-type MessengerStatus = 'connected' | 'connecting' | 'not connected';
+type InstagramStatus = 'connected' | 'connecting' | 'not connected';
 
-const STORAGE_KEY = 'messenger_connected';
-const TOKEN_DATA_KEY = 'messenger_token_data';
+const STORAGE_KEY = 'instagram_connected';
+const TOKEN_DATA_KEY = 'instagram_token_data';
 
 interface TokenData {
   timestamp: number;
-  page_id?: string;
+  instagram_username?: string;
+  instagram_user_id?: string;
+  instagram_page_id?: string;
+  profile_picture_url?: string;
 }
 
-interface MessengerStatusResponse {
+interface InstagramStatusResponse {
   is_connected: boolean;
-  page_id?: string;
+  instagram_username?: string;
+  instagram_user_id?: string;
+  instagram_page_id?: string;
+  profile_picture_url?: string;
 }
 
-export function useMessengerAuth() {
-  const [status, setStatus] = useState<MessengerStatus>('not connected');
+export function useInstagramAuth() {
+  const [status, setStatus] = useState<InstagramStatus>('not connected');
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
 
   // Reusable function to check connection status
   const checkConnectionStatus = useCallback(async () => {
     try {
-      // Check Messenger connection status from backend
-      // Using the same endpoint pattern as Instagram but for messenger/facebook
-      const response = await apiClient.get<MessengerStatusResponse>('/auth/meta/status', {
-        params: { platform: 'messenger' }
-      });
-      
+      // Check Instagram connection status from backend
+      const response = await apiClient.get<InstagramStatusResponse>('/auth/meta/status');
       if (response.data.is_connected) {
+        // Instagram is connected - update status and store connection data
         setStatus('connected');
+        setProfilePictureUrl(response.data.profile_picture_url || null);
+        
         if (typeof window !== 'undefined') {
           localStorage.setItem(STORAGE_KEY, 'true');
           localStorage.setItem(
             TOKEN_DATA_KEY,
             JSON.stringify({
               timestamp: Date.now(),
-              page_id: response.data.page_id,
+              instagram_username: response.data.instagram_username,
+              instagram_user_id: response.data.instagram_user_id,
+              instagram_page_id: response.data.instagram_page_id,
+              profile_picture_url: response.data.profile_picture_url,
             } as TokenData),
           );
         }
       } else {
+        // Instagram is not connected - clear stored data
         setStatus('not connected');
+        setProfilePictureUrl(null);
         if (typeof window !== 'undefined') {
           localStorage.removeItem(STORAGE_KEY);
           localStorage.removeItem(TOKEN_DATA_KEY);
         }
       }
     } catch {
+      // If we get an error (401, 404, etc.), Instagram is not connected
+      // Clear stored data
       setStatus('not connected');
+      setProfilePictureUrl(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(TOKEN_DATA_KEY);
@@ -58,9 +72,10 @@ export function useMessengerAuth() {
     }
   }, []);
 
-  // Check connection status on mount
+  // Check connection status on mount - verify with backend using status API
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Use setTimeout to avoid synchronous setState in effect
     const timer = setTimeout(() => {
       void checkConnectionStatus();
     }, 0);
@@ -76,12 +91,15 @@ export function useMessengerAuth() {
         '/auth/meta/complete',
         {
           short_lived_token: accessToken,
-          platform: 'messenger',
         },
         { skipAuth: true } as ApiRequestConfig
       );
 
+            console.log('Instagram status response:', response.data);
+
+      // After connecting, re-check status to get profile picture and update state
       await checkConnectionStatus();
+
       return { success: true, data: response.data };
     } catch (error) {
       setStatus('not connected');
@@ -98,20 +116,26 @@ export function useMessengerAuth() {
     try {
       setStatus('connecting');
       
-      await apiClient.post('/auth/meta/disconnect', { platform: 'messenger' });
+      // Call backend API to disconnect Instagram
+      await apiClient.post('/auth/meta/disconnect');
       
+      // Clear local state after successful API call
       if (typeof window !== 'undefined') {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(TOKEN_DATA_KEY);
       }
       setStatus('not connected');
+      setProfilePictureUrl(null);
     } catch (error) {
       console.error('Disconnect error:', error);
+      // Still clear local state on error to ensure UI updates
       if (typeof window !== 'undefined') {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(TOKEN_DATA_KEY);
       }
       setStatus('not connected');
+      setProfilePictureUrl(null);
+      // Re-throw error so calling component can handle it if needed
       throw error;
     }
   }, []);
@@ -121,6 +145,7 @@ export function useMessengerAuth() {
     setStatus,
     processOAuthCallback,
     disconnect,
+    profilePictureUrl,
     refreshStatus: checkConnectionStatus,
   };
 }

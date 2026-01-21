@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '@/app/lib/hooks';
-import { fetchMessages, setCurrentConversation } from '@/app/lib/slices/instagramMessagesSlice';
-import MessageBox from '@/app/message/components/MessageBox';
+import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
+import { fetchMessengerMessages, setCurrentConversation } from '@/app/dashboard/lib/slices/messengerMessagesSlice';
+import MessageBox from '@/app/dashboard/message/components/MessageBox';
 import MicIcon from '@mui/icons-material/Mic';
 import ImageIcon from '@mui/icons-material/Image';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
@@ -15,8 +15,8 @@ interface ConversationViewProps {
 
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
-  const { messages, businessUsername, loading, error, currentConversationId } = useAppSelector(
-    (state) => state.instagramMessages
+  const { messages, loading, error, currentConversationId } = useAppSelector(
+    (state) => state.messengerMessages
   );
   const [messageInput, setMessageInput] = useState('');
 
@@ -28,7 +28,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       // This prevents refetching when user clicks the same conversation again
       if (currentConversationId !== conversationId || messages.length === 0) {
         // Fetch from cache (fast) by default - lazy loading
-        dispatch(fetchMessages({ conversationId, forceRefresh: false }));
+        dispatch(fetchMessengerMessages({ conversationId, forceRefresh: false }));
       }
     }
   }, [conversationId, dispatch, currentConversationId, messages.length]);
@@ -83,7 +83,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       >
         <MessageBox 
           messages={messages} 
-          businessUsername={businessUsername}
+          businessUsername={null}
           loading={loading}
         />
       </div>
@@ -101,7 +101,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
               }
             }}
             placeholder="Message ..."
-            className="flex-1 rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-sm focus:border-[#8A38F5] focus:outline-none focus:ring-2 focus:ring-[#8A38F5] focus:ring-opacity-20"
+            className="flex-1 rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-sm focus:border-[#0084ff] focus:outline-none focus:ring-2 focus:ring-[#0084ff] focus:ring-opacity-20"
           />
           <button
             type="button"

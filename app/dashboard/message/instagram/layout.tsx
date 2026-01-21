@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAppDispatch, useAppSelector } from '@/app/lib/hooks';
-import { fetchConversations } from '@/app/lib/slices/instagramMessagesSlice';
+import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
+import { fetchConversations } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
