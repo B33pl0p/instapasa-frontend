@@ -117,23 +117,37 @@ export const productService = {
       }
 
       xhr.addEventListener('load', () => {
+        console.log('Upload response status:', xhr.status);
         if (xhr.status >= 200 && xhr.status < 300) {
+          console.log('Upload successful');
           resolve();
         } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
+          const errorMsg = `Upload failed with status ${xhr.status}`;
+          console.error(errorMsg, xhr.responseText);
+          reject(new Error(errorMsg));
         }
       });
 
       xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
+        const errorMsg = `Network error during upload. Status: ${xhr.status}`;
+        console.error('XHR Error:', errorMsg, 'Response:', xhr.responseText);
+        reject(new Error(errorMsg));
       });
 
       xhr.addEventListener('abort', () => {
+        console.error('Upload aborted');
         reject(new Error('Upload cancelled'));
       });
 
+      xhr.addEventListener('timeout', () => {
+        console.error('Upload timeout');
+        reject(new Error('Upload timeout'));
+      });
+
+      console.log('Starting S3 upload for file:', file.name, 'Size:', file.size, 'Type:', file.type);
       xhr.open('PUT', presignedUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
+      // Do NOT set Content-Type header - the presigned URL already includes it in the signature
+      xhr.timeout = 30000; // 30 second timeout
       xhr.send(file);
     });
   },

@@ -18,9 +18,12 @@ import {
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import ClearIcon from '@mui/icons-material/Clear';
 import type { AppDispatch } from '@/app/dashboard/lib/store';
 import { createProduct } from '@/app/dashboard/lib/slices/productSlice';
 import { CreateProductRequest } from '@/app/dashboard/lib/types/product';
+import { productService } from '@/app/dashboard/lib/services/productService';
+import LinearProgress from '@mui/material/LinearProgress';
 
 export default function CreateProductPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -38,6 +41,12 @@ export default function CreateProductPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Image upload states
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement & HTMLTextAreaElement;
@@ -68,6 +77,45 @@ export default function CreateProductPage() {
     return true;
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles: File[] = [];
+
+    files.forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select valid image files');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (validFiles.length > 0) {
+      setSelectedImages((prev) => [...prev, ...validFiles]);
+      setError(null);
+
+      // Create preview URLs
+      validFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreviewUrls((prev) => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Clear input
+    e.target.value = '';
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -78,10 +126,54 @@ export default function CreateProductPage() {
 
     try {
       setLoading(true);
-      await dispatch(createProduct(formData)).unwrap();
+      const createdProduct = await dispatch(createProduct(formData)).unwrap();
+
+      // Upload images if any were selected
+      if (selectedImages.length > 0) {
+        setUploadingImages(true);
+        const uploadErrors: string[] = [];
+
+        for (let i = 0; i < selectedImages.length; i++) {
+          try {
+            const file = selectedImages[i];
+            const presignedData = await productService.getPresignedUrl(createdProduct.id);
+            
+            if (!presignedData?.presigned_url) {
+              throw new Error('Failed to get presigned URL from server');
+            }
+
+            await productService.uploadToS3(
+              presignedData.presigned_url,
+              file,
+              (progress) => {
+                setUploadProgress(Math.round((progress * (i + 1)) / selectedImages.length));
+              }
+            );
+          } catch (err) {
+            const errorMsg = (err as Error).message || `Failed to upload image ${i + 1}`;
+            console.error('Image upload failed:', err);
+            uploadErrors.push(errorMsg);
+          }
+        }
+
+        setUploadingImages(false);
+        setUploadProgress(0);
+
+        // If there were upload errors, show them but don't block product creation
+        if (uploadErrors.length > 0) {
+          setError(`Product created but some images failed to upload: ${uploadErrors.join(', ')}`);
+          setTimeout(() => {
+            router.push('/dashboard/products');
+          }, 2000);
+          return;
+        }
+      }
+
       router.push('/dashboard/products');
     } catch (err) {
-      setError((err as Error).message || 'Failed to create product');
+      const errorMsg = (err as Error).message || 'Failed to create product';
+      setError(errorMsg);
+      console.error('Product creation failed:', err);
     } finally {
       setLoading(false);
     }
@@ -186,6 +278,97 @@ export default function CreateProductPage() {
                   disabled={loading}
                   placeholder="Enter product description"
                 />
+              </Grid>
+
+              {/* Image Upload */}
+              <Grid size={{ xs: 12 }}>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                    Product Images
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    fullWidth
+                    disabled={loading || uploadingImages}
+                    sx={{ py: 2, mb: 2 }}
+                  >
+                    Upload Images
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      hidden
+                      onChange={handleImageSelect}
+                      disabled={loading || uploadingImages}
+                    />
+                  </Button>
+
+                  {uploadingImages && (
+                    <Box sx={{ mb: 2 }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={uploadProgress}
+                        sx={{ mb: 1 }}
+                      />
+                      <Typography variant="caption" color="textSecondary">
+                        Uploading... {uploadProgress}%
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {imagePreviewUrls.length > 0 && (
+                    <Box>
+                      <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                        Selected Images ({imagePreviewUrls.length})
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {imagePreviewUrls.map((url, index) => (
+                          <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
+                            <Box
+                              sx={{
+                                position: 'relative',
+                                paddingBottom: '100%',
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                                border: '1px solid #ddd',
+                              }}
+                            >
+                              <Box
+                                component="img"
+                                src={url}
+                                alt={`Preview ${index}`}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: 4,
+                                  right: 4,
+                                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                  borderRadius: '50%',
+                                  p: 0.5,
+                                  cursor: 'pointer',
+                                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.9)' },
+                                }}
+                                onClick={() => removeImage(index)}
+                              >
+                                <ClearIcon sx={{ color: 'white', fontSize: 18 }} />
+                              </Box>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </Box>
+                  )}
+                </Box>
               </Grid>
 
               {/* Active Status */}
