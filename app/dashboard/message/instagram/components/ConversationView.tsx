@@ -15,7 +15,7 @@ interface ConversationViewProps {
 
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
-  const { messages, businessUsername, loading, error, currentConversationId } = useAppSelector(
+  const { messages, businessUsername, messageLoading, error, currentConversationId, messageCache } = useAppSelector(
     (state) => state.instagramMessages
   );
   const [messageInput, setMessageInput] = useState('');
@@ -24,14 +24,13 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     dispatch(setCurrentConversation(conversationId));
     
     if (conversationId) {
-      // Only fetch if this is a different conversation or no messages loaded yet
-      // This prevents refetching when user clicks the same conversation again
-      if (currentConversationId !== conversationId || messages.length === 0) {
-        // Fetch from cache (fast) by default - lazy loading
+      // LAZY LOADING: Only fetch if not already cached
+      if (!messageCache[conversationId]) {
+        // Fetch from API (lazy loading on demand)
         dispatch(fetchMessages({ conversationId, forceRefresh: false }));
       }
     }
-  }, [conversationId, dispatch, currentConversationId, messages.length]);
+  }, [conversationId, dispatch, messageCache]);
 
   const handleSendMessage = () => {
     if (!messageInput.trim()) return;
@@ -84,7 +83,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
         <MessageBox 
           messages={messages} 
           businessUsername={businessUsername}
-          loading={loading}
+          loading={messageLoading}
         />
       </div>
 

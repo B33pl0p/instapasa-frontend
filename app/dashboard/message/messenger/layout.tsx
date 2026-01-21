@@ -21,7 +21,7 @@ export default function MessengerLayout({
   const [showMobileList, setShowMobileList] = useState(!selectedConversationId);
 
   const dispatch = useAppDispatch();
-  const { conversations, loading, error, conversationsLoaded } = useAppSelector(
+  const { conversations, conversationLoading, error, conversationsLoaded } = useAppSelector(
     (state) => state.messengerMessages
   );
 
@@ -32,13 +32,13 @@ export default function MessengerLayout({
     }
   }, [selectedConversationId]);
 
-  // Lazy loading: Only fetch conversations list on mount (fast)
+  // LAZY LOADING: Only fetch conversations list on mount (lightweight overview)
   useEffect(() => {
     // Only fetch if not already loaded
-    if (!conversationsLoaded && !loading) {
+    if (!conversationsLoaded && !conversationLoading) {
       dispatch(fetchMessengerConversations());
     }
-  }, [dispatch, conversationsLoaded, loading]);
+  }, [dispatch, conversationsLoaded, conversationLoading]);
 
   // Refresh conversations list (no sync, just refresh the list)
   const handleRefresh = async () => {
@@ -52,7 +52,7 @@ export default function MessengerLayout({
   const handleSelectConversation = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
-    router.push(`/message/messenger?${params.toString()}`);
+    router.push(`/dashboard/message/messenger?${params.toString()}`);
     // On mobile, hide list after selection
     if (window.innerWidth < 768) {
       setShowMobileList(false);
@@ -60,7 +60,7 @@ export default function MessengerLayout({
   };
 
   const handleBackToList = () => {
-    router.push('/message/messenger');
+    router.push('/dashboard/message/messenger');
     setShowMobileList(true);
   };
 
@@ -104,14 +104,14 @@ export default function MessengerLayout({
               <IconButton
                 size="small"
                 onClick={handleRefresh}
-                disabled={loading}
+                disabled={conversationLoading}
                 sx={{
-                  color: loading ? 'text.disabled' : 'text.primary',
+                  color: conversationLoading ? 'text.disabled' : 'text.primary',
                 }}
               >
                 <RefreshIcon
                   sx={{
-                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    animation: conversationLoading ? 'spin 1s linear infinite' : 'none',
                     '@keyframes spin': {
                       '0%': { transform: 'rotate(0deg)' },
                       '100%': { transform: 'rotate(360deg)' },
@@ -122,7 +122,7 @@ export default function MessengerLayout({
             </Tooltip>
           </div>
           
-          {loading ? (
+          {conversationLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-[#0084ff] border-t-transparent"></div>

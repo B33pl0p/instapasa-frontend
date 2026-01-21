@@ -21,7 +21,7 @@ export default function InstagramLayout({
   const [showMobileList, setShowMobileList] = useState(!selectedConversationId);
 
   const dispatch = useAppDispatch();
-  const { conversations, businessUsername, loading, error, conversationsLoaded } = useAppSelector(
+  const { conversations, businessUsername, conversationLoading, error, conversationsLoaded } = useAppSelector(
     (state) => state.instagramMessages
   );
 
@@ -32,13 +32,13 @@ export default function InstagramLayout({
     }
   }, [selectedConversationId]);
 
-  // Lazy loading: Only fetch conversations list on mount (fast)
+  // LAZY LOADING: Only fetch conversations list on mount (lightweight overview)
   useEffect(() => {
     // Only fetch if not already loaded
-    if (!conversationsLoaded && !loading) {
+    if (!conversationsLoaded && !conversationLoading) {
       dispatch(fetchConversations());
     }
-  }, [dispatch, conversationsLoaded, loading]);
+  }, [dispatch, conversationsLoaded, conversationLoading]);
 
   // Refresh conversations list (no sync, just refresh the list)
   const handleRefresh = async () => {
@@ -52,7 +52,7 @@ export default function InstagramLayout({
   const handleSelectConversation = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
-    router.push(`/message/instagram?${params.toString()}`);
+    router.push(`/dashboard/message/instagram?${params.toString()}`);
     // On mobile, hide list after selection
     if (window.innerWidth < 768) {
       setShowMobileList(false);
@@ -60,7 +60,7 @@ export default function InstagramLayout({
   };
 
   const handleBackToList = () => {
-    router.push('/message/instagram');
+    router.push('/dashboard/message/instagram');
     setShowMobileList(true);
   };
 
@@ -72,7 +72,7 @@ export default function InstagramLayout({
       (p) => p.username !== businessUsername
     );
     return otherParticipant?.username || 'Unknown User';
-  };
+  };;
 
   const formatTime = (timeString: string): string => {
     const date = new Date(timeString);
@@ -108,14 +108,14 @@ export default function InstagramLayout({
               <IconButton
                 size="small"
                 onClick={handleRefresh}
-                disabled={loading}
+                disabled={conversationLoading}
                 sx={{
-                  color: loading ? 'text.disabled' : 'text.primary',
+                  color: conversationLoading ? 'text.disabled' : 'text.primary',
                 }}
               >
                 <RefreshIcon
                   sx={{
-                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    animation: conversationLoading ? 'spin 1s linear infinite' : 'none',
                     '@keyframes spin': {
                       '0%': { transform: 'rotate(0deg)' },
                       '100%': { transform: 'rotate(360deg)' },
@@ -126,7 +126,7 @@ export default function InstagramLayout({
             </Tooltip>
           </div>
           
-          {loading ? (
+          {conversationLoading ? (
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-[#8A38F5] border-t-transparent"></div>
