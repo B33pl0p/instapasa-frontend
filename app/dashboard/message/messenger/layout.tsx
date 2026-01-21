@@ -52,7 +52,7 @@ export default function MessengerLayout({
   const handleSelectConversation = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
-    router.push(`/message/messenger?${params.toString()}`);
+    router.push(`/dashboard/message/messenger?${params.toString()}`);
     // On mobile, hide list after selection
     if (window.innerWidth < 768) {
       setShowMobileList(false);
@@ -60,7 +60,7 @@ export default function MessengerLayout({
   };
 
   const handleBackToList = () => {
-    router.push('/message/messenger');
+    router.push('/dashboard/message/messenger');
     setShowMobileList(true);
   };
 

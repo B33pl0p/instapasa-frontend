@@ -20,9 +20,11 @@ export default function Hero() {
             </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4">
-          <button className="bg-black border border-transparent hover:border-white text-white px-4 py-3 rounded-md">
-            Get in Touch
-          </button>
+          <Link 
+          href="/signup"
+          className="bg-[#8A38F5] border border-transparent hover:border-white text-white px-4 py-3 rounded-md">
+            Get Started
+          </Link>
           <Link 
           href="/services"
           className="border border-white bg-gray-200/20 px-4 py-3 rounded-md">

@@ -52,7 +52,7 @@ export default function InstagramLayout({
   const handleSelectConversation = (conversationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
-    router.push(`/message/instagram?${params.toString()}`);
+    router.push(`/dashboard/message/instagram?${params.toString()}`);
     // On mobile, hide list after selection
     if (window.innerWidth < 768) {
       setShowMobileList(false);
@@ -60,7 +60,7 @@ export default function InstagramLayout({
   };
 
   const handleBackToList = () => {
-    router.push('/message/instagram');
+    router.push('/dashboard/message/instagram');
     setShowMobileList(true);
   };
 

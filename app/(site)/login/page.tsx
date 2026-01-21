@@ -44,7 +44,7 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
-      router.push('/message');
+      router.push('/dashboard/message');
     } catch (error: any) {
       setIsLoading(false);
       if (error.response?.status === 401) {
