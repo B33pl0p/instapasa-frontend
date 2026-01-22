@@ -264,12 +264,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         {status.progress}%
                       </Typography>
                     )}
-                    <Chip
-                      label={status.status}
-                      color={getStatusColor(status.status)}
-                      size="small"
-                      icon={getStatusIcon(status.status)}
-                    />
+                    {getStatusIcon(status.status) ? (
+                      <Chip
+                        label={status.status}
+                        color={getStatusColor(status.status)}
+                        size="small"
+                        icon={getStatusIcon(status.status)!}
+                      />
+                    ) : (
+                      <Chip
+                        label={status.status}
+                        color={getStatusColor(status.status)}
+                        size="small"
+                      />
+                    )}
                   </Box>
                 </ListItem>
               ))}
