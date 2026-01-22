@@ -29,13 +29,27 @@ export interface MessagesOverviewResponse {
   conversations: Conversation[];
 }
 
+export interface Postback {
+  title: string;
+  payload: string;
+}
+
+export interface Attachment {
+  type: string;
+  url: string;
+  media?: any;
+}
+
 export interface Message {
   id: string;
   created_time: string;
-  text: string;
+  text: string | null;
   from: Participant;
   to: Participant[];
   is_from_business: boolean;
+  postback?: Postback | null;
+  attachments?: Attachment[] | null;
+  sticker?: string | null;
 }
 
 export interface ConversationDetailResponse {

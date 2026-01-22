@@ -3,13 +3,27 @@
 import React, { useEffect, useRef } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
+interface Postback {
+  title: string;
+  payload: string;
+}
+
+interface Attachment {
+  type: string;
+  url: string;
+  media?: any;
+}
+
 interface Message {
   id: string;
   created_time: string;
-  text: string;
+  text: string | null;
   from?: { username?: string; id: string };
   to?: { username?: string; id: string }[];
   is_from_business?: boolean;
+  postback?: Postback | null;
+  attachments?: Attachment[] | null;
+  sticker?: string | null;
 }
 
 interface MessageBoxProps {
@@ -147,6 +161,94 @@ export default function MessageBox({ messages, businessUsername, loading }: Mess
                     hyphens: 'auto',
                   }}
                 >
+                  {/* Postback (Button Click) */}
+                  {message.postback && (
+                    <div className={`flex items-center gap-2 mb-2 pb-2 border-b ${
+                      isFromBusiness ? 'border-white/20' : 'border-gray-200'
+                    }`}>
+                      <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/>
+                      </svg>
+                      <span className="text-xs opacity-80 font-medium">
+                        Clicked: {message.postback.title}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Sticker */}
+                  {message.sticker && (
+                    <div className="mb-2">
+                      <img 
+                        src={message.sticker} 
+                        alt="Sticker" 
+                        className="max-w-[120px] max-h-[120px] object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Attachments (Images, Videos, Files) */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="mb-2 space-y-2">
+                      {message.attachments.map((attachment, idx) => {
+                        if (attachment.type === 'image') {
+                          return (
+                            <div key={idx} className="rounded overflow-hidden">
+                              <img 
+                                src={attachment.url} 
+                                alt="Attachment" 
+                                className="max-w-full max-h-[300px] object-contain rounded"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect fill="%23ddd" width="200" height="150"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage unavailable%3C/text%3E%3C/svg%3E';
+                                }}
+                              />
+                            </div>
+                          );
+                        } else if (attachment.type === 'video') {
+                          return (
+                            <div key={idx} className="rounded overflow-hidden">
+                              <video 
+                                src={attachment.url} 
+                                controls 
+                                className="max-w-full max-h-[300px] rounded"
+                              >
+                                Your browser does not support the video tag.
+                              </video>
+                            </div>
+                          );
+                        } else if (attachment.type === 'audio') {
+                          return (
+                            <div key={idx} className="rounded">
+                              <audio src={attachment.url} controls className="w-full">
+                                Your browser does not support the audio tag.
+                              </audio>
+                            </div>
+                          );
+                        } else {
+                          return (
+                            <a 
+                              key={idx}
+                              href={attachment.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className={`flex items-center gap-2 p-2 rounded ${
+                                isFromBusiness ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-100 hover:bg-gray-200'
+                              }`}
+                            >
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
+                              </svg>
+                              <span className="text-sm">📎 {attachment.type} file</span>
+                            </a>
+                          );
+                        }
+                      })}
+                    </div>
+                  )}
+
+                  {/* Text Message */}
                   {messageText ? (
                     <p className="text-xs sm:text-sm whitespace-pre-wrap break-words leading-relaxed">
                       {messageText}

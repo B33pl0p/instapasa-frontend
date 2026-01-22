@@ -7,13 +7,27 @@ export interface MessengerParticipant {
   id: string;
 }
 
+export interface MessengerPostback {
+  title: string;
+  payload: string;
+}
+
+export interface MessengerAttachment {
+  type: string;
+  url: string;
+  media?: any;
+}
+
 export interface MessengerMessage {
   id: string;
   created_time: string;
-  text: string;
+  text: string | null;
   from: MessengerParticipant;
   to: MessengerParticipant[];
   is_from_business: boolean;
+  postback?: MessengerPostback | null;
+  attachments?: MessengerAttachment[] | null;
+  sticker?: string | null;
 }
 
 export interface MessengerConversation {
