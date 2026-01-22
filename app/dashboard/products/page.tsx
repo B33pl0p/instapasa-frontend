@@ -117,43 +117,46 @@ export default function ProductPage() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <div className="p-6">
       {/* Active User Display */}
       {(email || business_name) && (
-        <Box sx={{ mb: 3, p: 2, backgroundColor: '#f0f4ff', borderRadius: 1, borderLeft: '4px solid #1976d2' }}>
-          <Typography variant="body2" color="textSecondary">
-            Logged in as:
-          </Typography>
-          <Typography variant="h6">
+        <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+          <p className="text-sm text-gray-600 mb-1">Logged in as:</p>
+          <h2 className="text-lg font-semibold text-gray-900">
             {business_name || email}
-          </Typography>
+          </h2>
           {business_name && email && (
-            <Typography variant="body2" color="textSecondary">
-              {email}
-            </Typography>
+            <p className="text-sm text-gray-600">{email}</p>
           )}
-        </Box>
+        </div>
       )}
 
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Products
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+          <p className="text-gray-600 mt-1">Manage your product inventory</p>
+        </div>
+        <button
           onClick={() => router.push('/dashboard/products/create')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
+          <AddIcon fontSize="small" />
           Add Product
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Error Message */}
       {error && (
-        <Alert severity="error" onClose={() => dispatch(clearError())} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
+        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex justify-between items-center">
+          <p className="text-red-700">{error}</p>
+          <button
+            onClick={() => dispatch(clearError())}
+            className="text-red-700 hover:text-red-900"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* Filters */}
@@ -161,21 +164,16 @@ export default function ProductPage() {
 
       {/* Bulk Actions */}
       {selectedItems.length > 0 && (
-        <Alert
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              startIcon={<DeleteIcon />}
-              onClick={handleBulkDelete}
-            >
-              Delete ({selectedItems.length})
-            </Button>
-          }
-          sx={{ mb: 2 }}
-        >
-          {selectedItems.length} item(s) selected
-        </Alert>
+        <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg flex justify-between items-center">
+          <p className="text-blue-800">{selectedItems.length} item(s) selected</p>
+          <button
+            onClick={handleBulkDelete}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2"
+          >
+            <DeleteIcon fontSize="small" />
+            Delete ({selectedItems.length})
+          </button>
+        </div>
       )}
 
       {/* Product Table */}
@@ -218,19 +216,24 @@ export default function ProductPage() {
 
       {/* Notification Toast */}
       {showNotification && (
-        <Alert
-          severity={showNotification.type}
-          onClose={() => setShowNotification(null)}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            minWidth: 300,
+        <div className="fixed bottom-4 right-4 min-w-[300px] p-4 bg-white border-l-4 rounded-lg shadow-lg z-50"
+          style={{
+            borderLeftColor: showNotification.type === 'success' ? '#10b981' : '#ef4444'
           }}
         >
-          {showNotification.message}
-        </Alert>
+          <div className="flex justify-between items-center">
+            <p className={showNotification.type === 'success' ? 'text-green-700' : 'text-red-700'}>
+              {showNotification.message}
+            </p>
+            <button
+              onClick={() => setShowNotification(null)}
+              className="ml-4 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
       )}
-    </Container>
+    </div>
   );
 }

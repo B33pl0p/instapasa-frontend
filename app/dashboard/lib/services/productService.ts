@@ -90,51 +90,52 @@ export const productService = {
   },
 
   // Get presigned URL for image upload
-  getPresignedUrl: async (productId: string): Promise<PresignedUrlResponse> => {
+  getPresignedUrl: async (productId: string, contentType: string): Promise<PresignedUrlResponse> => {
     const response = await apiClient.post<PresignedUrlResponse>(
-      `${DASHBOARD_BASE}/products/${productId}/get-upload-url`,
+      `${DASHBOARD_BASE}/products/${productId}/get-upload-url?content_type=${encodeURIComponent(contentType)}`,
       {}
     );
     return response.data;
   },
 
-  // Upload file directly to S3 using presigned URL
+  // Confirm image upload completion
+  confirmImageUpload: async (productId: string, imageUrl: string, s3Key: string): Promise<Product> => {
+    const encodedUrl = encodeURIComponent(imageUrl);
+    const response = await apiClient.post<Product>(
+      `${DASHBOARD_BASE}/products/${productId}/confirm-upload?image_url=${encodedUrl}`,
+      {}
+    );
+    return response.data;
+  },
+
+  // Upload file directly to S3 using presigned URL via Next.js API route (avoids CORS)
   uploadToS3: async (
     presignedUrl: string,
     file: File,
+    contentType: string,
     onProgress?: (progress: number) => void
   ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
+    try {
+      const formData = new FormData();
+      formData.append('presigned_url', presignedUrl);
+      formData.append('file', file);
+      formData.append('content_type', contentType);
 
-      if (onProgress) {
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            const progress = Math.round((e.loaded / e.total) * 100);
-            onProgress(progress);
-          }
-        });
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
       }
 
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      });
-
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
-      });
-
-      xhr.addEventListener('abort', () => {
-        reject(new Error('Upload cancelled'));
-      });
-
-      xhr.open('PUT', presignedUrl);
-      xhr.setRequestHeader('Content-Type', file.type);
-      xhr.send(file);
-    });
+      if (onProgress) {
+        onProgress(100);
+      }
+    } catch (error) {
+      throw error;
+    }
   },
 };

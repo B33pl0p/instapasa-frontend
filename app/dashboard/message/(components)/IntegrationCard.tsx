@@ -21,22 +21,24 @@ export default function IntegrationCard({
   const isConnecting = status === 'connecting';
  
   return (
-    <div className="w-full max-w-xs rounded-xl bg-[#F3E5F5] p-5 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {image}
-          <p className="text-sm font-medium text-gray-800">{name}</p>
+    <div className="w-full max-w-sm rounded-lg bg-white border border-gray-200 p-6 shadow-md hover:shadow-lg transition-shadow">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 flex items-center justify-center">
+            {image}
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
         </div>
         <span
-          className={`h-2 w-2 rounded-full ${
-            isConnected ? 'bg-green-500' : 'bg-gray-400'
+          className={`h-3 w-3 rounded-full ${
+            isConnected ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-gray-400'
           }`}
         />
       </div>
 
-      <div className="mb-4">
+      <div className="mb-5">
         <span
-          className={`rounded-full px-2 py-1 text-xs font-medium ${
+          className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
             isConnected
               ? 'bg-green-100 text-green-700'
               : isConnecting

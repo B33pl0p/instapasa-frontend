@@ -88,8 +88,8 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       </div>
 
       {/* Message Input Area - Fixed at bottom */}
-      <div className="shrink-0 border-t border-gray-200 bg-white p-3 sm:p-4 shadow-sm">
-        <div className="flex items-center gap-1 sm:gap-2">
+      <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-lg">
+        <div className="flex items-center gap-2">
           <input
             type="text"
             value={messageInput}
@@ -99,29 +99,36 @@ export default function ConversationView({ conversationId }: ConversationViewPro
                 handleSendMessage();
               }
             }}
-            placeholder="Message ..."
-            className="flex-1 rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-sm focus:border-[#0084ff] focus:outline-none focus:ring-2 focus:ring-[#0084ff] focus:ring-opacity-20"
+            placeholder="Type your message..."
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
           />
           <button
+            onClick={handleSendMessage}
+            disabled={!messageInput.trim()}
+            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          >
+            Send
+          </button>
+          <button
             type="button"
-            className="rounded-lg p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             aria-label="Microphone"
           >
-            <MicIcon sx={{ width: 18, height: 18, '@media (min-width: 640px)': { width: 20, height: 20 } }} />
+            <MicIcon sx={{ width: 20, height: 20 }} />
           </button>
           <button
             type="button"
-            className="rounded-lg p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             aria-label="Image"
           >
-            <ImageIcon sx={{ width: 18, height: 18, '@media (min-width: 640px)': { width: 20, height: 20 } }} />
+            <ImageIcon sx={{ width: 20, height: 20 }} />
           </button>
           <button
             type="button"
-            className="rounded-lg p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
             aria-label="Emoji"
           >
-            <EmojiEmotionsIcon sx={{ width: 18, height: 18, '@media (min-width: 640px)': { width: 20, height: 20 } }} />
+            <EmojiEmotionsIcon sx={{ width: 20, height: 20 }} />
           </button>
         </div>
       </div>

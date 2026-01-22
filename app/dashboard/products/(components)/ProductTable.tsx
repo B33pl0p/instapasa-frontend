@@ -121,7 +121,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                  ${product.price ?? 'N/A'}
+                  Rs. {product.price?.toFixed(2) ?? 'N/A'}
                 </Typography>
                 <Typography
                   variant="body2"
@@ -194,7 +194,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               <TableCell sx={{ maxWidth: isTablet ? '150px' : 'auto', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {product.name}
               </TableCell>
-              {!isTablet && <TableCell align="right">Rs. {product.price ?? 'N/A'}</TableCell>}
+              {!isTablet && <TableCell align="right">Rs. {product.price?.toFixed(2) ?? 'N/A'}</TableCell>}
               {!isTablet && <TableCell>{product.category ?? '-'}</TableCell>}
               <TableCell>
                 <Typography

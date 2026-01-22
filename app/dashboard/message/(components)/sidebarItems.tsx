@@ -6,6 +6,7 @@ import Image from 'next/image';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import messenger from '@/public/messengerIcon.svg';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 type SidebarSection = 'General' | 'Messages' | 'Services' | 'Prodcuts';
 
 export type SidebarItem = {
@@ -44,6 +45,12 @@ export const sidebarItems: SidebarItem[] = [
     label:'Products',
     icon: <ShoppingCartIcon />,
     href: '/dashboard/products',
+    section: 'Prodcuts',
+  },
+  {
+    label: 'Orders',
+    icon: <ReceiptLongIcon />,
+    href: '/dashboard/orders',
     section: 'Prodcuts',
   }
 ];

@@ -53,14 +53,25 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       setError(null);
       setProgress(0);
 
-      // Step 1: Get presigned URL
-      const presignedData = await productService.getPresignedUrl(productId);
+      // Step 1: Get presigned URL with content type
+      const presignedData = await productService.getPresignedUrl(
+        productId,
+        selectedFile.type
+      );
 
-      // Step 2: Upload to S3
+      // Step 2: Upload to S3 with matching content type
       await productService.uploadToS3(
         presignedData.presigned_url,
         selectedFile,
+        selectedFile.type,
         (p) => setProgress(p)
+      );
+
+      // Step 3: Confirm upload completion with backend
+      await productService.confirmImageUpload(
+        productId,
+        presignedData.image_url,
+        presignedData.s3_key
       );
 
       setProgress(100);

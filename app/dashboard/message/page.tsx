@@ -86,12 +86,13 @@ function MessageContent() {
   }, [processInstagramCallback, processMessengerCallback]);
 
   return (
-    <main className="min-h-screen bg-white p-16">
-      <h1 className="mb-6 text-2xl font-semibold text-gray-900">
-        Integrations
-      </h1>
+    <main className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Integrations</h1>
+        <p className="text-gray-600 mt-1">Connect your messaging platforms</p>
+      </div>
 
-      <section className="flex flex-wrap gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <IntegrationCard
           name="Messenger"
           status={messengerStatus}
@@ -100,7 +101,7 @@ function MessageContent() {
             <Image
               src={messengerIcon}
               alt="Messenger"
-              className="h-5 w-5"
+              className="h-8 w-8"
             />
           }
         />
@@ -113,7 +114,7 @@ function MessageContent() {
             <Image
               src={instagramIcon}
               alt="Instagram"
-              className="h-5 w-5"
+              className="h-8 w-8"
             />
           }
         />

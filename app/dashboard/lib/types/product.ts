@@ -46,6 +46,7 @@ export interface ProductListResponse {
 
 export interface PresignedUrlResponse {
   presigned_url: string;
+  image_url: string;
   s3_key: string;
 }
 
