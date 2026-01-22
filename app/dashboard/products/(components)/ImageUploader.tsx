@@ -61,7 +61,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         selectedFile.type
       );
       console.log('Got presigned URL:', {
-        hasUploadUrl: !!(presignedData.upload_url || presignedData.presigned_url),
+        hasPresignedUrl: !!presignedData.presigned_url,
         hasImageUrl: !!presignedData.image_url,
         hasS3Key: !!presignedData.s3_key,
       });

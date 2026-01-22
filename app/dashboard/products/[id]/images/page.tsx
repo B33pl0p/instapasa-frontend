@@ -157,12 +157,12 @@ export default function ProductImagesPage() {
         ) : (
           <Grid container spacing={2}>
             {product.images.map((image, index) => (
-              <Grid key={`${image.key}-${index}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <Grid key={`${image}-${index}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card>
                   <CardMedia
                     component="img"
                     height="200"
-                    image={image.url}
+                    image={image}
                     alt={`Product image ${index + 1}`}
                     sx={{ objectFit: 'cover' }}
                   />
@@ -170,7 +170,7 @@ export default function ProductImagesPage() {
                     <IconButton
                       size="small"
                       color="error"
-                      onClick={() => handleDeleteImage(image.url)}
+                      onClick={() => handleDeleteImage(image)}
                       title="Delete"
                     >
                       <DeleteIcon />
