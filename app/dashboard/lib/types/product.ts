@@ -7,14 +7,30 @@ export interface Product {
   sku?: string;
   stock?: number;
   is_active: boolean;
-  images?: ProductImage[];
+  images?: string[];
+  attributes?: Record<string, any>;
   created_at?: string;
   updated_at?: string;
+  customer_id?: string;
 }
 
-export interface ProductImage {
-  url: string;
-  key: string;
+export type AttributeType = 'text' | 'number' | 'select' | 'multi_select' | 'color' | 'boolean';
+
+export interface AttributeDefinition {
+  name: string;
+  label: string;
+  type: AttributeType;
+  required: boolean;
+  options?: string[];
+  help_text?: string;
+  placeholder?: string;
+}
+
+export interface CategoryConfig {
+  category: string;
+  display_name: string;
+  icon: string;
+  attributes: AttributeDefinition[];
 }
 
 export interface CreateProductRequest {
@@ -25,6 +41,7 @@ export interface CreateProductRequest {
   sku?: string;
   stock?: number;
   is_active?: boolean;
+  attributes?: Record<string, any>;
 }
 
 export interface UpdateProductRequest {
@@ -35,6 +52,7 @@ export interface UpdateProductRequest {
   sku?: string;
   stock?: number;
   is_active?: boolean;
+  attributes?: Record<string, any>;
 }
 
 export interface ProductListResponse {

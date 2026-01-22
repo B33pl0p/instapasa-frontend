@@ -80,7 +80,7 @@ export default function ProductImagesPage() {
         prev
           ? {
               ...prev,
-              images: prev.images?.filter((img) => img.url !== deletingImageUrl),
+              images: prev.images?.filter((img) => img !== deletingImageUrl),
             }
           : null
       );

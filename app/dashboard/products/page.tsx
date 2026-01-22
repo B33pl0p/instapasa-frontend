@@ -23,11 +23,15 @@ import {
   selectAllItems,
   clearSelection,
   clearError,
+  setItems,
 } from '@/app/dashboard/lib/slices/productSlice';
-import { ProductTable } from './(components)/ProductTable';
+import { ModernProductTable } from './(components)/ModernProductTable';
+import { QuickUploadModal } from './(components)/QuickUploadModal';
 import { ProductFilterComponent } from './(components)/ProductFilters';
 import { ProductPagination } from './(components)/ProductPagination';
 import { ConfirmDialog } from './(components)/ConfirmDialog';
+import { Product } from '@/app/dashboard/lib/types/product';
+import { productService } from '@/app/dashboard/lib/services/productService';
 
 export default function ProductPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -52,13 +56,50 @@ export default function ProductPage() {
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [quickUploadOpen, setQuickUploadOpen] = useState(false);
+  const [quickUploadProduct, setQuickUploadProduct] = useState<Product | null>(null);
+  const [viewMode, setViewMode] = useState<'all' | 'active' | 'low-stock'>('all');
 
-  // Fetch products on mount and when filters/page changes
+  // Fetch products on mount and when filters/page/viewMode changes
   useEffect(() => {
-    void dispatch(
-      fetchProducts({ page: currentPage, pageSize, filters })
-    );
-  }, [dispatch, currentPage, pageSize, filters]);
+    if (viewMode === 'all') {
+      void dispatch(
+        fetchProducts({ page: currentPage, pageSize, filters })
+      );
+    }
+  }, [dispatch, currentPage, pageSize, filters, viewMode]);
+
+  // Fetch active or low-stock products based on view mode
+  useEffect(() => {
+    const fetchSpecialView = async () => {
+      if (viewMode === 'active') {
+        try {
+          const products = await productService.getActiveProducts(
+            (currentPage - 1) * pageSize,
+            pageSize
+          );
+          // Update Redux state manually for these special views
+          dispatch(setItems({ items: products, total: products.length }));
+        } catch (error) {
+          console.error('Failed to fetch active products:', error);
+        }
+      } else if (viewMode === 'low-stock') {
+        try {
+          const products = await productService.getLowStockProducts(
+            (currentPage - 1) * pageSize,
+            pageSize
+          );
+          dispatch(setItems({ items: products, total: products.length }));
+        } catch (error) {
+          console.error('Failed to fetch low stock products:', error);
+        }
+      }
+    };
+
+    if (viewMode !== 'all') {
+      void fetchSpecialView();
+    }
+  }, [viewMode, currentPage, pageSize, dispatch]);
 
   const handleDeleteProduct = (id: string) => {
     setDeleteItemId(id);
@@ -116,6 +157,22 @@ export default function ProductPage() {
     dispatch(setCurrentPage(page));
   };
 
+  const handleQuickUpload = (id: string) => {
+    const product = items.find((p) => p.id === id);
+    if (product) {
+      setQuickUploadProduct(product);
+      setQuickUploadOpen(true);
+    }
+  };
+
+  const handleQuickUploadSuccess = async () => {
+    await dispatch(fetchProducts({ page: currentPage, pageSize, filters }));
+    setShowNotification({
+      type: 'success',
+      message: 'Image uploaded successfully',
+    });
+  };
+
   return (
     <div className="p-6">
       {/* Active User Display */}
@@ -143,6 +200,40 @@ export default function ProductPage() {
         >
           <AddIcon fontSize="small" />
           Add Product
+        </button>
+      </div>
+
+      {/* Quick Filter Buttons */}
+      <div className="mb-6 flex gap-3">
+        <button
+          onClick={() => setViewMode('all')}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            viewMode === 'all'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          📦 All Products
+        </button>
+        <button
+          onClick={() => setViewMode('active')}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            viewMode === 'active'
+              ? 'bg-green-600 text-white shadow-md'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          ✅ Active Only
+        </button>
+        <button
+          onClick={() => setViewMode('low-stock')}
+          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+            viewMode === 'low-stock'
+              ? 'bg-orange-600 text-white shadow-md'
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          ⚠️ Low Stock
         </button>
       </div>
 
@@ -177,14 +268,14 @@ export default function ProductPage() {
       )}
 
       {/* Product Table */}
-      <ProductTable
+      <ModernProductTable
         products={items}
         selectedItems={selectedItems}
         onSelectItem={(id) => dispatch(toggleSelectItem(id))}
         onSelectAll={() => dispatch(selectAllItems())}
         onEdit={(id) => router.push(`/dashboard/products/${id}`)}
         onDelete={handleDeleteProduct}
-        onImages={(id) => router.push(`/dashboard/products/${id}/images`)}
+        onQuickUpload={handleQuickUpload}
         loading={loading}
       />
 
@@ -212,6 +303,17 @@ export default function ProductPage() {
           setDeleteItemId(null);
         }}
         loading={loading}
+      />
+
+      {/* Quick Upload Modal */}
+      <QuickUploadModal
+        open={quickUploadOpen}
+        onClose={() => {
+          setQuickUploadOpen(false);
+          setQuickUploadProduct(null);
+        }}
+        product={quickUploadProduct}
+        onSuccess={handleQuickUploadSuccess}
       />
 
       {/* Notification Toast */}

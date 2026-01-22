@@ -1,244 +1,354 @@
-# Order Management API - Technical Documentation
+# Dynamic Product Attributes System
 
-## Order Flow
+## Overview
+The ecommerce system now supports dynamic, category-based product attributes. Different product categories can have different required and optional fields (e.g., clothing has size/color, electronics has warranty/specs).
 
-### Order Creation
-Orders are created in two ways:
-1. **Instagram Checkout** - Automatic via webhook when customer clicks checkout button
-2. **Quick Order API** - Manual via `POST /quick-orders` endpoint
+## Architecture
 
-Both create orders with `status: "pending_details"` and clear the cart.
+### 1. Category Model (`app/models/category_model.py`)
+Defines category configurations with attribute definitions:
+- **AttributeType**: Text, Number, Select (dropdown), Multi-Select, Color, Boolean
+- **AttributeDefinition**: Individual attribute configuration (name, label, type, required, options)
+- **CategoryConfig**: Full category with all its attributes
+- **CATEGORY_CONFIGS**: Predefined categories (clothing, footwear, electronics, food, beauty, home, books, general)
 
-### Workflow
-1. Customer completes Instagram checkout → Order created with `pending_details` status
-2. Backend sends message: "A representative will contact you soon"
-3. Seller views `pending_details` orders in dashboard
-4. Seller contacts customer and fills in details via `PUT /quick-orders/{order_id}/details`
-5. Once all fields filled (name, address, phone) → Status auto-changes to `confirmed`
-6. Seller updates status through lifecycle: `processing` → `shipped` → `delivered`
-
-### Order Data Structure
-
-```typescript
-Order {
-  id: string
-  order_number: string              // Format: "ORD-XXXXXXXX"
-  customer_id: string               // Seller/business ID
-  instagram_user_id: string         // Buyer Instagram ID
-  conversation_id: string           // Instagram conversation ID
-  items: OrderItem[]
-  total: number
-  customer_name?: string            // Optional - filled by seller
-  shipping_address?: string         // Optional - filled by seller
-  phone?: string                    // Optional - filled by seller
-  payment_reference?: string        // Optional
-  payment_method?: string           // Optional
-  payment_confirmed_at?: datetime   // Optional
-  status: OrderStatus               // See status enum below
-  notes?: string
-  created_at: datetime
-  updated_at: datetime
-}
-
-OrderItem {
-  product_id: string
-  product_name: string
-  quantity: number
-  price: number
-  image_url?: string
-}
+### 2. Product Model (`app/models/product_model.py`)
+```python
+class Product(Document):
+    ...
+    category: Optional[str] = None
+    attributes: Dict[str, Any] = {}  # Dynamic category-specific attributes
+    ...
 ```
 
-### Order Status Enum
-`pending_details` | `confirmed` | `processing` | `shipped` | `delivered` | `cancelled`
+### 3. API Schemas (`app/api/v2/schemas/ecommerce_schema.py`)
+```python
+class ProductCreate(BaseModel):
+    ...
+    category: Optional[str] = None
+    attributes: Dict[str, Any] = {}
+    ...
+```
 
----
+## Available Categories
+
+### Clothing (👕)
+- **size**: XS, S, M, L, XL, XXL, XXXL (required)
+- **color**: Black, White, Red, Blue, etc. (required)
+- **material**: Cotton, Polyester, Wool, Silk, Linen, etc.
+- **gender**: Men, Women, Unisex, Kids
+
+### Footwear (👟)
+- **size**: 5-13 (required)
+- **color**: Black, White, Brown, etc. (required)
+- **material**: Leather, Synthetic, Canvas, Suede
+- **type**: Sneakers, Formal, Sandals, Boots, Slippers
+
+### Electronics (📱)
+- **brand**: Text (required)
+- **model**: Text (required)
+- **warranty**: No Warranty, 6 Months, 1 Year, 2 Years, 3 Years
+- **color**: Black, White, Silver, Gold, Blue, Red
+- **condition**: Brand New, Like New, Refurbished, Used (required)
+
+### Food & Beverages (🍔)
+- **weight**: Text (e.g., 500g, 1L)
+- **ingredients**: Main ingredients
+- **allergens**: Nuts, Dairy, Eggs, Soy, Gluten, Shellfish
+- **dietary**: Vegetarian, Vegan, Gluten-Free, Organic, Halal, Kosher
+- **expiry**: Best before date
+
+### Beauty & Personal Care (💄)
+- **brand**: Text (required)
+- **skin_type**: All Skin Types, Dry, Oily, Combination, Sensitive
+- **size**: Size/Volume (e.g., 50ml, 100g)
+- **ingredients**: Key ingredients
+- **features**: Paraben-Free, Cruelty-Free, Organic, etc.
+
+### Home & Living (🏠)
+- **material**: Text
+- **dimensions**: Length x Width x Height
+- **color**: Black, White, Brown, Beige, Gray
+- **room**: Living Room, Bedroom, Kitchen, Bathroom, Office
+
+### Books & Stationery (📚)
+- **author**: Text
+- **publisher**: Text
+- **language**: English, Nepali, Hindi, Other
+- **pages**: Number
+- **format**: Hardcover, Paperback, E-book
+
+### General (📦)
+Fallback category with basic attributes:
+- **brand**: Text
+- **color**: Text
+- **size**: Text
 
 ## API Endpoints
 
-**Auth Required:** Bearer token in Authorization header
+### Get All Categories
+```
+GET /api/v2/products/categories
+```
+Returns all available categories with their attribute definitions.
 
----
+**Response:**
+```json
+[
+  {
+    "category": "clothing",
+    "display_name": "Clothing & Apparel",
+    "icon": "👕",
+    "attributes": [
+      {
+        "name": "size",
+        "label": "Size",
+        "type": "select",
+        "required": true,
+        "options": ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
+        "help_text": "Select garment size"
+      },
+      ...
+    ]
+  },
+  ...
+]
+```
 
-## Quick Order Endpoints
-Base URL: `/api/v2/quick-orders`
+### Get Specific Category
+```
+GET /api/v2/products/categories/{category}
+```
+Returns configuration for a specific category (e.g., `clothing`, `electronics`).
 
-### 1. Create Quick Order
-**POST** `/quick-orders`
-
-**Query Params:**
-- `sender_id` (required): Instagram user ID (buyer)
-- `conversation_id` (required): Instagram conversation ID
-
-**Response:** `Order` with status `pending_details`
-
-**Notes:**
-- Creates order from cart items
-- Cart is cleared after order creation
-- No customer details required initially
-
----
-
-### 2. Update Order Details
-**PUT** `/quick-orders/{order_id}/details`
-
-**Query Params:**
-- `customer_name` (optional): Customer full name
-- `shipping_address` (optional): Delivery address
-- `phone` (optional): Contact phone number
-
-**Response:** `Order`
-
-**Notes:**
-- Update customer details after contacting them
-- Status auto-changes to `confirmed` when ALL fields (name, address, phone) are filled
-- Can be called multiple times to update partial info
-
----
-
-### 3. Get Quick Order
-**GET** `/quick-orders/{order_id}`
-
-**Response:** `Order`
-
----
-
-### 4. List Orders by Status
-**GET** `/quick-orders?status=pending_details`
-
-**Query Params:**
-- `status` (optional, default: "pending_details"): Filter by order status
-
-**Response:** `Order[]` sorted by newest first
-
----
-
-## Order Management Endpoints
-Base URL: `/api/v2/orders`
-
-### 5. List All Orders
-**GET** `/orders`
-
-**Query Params:**
-- `status` (optional): Filter by order status
-
-**Response:** `Order[]`
-
----
-
-### 6. Get Order by ID
-**GET** `/orders/{order_id}`
-
-**Response:** `Order`
-
----
-
-### 7. Get Order by Number
-**GET** `/orders/order-number/{order_number}`
-
-**Response:** `Order`
-
----
-
-### 8. Update Order Status
-**PUT** `/orders/{order_id}/status`
+### Create Product with Attributes
+```
+POST /api/v2/products
+```
 
 **Request Body:**
 ```json
 {
-  "status": "confirmed" | "processing" | "shipped" | "delivered" | "cancelled"
+  "name": "Premium Cotton T-Shirt",
+  "description": "Comfortable cotton t-shirt",
+  "price": 29.99,
+  "stock": 100,
+  "category": "clothing",
+  "attributes": {
+    "size": "L",
+    "color": "Blue",
+    "material": "Cotton",
+    "gender": "Unisex"
+  },
+  "images": ["https://..."]
 }
 ```
 
-**Response:** `Order`
-
-**Notes:** 
-- Validates status transitions
-- Cannot change status of already delivered/cancelled orders
-
----
-
-### 9. Cancel Order
-**POST** `/orders/{order_id}/cancel`
-
-**Request Body:** None
-
-**Response:** `Order`
-
-**Notes:**
-- Automatically restores product stock
-- Cannot cancel delivered orders
-- Sets status to `cancelled`
-
----
-
-### 10. Order Statistics
-**GET** `/orders/statistics/all`
-
-**Response:**
-```typescript
-{
-  total_orders: number
-  total_revenue: number
-  pending: number          // Count by status
-  confirmed: number
-  processing: number
-  shipped: number
-  delivered: number
-  cancelled: number
-}
-```
-
----
-
-### 11. Low Stock Alerts
-**GET** `/orders/alerts/low-stock?threshold=10`
-
-**Query Params:**
-- `threshold` (optional, default: 10): Stock level alert threshold
-
-**Response:**
-```typescript
-{
-  product_id: string
-  product_name: string
-  current_stock: number
-  threshold: number
-}[]
-```
-
----
-
-## Error Responses
-
-All endpoints return standard HTTP status codes:
-- `200` - Success
-- `400` - Bad Request (validation errors)
-- `403` - Forbidden (not authorized to access this order)
-- `404` - Order not found
-- `500` - Internal server error
-
-Error format:
+**Another Example (Electronics):**
 ```json
 {
-  "detail": "Error message"
+  "name": "Wireless Headphones",
+  "price": 99.99,
+  "stock": 50,
+  "category": "electronics",
+  "attributes": {
+    "brand": "Sony",
+    "model": "WH-1000XM5",
+    "warranty": "1 Year",
+    "color": "Black",
+    "condition": "Brand New"
+  }
 }
 ```
 
----
+### Update Product Attributes
+```
+PUT /api/v2/products/{product_id}
+```
 
-## Authorization
+**Request Body:**
+```json
+{
+  "attributes": {
+    "size": "XL",
+    "color": "Red"
+  }
+}
+```
 
-Only sellers can access their own orders. The API validates:
-- Seller owns the order (`order.customer_id == current_customer.id`)
-- Valid JWT token in request headers
+### Get Product
+```
+GET /api/v2/products/{product_id}
+```
 
----
+**Response:**
+```json
+{
+  "id": "...",
+  "name": "Premium Cotton T-Shirt",
+  "category": "clothing",
+  "attributes": {
+    "size": "L",
+    "color": "Blue",
+    "material": "Cotton",
+    "gender": "Unisex"
+  },
+  ...
+}
+```
 
-## Important Notes
+## Frontend Implementation Guide
 
-1. **Quick Order Flow** - Use `/quick-orders` endpoints for creating and updating order details
-2. **Auto Status Change** - Status changes from `pending_details` → `confirmed` when name, address, and phone are all filled
-3. **Stock Management** - Stock automatically decreased on order creation and restored on cancellation
-4. **Order Numbers** - System-generated, format: `ORD-XXXXXXXX` (8 hex characters)
-5. **Two API Groups** - `/quick-orders` for creation/details, `/orders` for status updates and management
+### 1. Fetch Categories on Page Load
+```javascript
+const categories = await fetch('/api/v2/products/categories');
+// Display in dropdown
+```
+
+### 2. Dynamic Form Based on Category
+```javascript
+function CategoryBasedForm({ selectedCategory }) {
+  const [categoryConfig, setCategoryConfig] = useState(null);
+  
+  useEffect(() => {
+    if (selectedCategory) {
+      fetch(`/api/v2/products/categories/${selectedCategory}`)
+        .then(res => res.json())
+        .then(setCategoryConfig);
+    }
+  }, [selectedCategory]);
+  
+  return (
+    <div>
+      {categoryConfig?.attributes.map(attr => (
+        <FormField key={attr.name} attribute={attr} />
+      ))}
+    </div>
+  );
+}
+```
+
+### 3. Render Form Fields
+```javascript
+function FormField({ attribute }) {
+  switch (attribute.type) {
+    case 'text':
+      return <input type="text" required={attribute.required} />;
+    case 'number':
+      return <input type="number" required={attribute.required} />;
+    case 'select':
+      return (
+        <select required={attribute.required}>
+          {attribute.options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      );
+    case 'multi_select':
+      return attribute.options.map(opt => (
+        <label key={opt}>
+          <input type="checkbox" value={opt} />
+          {opt}
+        </label>
+      ));
+    case 'color':
+      return <input type="color" />;
+    case 'boolean':
+      return <input type="checkbox" />;
+  }
+}
+```
+
+### 4. Submit Product with Attributes
+```javascript
+const productData = {
+  name: formData.name,
+  price: formData.price,
+  category: formData.category,
+  attributes: {
+    size: formData.size,
+    color: formData.color,
+    material: formData.material,
+    // ... other dynamic attributes
+  }
+};
+
+await fetch('/api/v2/products', {
+  method: 'POST',
+  body: JSON.stringify(productData)
+});
+```
+
+## Instagram Chatbot Integration
+
+When displaying products in Instagram:
+```python
+from app.models.product_model import Product
+from app.models.category_model import get_category_config
+
+product = await Product.get(product_id)
+category_config = get_category_config(product.category)
+
+# Format attributes for display
+attributes_text = []
+for attr_def in category_config.attributes:
+    attr_name = attr_def.name
+    if attr_name in product.attributes:
+        value = product.attributes[attr_name]
+        attributes_text.append(f"{attr_def.label}: {value}")
+
+message = f"{product.name}\n"
+message += f"Price: ${product.price}\n"
+message += "\n".join(attributes_text)
+```
+
+Example output:
+```
+Premium Cotton T-Shirt
+Price: $29.99
+Size: L
+Color: Blue
+Material: Cotton
+Gender: Unisex
+```
+
+## Adding New Categories
+
+To add a new category, edit `app/models/category_model.py`:
+
+```python
+CATEGORY_CONFIGS["toys"] = CategoryConfig(
+    category="toys",
+    display_name="Toys & Games",
+    icon="🧸",
+    attributes=[
+        AttributeDefinition(
+            name="age_range",
+            label="Age Range",
+            type=AttributeType.SELECT,
+            required=True,
+            options=["0-2 years", "3-5 years", "6-8 years", "9+ years"],
+        ),
+        AttributeDefinition(
+            name="material",
+            label="Material",
+            type=AttributeType.SELECT,
+            options=["Plastic", "Wood", "Fabric", "Metal"],
+        ),
+        # ... more attributes
+    ]
+)
+```
+
+## Benefits
+
+1. **Flexibility**: Different product types can have relevant attributes
+2. **Validation**: Frontend can validate based on attribute definitions
+3. **User Experience**: Show only relevant fields based on category
+4. **Scalability**: Easy to add new categories without code changes
+5. **Type Safety**: Attribute types ensure consistent data entry
+6. **Instagram Integration**: Better product descriptions in chat
+
+## Migration Notes
+
+Existing products without `attributes` field will default to an empty dictionary `{}`. No migration needed - the field is optional and backwards compatible.

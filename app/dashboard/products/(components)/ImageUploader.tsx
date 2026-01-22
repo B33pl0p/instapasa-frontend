@@ -53,11 +53,18 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       setError(null);
       setProgress(0);
 
+      console.log('Starting upload for product:', productId);
+
       // Step 1: Get presigned URL with content type
       const presignedData = await productService.getPresignedUrl(
         productId,
         selectedFile.type
       );
+      console.log('Got presigned URL:', {
+        hasUploadUrl: !!(presignedData.upload_url || presignedData.presigned_url),
+        hasImageUrl: !!presignedData.image_url,
+        hasS3Key: !!presignedData.s3_key,
+      });
 
       // Step 2: Upload to S3 with matching content type
       await productService.uploadToS3(
@@ -66,6 +73,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         selectedFile.type,
         (p) => setProgress(p)
       );
+      console.log('S3 upload complete');
 
       // Step 3: Confirm upload completion with backend
       await productService.confirmImageUpload(
@@ -73,6 +81,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         presignedData.image_url,
         presignedData.s3_key
       );
+      console.log('Upload confirmed with backend');
 
       setProgress(100);
       setSelectedFile(null);
@@ -83,6 +92,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         setProgress(0);
       }, 1000);
     } catch (err) {
+      console.error('Upload error:', err);
       setError((err as Error).message || 'Upload failed');
     } finally {
       setUploading(false);
