@@ -183,17 +183,38 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`text-sm font-medium ${
-                        (product.stock || 0) > 10
-                          ? 'text-green-600'
-                          : (product.stock || 0) > 0
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
-                      }`}
-                    >
-                      {product.stock || 0}
-                    </span>
+                    {product.variants && product.variants.length > 0 ? (
+                      <div>
+                        <span
+                          className={`text-sm font-medium ${
+                            (product.total_stock || 0) > 10
+                              ? 'text-green-600'
+                              : (product.total_stock || 0) > 0
+                              ? 'text-yellow-600'
+                              : 'text-red-600'
+                          }`}
+                        >
+                          {product.total_stock || 0}
+                        </span>
+                        <div className="mt-0.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {product.variants.length} variant{product.variants.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <span
+                        className={`text-sm font-medium ${
+                          (product.stock || 0) > 10
+                            ? 'text-green-600'
+                            : (product.stock || 0) > 0
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
+                        }`}
+                      >
+                        {product.stock || 0}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <span

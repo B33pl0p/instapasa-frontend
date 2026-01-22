@@ -1,354 +1,551 @@
-# Dynamic Product Attributes System
+# Product Variants API Documentation
 
 ## Overview
-The ecommerce system now supports dynamic, category-based product attributes. Different product categories can have different required and optional fields (e.g., clothing has size/color, electronics has warranty/specs).
+Products now support multiple variants (size, color, etc.) with individual stock tracking. This allows sellers to create one product with multiple combinations of attributes.
 
-## Architecture
+## Key Concepts
 
-### 1. Category Model (`app/models/category_model.py`)
-Defines category configurations with attribute definitions:
-- **AttributeType**: Text, Number, Select (dropdown), Multi-Select, Color, Boolean
-- **AttributeDefinition**: Individual attribute configuration (name, label, type, required, options)
-- **CategoryConfig**: Full category with all its attributes
-- **CATEGORY_CONFIGS**: Predefined categories (clothing, footwear, electronics, food, beauty, home, books, general)
+### Product Structure
+- **Base Product**: Contains name, description, base price, and images
+- **Variants**: Each variant has specific attributes (size, color), stock, and optional price adjustment
 
-### 2. Product Model (`app/models/product_model.py`)
-```python
-class Product(Document):
-    ...
-    category: Optional[str] = None
-    attributes: Dict[str, Any] = {}  # Dynamic category-specific attributes
-    ...
-```
+### Backward Compatibility
+- ✅ Old products (single variant) continue to work using `stock` field
+- ✅ New products can have multiple variants
+- ✅ Frontend can detect variant mode by checking if `variants` array has items
 
-### 3. API Schemas (`app/api/v2/schemas/ecommerce_schema.py`)
-```python
-class ProductCreate(BaseModel):
-    ...
-    category: Optional[str] = None
-    attributes: Dict[str, Any] = {}
-    ...
-```
-
-## Available Categories
-
-### Clothing (👕)
-- **size**: XS, S, M, L, XL, XXL, XXXL (required)
-- **color**: Black, White, Red, Blue, etc. (required)
-- **material**: Cotton, Polyester, Wool, Silk, Linen, etc.
-- **gender**: Men, Women, Unisex, Kids
-
-### Footwear (👟)
-- **size**: 5-13 (required)
-- **color**: Black, White, Brown, etc. (required)
-- **material**: Leather, Synthetic, Canvas, Suede
-- **type**: Sneakers, Formal, Sandals, Boots, Slippers
-
-### Electronics (📱)
-- **brand**: Text (required)
-- **model**: Text (required)
-- **warranty**: No Warranty, 6 Months, 1 Year, 2 Years, 3 Years
-- **color**: Black, White, Silver, Gold, Blue, Red
-- **condition**: Brand New, Like New, Refurbished, Used (required)
-
-### Food & Beverages (🍔)
-- **weight**: Text (e.g., 500g, 1L)
-- **ingredients**: Main ingredients
-- **allergens**: Nuts, Dairy, Eggs, Soy, Gluten, Shellfish
-- **dietary**: Vegetarian, Vegan, Gluten-Free, Organic, Halal, Kosher
-- **expiry**: Best before date
-
-### Beauty & Personal Care (💄)
-- **brand**: Text (required)
-- **skin_type**: All Skin Types, Dry, Oily, Combination, Sensitive
-- **size**: Size/Volume (e.g., 50ml, 100g)
-- **ingredients**: Key ingredients
-- **features**: Paraben-Free, Cruelty-Free, Organic, etc.
-
-### Home & Living (🏠)
-- **material**: Text
-- **dimensions**: Length x Width x Height
-- **color**: Black, White, Brown, Beige, Gray
-- **room**: Living Room, Bedroom, Kitchen, Bathroom, Office
-
-### Books & Stationery (📚)
-- **author**: Text
-- **publisher**: Text
-- **language**: English, Nepali, Hindi, Other
-- **pages**: Number
-- **format**: Hardcover, Paperback, E-book
-
-### General (📦)
-Fallback category with basic attributes:
-- **brand**: Text
-- **color**: Text
-- **size**: Text
+---
 
 ## API Endpoints
 
-### Get All Categories
-```
-GET /api/v2/products/categories
-```
-Returns all available categories with their attribute definitions.
+### 1. Create Product with Variants
 
-**Response:**
+**POST** `/api/v2/dashboard/products`
+
+#### Request Body (Multiple Variants):
+```json
+{
+  "name": "Cotton T-Shirt",
+  "description": "Comfortable cotton t-shirt",
+  "price": 1999.0,
+  "category": "clothing",
+  "images": ["https://example.com/shirt.jpg"],
+  "variants": [
+    {
+      "attributes": {"size": "S", "color": "Blue"},
+      "stock": 5
+    },
+    {
+      "attributes": {"size": "M", "color": "Blue"},
+      "stock": 10
+    },
+    {
+      "attributes": {"size": "L", "color": "Blue"},
+      "stock": 8
+    },
+    {
+      "attributes": {"size": "S", "color": "Red"},
+      "stock": 3
+    },
+    {
+      "attributes": {"size": "M", "color": "Red"},
+      "stock": 7
+    }
+  ]
+}
+```
+
+#### Request Body (Single Variant - Old Method):
+```json
+{
+  "name": "Wireless Mouse",
+  "description": "Ergonomic wireless mouse",
+  "price": 1299.0,
+  "category": "electronics",
+  "stock": 15,
+  "images": ["https://example.com/mouse.jpg"]
+}
+```
+
+#### Response:
+```json
+{
+  "id": "676e3f4a8d9e1234567890ab",
+  "customer_id": "seller_123",
+  "name": "Cotton T-Shirt",
+  "description": "Comfortable cotton t-shirt",
+  "price": 1999.0,
+  "category": "clothing",
+  "images": ["https://example.com/shirt.jpg"],
+  "variants": [
+    {
+      "variant_id": "1737551234.567890",
+      "attributes": {"size": "S", "color": "Blue"},
+      "stock": 5,
+      "price_adjustment": 0.0,
+      "sku": null,
+      "images": null
+    },
+    {
+      "variant_id": "1737551234.567891",
+      "attributes": {"size": "M", "color": "Blue"},
+      "stock": 10,
+      "price_adjustment": 0.0,
+      "sku": null,
+      "images": null
+    }
+  ],
+  "stock": 0,
+  "attributes": {},
+  "total_stock": 33,
+  "is_active": true,
+  "created_at": "2026-01-22T10:30:00Z",
+  "updated_at": "2026-01-22T10:30:00Z"
+}
+```
+
+---
+
+### 2. Get All Products
+
+**GET** `/api/v2/dashboard/products?skip=0&limit=20`
+
+#### Response:
 ```json
 [
   {
-    "category": "clothing",
-    "display_name": "Clothing & Apparel",
-    "icon": "👕",
-    "attributes": [
+    "id": "676e3f4a8d9e1234567890ab",
+    "name": "Cotton T-Shirt",
+    "price": 1999.0,
+    "variants": [
       {
-        "name": "size",
-        "label": "Size",
-        "type": "select",
-        "required": true,
-        "options": ["XS", "S", "M", "L", "XL", "XXL", "XXXL"],
-        "help_text": "Select garment size"
-      },
-      ...
-    ]
+        "variant_id": "1737551234.567890",
+        "attributes": {"size": "S", "color": "Blue"},
+        "stock": 5,
+        "price_adjustment": 0.0
+      }
+    ],
+    "total_stock": 33,
+    "is_active": true
   },
-  ...
+  {
+    "id": "676e3f4a8d9e1234567890ac",
+    "name": "Wireless Mouse",
+    "price": 1299.0,
+    "variants": [],
+    "stock": 15,
+    "total_stock": 15,
+    "is_active": true
+  }
 ]
 ```
 
-### Get Specific Category
-```
-GET /api/v2/products/categories/{category}
-```
-Returns configuration for a specific category (e.g., `clothing`, `electronics`).
+---
 
-### Create Product with Attributes
-```
-POST /api/v2/products
-```
+### 3. Update Product
 
-**Request Body:**
+**PUT** `/api/v2/dashboard/products/{product_id}`
+
+#### Update Variants:
 ```json
 {
-  "name": "Premium Cotton T-Shirt",
-  "description": "Comfortable cotton t-shirt",
-  "price": 29.99,
-  "stock": 100,
-  "category": "clothing",
-  "attributes": {
-    "size": "L",
-    "color": "Blue",
-    "material": "Cotton",
-    "gender": "Unisex"
-  },
-  "images": ["https://..."]
+  "variants": [
+    {
+      "attributes": {"size": "S", "color": "Blue"},
+      "stock": 8
+    },
+    {
+      "attributes": {"size": "M", "color": "Blue"},
+      "stock": 15
+    }
+  ]
 }
 ```
 
-**Another Example (Electronics):**
+#### Update Single Stock (No Variants):
 ```json
 {
-  "name": "Wireless Headphones",
-  "price": 99.99,
-  "stock": 50,
-  "category": "electronics",
-  "attributes": {
-    "brand": "Sony",
-    "model": "WH-1000XM5",
-    "warranty": "1 Year",
-    "color": "Black",
-    "condition": "Brand New"
-  }
+  "stock": 25
 }
 ```
 
-### Update Product Attributes
-```
-PUT /api/v2/products/{product_id}
-```
-
-**Request Body:**
-```json
-{
-  "attributes": {
-    "size": "XL",
-    "color": "Red"
-  }
-}
-```
-
-### Get Product
-```
-GET /api/v2/products/{product_id}
-```
-
-**Response:**
-```json
-{
-  "id": "...",
-  "name": "Premium Cotton T-Shirt",
-  "category": "clothing",
-  "attributes": {
-    "size": "L",
-    "color": "Blue",
-    "material": "Cotton",
-    "gender": "Unisex"
-  },
-  ...
-}
-```
+---
 
 ## Frontend Implementation Guide
 
-### 1. Fetch Categories on Page Load
+### Detecting Variant Mode
 ```javascript
-const categories = await fetch('/api/v2/products/categories');
-// Display in dropdown
+function hasVariants(product) {
+  return product.variants && product.variants.length > 0;
+}
 ```
 
-### 2. Dynamic Form Based on Category
-```javascript
-function CategoryBasedForm({ selectedCategory }) {
-  const [categoryConfig, setCategoryConfig] = useState(null);
+### Display Product Form
+
+#### For Product Creation:
+```jsx
+<form>
+  <input name="name" placeholder="Product Name" required />
+  <input name="price" type="number" placeholder="Base Price" required />
+  <select name="category">
+    <option value="clothing">Clothing</option>
+    <option value="electronics">Electronics</option>
+  </select>
   
-  useEffect(() => {
-    if (selectedCategory) {
-      fetch(`/api/v2/products/categories/${selectedCategory}`)
-        .then(res => res.json())
-        .then(setCategoryConfig);
-    }
-  }, [selectedCategory]);
+  {/* Toggle for variant mode */}
+  <label>
+    <input type="checkbox" onChange={(e) => setHasVariants(e.target.checked)} />
+    Multiple Variants (Size/Color)
+  </label>
+  
+  {hasVariants ? (
+    <VariantBuilder />
+  ) : (
+    <input name="stock" type="number" placeholder="Stock" required />
+  )}
+</form>
+```
+
+#### Variant Builder Component:
+```jsx
+function VariantBuilder() {
+  const [variants, setVariants] = useState([]);
+  const [sizes, setSizes] = useState(['S', 'M', 'L', 'XL']);
+  const [colors, setColors] = useState(['Blue', 'Red', 'Black']);
+  
+  // Generate combinations
+  const generateVariants = () => {
+    const combinations = [];
+    sizes.forEach(size => {
+      colors.forEach(color => {
+        combinations.push({
+          attributes: { size, color },
+          stock: 0
+        });
+      });
+    });
+    setVariants(combinations);
+  };
   
   return (
     <div>
-      {categoryConfig?.attributes.map(attr => (
-        <FormField key={attr.name} attribute={attr} />
+      {/* Size selector */}
+      <MultiSelect 
+        label="Available Sizes"
+        options={['XS', 'S', 'M', 'L', 'XL', 'XXL']}
+        value={sizes}
+        onChange={setSizes}
+      />
+      
+      {/* Color selector with custom input */}
+      <div>
+        <label>Available Colors</label>
+        <MultiSelect 
+          options={['Blue', 'Red', 'Black', 'White', 'Green']}
+          value={colors}
+          onChange={setColors}
+        />
+        <input 
+          placeholder="Add custom color" 
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              setColors([...colors, e.target.value]);
+              e.target.value = '';
+            }
+          }}
+        />
+      </div>
+      
+      <button onClick={generateVariants}>Generate Variants</button>
+      
+      {/* Variant stock input */}
+      {variants.map((variant, idx) => (
+        <div key={idx}>
+          <span>Size: {variant.attributes.size}, Color: {variant.attributes.color}</span>
+          <input 
+            type="number"
+            placeholder="Stock"
+            value={variant.stock}
+            onChange={(e) => {
+              const updated = [...variants];
+              updated[idx].stock = parseInt(e.target.value) || 0;
+              setVariants(updated);
+            }}
+          />
+        </div>
       ))}
     </div>
   );
 }
 ```
 
-### 3. Render Form Fields
-```javascript
-function FormField({ attribute }) {
-  switch (attribute.type) {
-    case 'text':
-      return <input type="text" required={attribute.required} />;
-    case 'number':
-      return <input type="number" required={attribute.required} />;
-    case 'select':
-      return (
-        <select required={attribute.required}>
-          {attribute.options.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      );
-    case 'multi_select':
-      return attribute.options.map(opt => (
-        <label key={opt}>
-          <input type="checkbox" value={opt} />
-          {opt}
-        </label>
-      ));
-    case 'color':
-      return <input type="color" />;
-    case 'boolean':
-      return <input type="checkbox" />;
-  }
+### Display Product in List
+```jsx
+function ProductCard({ product }) {
+  const totalStock = product.total_stock || product.stock;
+  const hasVariants = product.variants && product.variants.length > 0;
+  
+  return (
+    <div className="product-card">
+      <img src={product.images[0]} alt={product.name} />
+      <h3>{product.name}</h3>
+      <p>₹{product.price}</p>
+      
+      {hasVariants ? (
+        <div>
+          <p>Total Stock: {totalStock}</p>
+          <p>{product.variants.length} variants available</p>
+          <details>
+            <summary>View Variants</summary>
+            {product.variants.map(v => (
+              <div key={v.variant_id}>
+                {Object.entries(v.attributes).map(([key, val]) => (
+                  <span key={key}>{key}: {val} </span>
+                ))}
+                - Stock: {v.stock}
+              </div>
+            ))}
+          </details>
+        </div>
+      ) : (
+        <p>Stock: {product.stock}</p>
+      )}
+    </div>
+  );
 }
 ```
 
-### 4. Submit Product with Attributes
+---
+
+## Variant Schema
+
+### ProductVariantCreate
+```typescript
+interface ProductVariantCreate {
+  attributes: Record<string, any>;  // e.g., {size: "M", color: "Blue"}
+  stock: number;                     // Stock for this variant
+  price_adjustment?: number;         // Price difference from base (default: 0)
+  sku?: string;                      // Optional SKU
+  images?: string[];                 // Optional variant-specific images
+}
+```
+
+### ProductVariantResponse
+```typescript
+interface ProductVariantResponse {
+  variant_id: string;                // Auto-generated unique ID
+  attributes: Record<string, any>;
+  stock: number;
+  price_adjustment: number;
+  sku: string | null;
+  images: string[] | null;
+}
+```
+
+---
+
+## Common Use Cases
+
+### 1. Clothing Store (Size + Color)
+```json
+{
+  "name": "Denim Jacket",
+  "price": 2499.0,
+  "category": "clothing",
+  "variants": [
+    {"attributes": {"size": "S", "color": "Blue"}, "stock": 5},
+    {"attributes": {"size": "M", "color": "Blue"}, "stock": 10},
+    {"attributes": {"size": "L", "color": "Blue"}, "stock": 8},
+    {"attributes": {"size": "S", "color": "Black"}, "stock": 3},
+    {"attributes": {"size": "M", "color": "Black"}, "stock": 12}
+  ]
+}
+```
+
+### 2. Shoes (Size Only)
+```json
+{
+  "name": "Running Shoes",
+  "price": 3999.0,
+  "category": "footwear",
+  "variants": [
+    {"attributes": {"size": "7"}, "stock": 5},
+    {"attributes": {"size": "8"}, "stock": 10},
+    {"attributes": {"size": "9"}, "stock": 8},
+    {"attributes": {"size": "10"}, "stock": 6}
+  ]
+}
+```
+
+### 3. Electronics (No Variants)
+```json
+{
+  "name": "Wireless Keyboard",
+  "price": 1499.0,
+  "category": "electronics",
+  "stock": 25
+}
+```
+
+### 4. Phone Cases (Model + Color)
+```json
+{
+  "name": "Phone Case",
+  "price": 499.0,
+  "category": "accessories",
+  "variants": [
+    {"attributes": {"model": "iPhone 14", "color": "Clear"}, "stock": 15},
+    {"attributes": {"model": "iPhone 14", "color": "Black"}, "stock": 20},
+    {"attributes": {"model": "iPhone 15", "color": "Clear"}, "stock": 10},
+    {"attributes": {"model": "iPhone 15", "color": "Black"}, "stock": 18}
+  ]
+}
+```
+
+---
+
+## Instagram Chat Flow
+
+When a customer views a product with variants:
+
+1. **Single Variant Product**: Shows "Add to Cart" button directly
+2. **Multiple Variants Product**: Shows variant selection buttons
+   - Carousel with buttons for each attribute (size, color)
+   - Customer selects size → then color → then adds to cart
+   - Cart stores exact variant with attributes
+
+### Example Flow:
+```
+Customer: *clicks product*
+Bot: Shows product details
+
+Customer: *clicks "Add to Cart"*
+Bot: Shows size selection buttons [S] [M] [L] [XL]
+
+Customer: *clicks M*
+Bot: Shows color selection buttons [Blue] [Red] [Black]
+
+Customer: *clicks Blue*
+Bot: ✅ Added Cotton T-Shirt (Size M, Blue) to cart!
+```
+
+---
+
+## Price Adjustments
+
+You can set different prices for variants using `price_adjustment`:
+
+```json
+{
+  "name": "T-Shirt",
+  "price": 1999.0,
+  "variants": [
+    {"attributes": {"size": "S"}, "stock": 10, "price_adjustment": -200},
+    {"attributes": {"size": "M"}, "stock": 15, "price_adjustment": 0},
+    {"attributes": {"size": "L"}, "stock": 12, "price_adjustment": 0},
+    {"attributes": {"size": "XL"}, "stock": 8, "price_adjustment": 200},
+    {"attributes": {"size": "XXL"}, "stock": 5, "price_adjustment": 300}
+  ]
+}
+```
+
+Result:
+- S size: ₹1,799 (1999 - 200)
+- M size: ₹1,999 (base price)
+- L size: ₹1,999 (base price)
+- XL size: ₹2,199 (1999 + 200)
+- XXL size: ₹2,299 (1999 + 300)
+
+---
+
+## Migration Guide
+
+### Existing Products
+All existing products automatically work - they use the `stock` field and have empty `variants` array.
+
+### Converting to Variants
+To convert an existing single-variant product to multiple variants:
+
+**Before:**
+```json
+{
+  "name": "T-Shirt",
+  "stock": 50,
+  "attributes": {"size": "M"}
+}
+```
+
+**After:**
+```json
+{
+  "name": "T-Shirt",
+  "variants": [
+    {"attributes": {"size": "S"}, "stock": 10},
+    {"attributes": {"size": "M"}, "stock": 20},
+    {"attributes": {"size": "L"}, "stock": 15},
+    {"attributes": {"size": "XL"}, "stock": 5}
+  ]
+}
+```
+
+---
+
+## Error Handling
+
+### Empty Variants Array
+If `variants: []` and `stock: 0`, product shows as out of stock.
+
+### Duplicate Attributes
+Backend doesn't automatically prevent duplicates. Frontend should validate:
 ```javascript
-const productData = {
-  name: formData.name,
-  price: formData.price,
-  category: formData.category,
-  attributes: {
-    size: formData.size,
-    color: formData.color,
-    material: formData.material,
-    // ... other dynamic attributes
+function hasDuplicateVariants(variants) {
+  const seen = new Set();
+  for (const v of variants) {
+    const key = JSON.stringify(v.attributes);
+    if (seen.has(key)) return true;
+    seen.add(key);
   }
-};
-
-await fetch('/api/v2/products', {
-  method: 'POST',
-  body: JSON.stringify(productData)
-});
+  return false;
+}
 ```
 
-## Instagram Chatbot Integration
-
-When displaying products in Instagram:
-```python
-from app.models.product_model import Product
-from app.models.category_model import get_category_config
-
-product = await Product.get(product_id)
-category_config = get_category_config(product.category)
-
-# Format attributes for display
-attributes_text = []
-for attr_def in category_config.attributes:
-    attr_name = attr_def.name
-    if attr_name in product.attributes:
-        value = product.attributes[attr_name]
-        attributes_text.append(f"{attr_def.label}: {value}")
-
-message = f"{product.name}\n"
-message += f"Price: ${product.price}\n"
-message += "\n".join(attributes_text)
+### Custom Colors
+When user adds custom color, store it in the `attributes` object:
+```json
+{
+  "attributes": {"size": "M", "color": "Mint Green"}
+}
 ```
 
-Example output:
-```
-Premium Cotton T-Shirt
-Price: $29.99
-Size: L
-Color: Blue
-Material: Cotton
-Gender: Unisex
-```
+---
 
-## Adding New Categories
+## API Response Fields
 
-To add a new category, edit `app/models/category_model.py`:
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Product ID |
+| `name` | string | Product name |
+| `price` | number | Base price |
+| `variants` | array | Array of variants (empty for single-variant) |
+| `stock` | number | Stock for single-variant products |
+| `total_stock` | number | Total stock across all variants |
+| `attributes` | object | Attributes for single-variant products |
+| `is_active` | boolean | Product visibility |
 
-```python
-CATEGORY_CONFIGS["toys"] = CategoryConfig(
-    category="toys",
-    display_name="Toys & Games",
-    icon="🧸",
-    attributes=[
-        AttributeDefinition(
-            name="age_range",
-            label="Age Range",
-            type=AttributeType.SELECT,
-            required=True,
-            options=["0-2 years", "3-5 years", "6-8 years", "9+ years"],
-        ),
-        AttributeDefinition(
-            name="material",
-            label="Material",
-            type=AttributeType.SELECT,
-            options=["Plastic", "Wood", "Fabric", "Metal"],
-        ),
-        # ... more attributes
-    ]
-)
-```
+---
 
-## Benefits
+## Best Practices
 
-1. **Flexibility**: Different product types can have relevant attributes
-2. **Validation**: Frontend can validate based on attribute definitions
-3. **User Experience**: Show only relevant fields based on category
-4. **Scalability**: Easy to add new categories without code changes
-5. **Type Safety**: Attribute types ensure consistent data entry
-6. **Instagram Integration**: Better product descriptions in chat
+1. **Always show `total_stock`** instead of individual stock for variant products
+2. **Generate variants automatically** from selected sizes and colors
+3. **Allow custom color input** for flexibility
+4. **Validate no duplicate variants** before submission
+5. **Display variant count** (e.g., "5 variants available") in product cards
+6. **Use expandable sections** to show all variants in detail view
+7. **Sort variants logically** (XS → S → M → L → XL)
 
-## Migration Notes
+---
 
-Existing products without `attributes` field will default to an empty dictionary `{}`. No migration needed - the field is optional and backwards compatible.
+## Questions?
+
+This API is backward compatible - all existing functionality continues to work. Products can be created with or without variants seamlessly.

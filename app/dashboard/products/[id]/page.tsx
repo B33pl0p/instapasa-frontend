@@ -14,9 +14,10 @@ import {
   fetchCategories, 
   fetchCategoryConfig 
 } from '@/app/dashboard/lib/services/productService';
-import { UpdateProductRequest, Product, CategoryConfig } from '@/app/dashboard/lib/types/product';
+import { UpdateProductRequest, Product, CategoryConfig, ProductVariantCreate } from '@/app/dashboard/lib/types/product';
 import { DynamicAttributeFields } from '../(components)/DynamicAttributeFields';
 import { ImageUploader } from '../(components)/ImageUploader';
+import VariantBuilder from '../(components)/VariantBuilder';
 import Image from 'next/image';
 
 const categoryIcons: Record<string, string> = {
@@ -46,6 +47,7 @@ export default function EditProductPage() {
     stock: 0,
     is_active: true,
     attributes: {},
+    variants: [],
   });
 
   const [categories, setCategories] = useState<string[]>([]);
@@ -55,6 +57,7 @@ export default function EditProductPage() {
   const [fetching, setFetching] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [useVariants, setUseVariants] = useState(false);
 
   // Fetch product details on mount
   useEffect(() => {
@@ -63,6 +66,11 @@ export default function EditProductPage() {
         setFetching(true);
         const data = await productService.getProduct(productId);
         setProduct(data);
+        
+        // Detect if product uses variants
+        const hasVariants = data.variants && data.variants.length > 0;
+        setUseVariants(!!hasVariants);
+        
         setFormData({
           name: data.name,
           price: data.price,
@@ -72,6 +80,13 @@ export default function EditProductPage() {
           stock: data.stock || 0,
           is_active: data.is_active ?? true,
           attributes: data.attributes || {},
+          variants: hasVariants ? (data.variants || []).map(v => ({
+            attributes: v.attributes,
+            stock: v.stock,
+            price_adjustment: v.price_adjustment,
+            sku: v.sku || undefined,
+            images: v.images || undefined,
+          })) : [],
         });
       } catch (err) {
         console.error('Failed to fetch product:', err);
@@ -141,18 +156,52 @@ export default function EditProductPage() {
     setFormData({ ...formData, attributes });
   };
 
+  const handleVariantsChange = (variants: ProductVariantCreate[]) => {
+    setFormData({ ...formData, variants });
+  };
+
+  const handleUseVariantsToggle = (checked: boolean) => {
+    setUseVariants(checked);
+    if (checked) {
+      // Clear stock and attributes when switching to variant mode
+      setFormData({ ...formData, stock: 0, attributes: {}, variants: [] });
+    } else {
+      // Clear variants when switching to simple mode
+      setFormData({ ...formData, variants: [] });
+    }
+  };
+
   const validateForm = (): boolean => {
     if (!formData.name?.trim()) {
       setError('Product name is required');
       return false;
     }
 
-    // Validate required attributes
-    if (categoryConfig?.attributes) {
-      for (const attr of categoryConfig.attributes) {
-        if (attr.required && !formData.attributes?.[attr.name]) {
-          setError(`${attr.label} is required`);
+    // Validate variants if using variant mode
+    if (useVariants) {
+      if (!formData.variants || formData.variants.length === 0) {
+        setError('At least one variant is required when using variant mode');
+        return false;
+      }
+
+      // Check for duplicate variants
+      const seen = new Set<string>();
+      for (const variant of formData.variants) {
+        const key = JSON.stringify(variant.attributes);
+        if (seen.has(key)) {
+          setError('Duplicate variants detected. Each variant must have unique attributes.');
           return false;
+        }
+        seen.add(key);
+      }
+    } else {
+      // Validate required attributes for single-variant products
+      if (categoryConfig?.attributes) {
+        for (const attr of categoryConfig.attributes) {
+          if (attr.required && !formData.attributes?.[attr.name]) {
+            setError(`${attr.label} is required`);
+            return false;
+          }
         }
       }
     }
@@ -170,7 +219,13 @@ export default function EditProductPage() {
 
     try {
       setLoading(true);
-      await dispatch(updateProduct({ productId: productId, data: formData })).unwrap();
+      
+      // Prepare payload based on variant mode
+      const payload = useVariants
+        ? { ...formData, variants: formData.variants, stock: undefined, attributes: undefined }
+        : { ...formData, variants: undefined };
+      
+      await dispatch(updateProduct({ productId: productId, data: payload })).unwrap();
       // Refetch product to get updated data
       const updatedProduct = await productService.getProduct(productId);
       setProduct(updatedProduct);
@@ -215,7 +270,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-h-screen overflow-y-auto">
       {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <div>
@@ -336,13 +391,25 @@ export default function EditProductPage() {
                 </div>
               </div>
 
-              {/* Dynamic Category Attributes */}
-              {categoryConfig && (
+              {/* Dynamic Category Attributes - Only for single-variant mode */}
+              {categoryConfig && !useVariants && (
                 <div className="bg-white rounded-lg shadow p-6">
                   <DynamicAttributeFields
                     categoryConfig={categoryConfig}
                     attributes={formData.attributes || {}}
                     onChange={handleAttributesChange}
+                  />
+                </div>
+              )}
+
+              {/* Variants Builder - Only for multi-variant mode */}
+              {useVariants && (
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Product Variants</h2>
+                  <VariantBuilder
+                    value={formData.variants || []}
+                    onChange={handleVariantsChange}
+                    category={formData.category}
                   />
                 </div>
               )}
@@ -357,7 +424,7 @@ export default function EditProductPage() {
                   {/* Price */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Price (Rs.)
+                      Price (Rs.) {useVariants && <span className="text-sm font-normal text-gray-500">(Base Price)</span>}
                     </label>
                     <input
                       type="number"
@@ -370,6 +437,11 @@ export default function EditProductPage() {
                       placeholder="0.00"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {useVariants && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Variants can have individual price adjustments
+                      </p>
+                    )}
                   </div>
 
                   {/* SKU */}
@@ -388,22 +460,73 @@ export default function EditProductPage() {
                     />
                   </div>
 
-                  {/* Stock */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Stock Quantity
-                    </label>
-                    <input
-                      type="number"
-                      name="stock"
-                      min="0"
-                      value={formData.stock ?? 0}
-                      onChange={handleChange}
-                      disabled={loading}
-                      placeholder="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  {/* Variant Mode Toggle - Only allow switching if no existing variants */}
+                  {!product?.variants?.length && (
+                    <div className="pt-2 border-t border-gray-200">
+                      <label className="flex items-start space-x-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={useVariants}
+                          onChange={(e) => handleUseVariantsToggle(e.target.checked)}
+                          disabled={loading}
+                          className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">
+                            Multiple Variants (Size/Color)
+                          </span>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Enable to add variants with different sizes, colors, or other attributes
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Display variant mode status if product has variants */}
+                  {product?.variants?.length ? (
+                    <div className="pt-2 border-t border-gray-200">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-sm font-medium text-blue-900">
+                          Variant Mode Active
+                        </p>
+                        <p className="text-xs text-blue-700 mt-1">
+                          This product uses variants. Stock is managed per variant.
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Stock - Only show for single-variant mode */}
+                  {!useVariants && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Stock Quantity
+                      </label>
+                      <input
+                        type="number"
+                        name="stock"
+                        min="0"
+                        value={formData.stock ?? 0}
+                        onChange={handleChange}
+                        disabled={loading}
+                        placeholder="0"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Variant stock info */}
+                  {useVariants && formData.variants && formData.variants.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm font-medium text-blue-900">
+                        {formData.variants.length} variant{formData.variants.length !== 1 ? 's' : ''}
+                      </p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        Total Stock: {formData.variants.reduce((sum, v) => sum + v.stock, 0)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

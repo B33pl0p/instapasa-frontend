@@ -118,6 +118,7 @@ const productSlice = createSlice({
     setFilters: (state, action: PayloadAction<ProductFilters>) => {
       state.filters = action.payload;
       state.currentPage = 1;
+      state.selectedItems = [];
     },
     toggleSelectItem: (state, action: PayloadAction<string>) => {
       const index = state.selectedItems.indexOf(action.payload);

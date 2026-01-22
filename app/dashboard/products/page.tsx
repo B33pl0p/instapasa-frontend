@@ -62,27 +62,13 @@ export default function ProductPage() {
 
   // Fetch products on mount and when filters/page/viewMode changes
   useEffect(() => {
-    if (viewMode === 'all') {
-      void dispatch(
-        fetchProducts({ page: currentPage, pageSize, filters })
-      );
-    }
-  }, [dispatch, currentPage, pageSize, filters, viewMode]);
-
-  // Fetch active or low-stock products based on view mode
-  useEffect(() => {
-    const fetchSpecialView = async () => {
+    const fetchData = async () => {
       if (viewMode === 'active') {
-        try {
-          const products = await productService.getActiveProducts(
-            (currentPage - 1) * pageSize,
-            pageSize
-          );
-          // Update Redux state manually for these special views
-          dispatch(setItems({ items: products, total: products.length }));
-        } catch (error) {
-          console.error('Failed to fetch active products:', error);
-        }
+        // Apply filters to active products
+        const activeFilters = { ...filters, is_active: true };
+        void dispatch(
+          fetchProducts({ page: currentPage, pageSize, filters: activeFilters })
+        );
       } else if (viewMode === 'low-stock') {
         try {
           const products = await productService.getLowStockProducts(
@@ -93,13 +79,22 @@ export default function ProductPage() {
         } catch (error) {
           console.error('Failed to fetch low stock products:', error);
         }
+      } else {
+        // Normal fetch with filters
+        void dispatch(
+          fetchProducts({ page: currentPage, pageSize, filters })
+        );
       }
     };
 
-    if (viewMode !== 'all') {
-      void fetchSpecialView();
-    }
-  }, [viewMode, currentPage, pageSize, dispatch]);
+    void fetchData();
+  }, [dispatch, currentPage, pageSize, filters, viewMode]);
+
+  // Reset page and clear selections when view mode changes
+  useEffect(() => {
+    dispatch(setCurrentPage(1));
+    dispatch(clearSelection());
+  }, [viewMode, dispatch]);
 
   const handleDeleteProduct = (id: string) => {
     setDeleteItemId(id);
@@ -151,6 +146,7 @@ export default function ProductPage() {
 
   const handleFilterChange = (newFilters: typeof filters) => {
     dispatch(setFilters(newFilters));
+    dispatch(clearSelection());
   };
 
   const handlePageChange = (page: number) => {
@@ -166,7 +162,23 @@ export default function ProductPage() {
   };
 
   const handleQuickUploadSuccess = async () => {
-    await dispatch(fetchProducts({ page: currentPage, pageSize, filters }));
+    // Refetch based on current view mode
+    if (viewMode === 'active') {
+      const activeFilters = { ...filters, is_active: true };
+      await dispatch(fetchProducts({ page: currentPage, pageSize, filters: activeFilters }));
+    } else if (viewMode === 'low-stock') {
+      try {
+        const products = await productService.getLowStockProducts(
+          (currentPage - 1) * pageSize,
+          pageSize
+        );
+        dispatch(setItems({ items: products, total: products.length }));
+      } catch (error) {
+        console.error('Failed to fetch low stock products:', error);
+      }
+    } else {
+      await dispatch(fetchProducts({ page: currentPage, pageSize, filters }));
+    }
     setShowNotification({
       type: 'success',
       message: 'Image uploaded successfully',
@@ -174,25 +186,19 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="p-6">
-      {/* Active User Display */}
-      {(email || business_name) && (
-        <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
-          <p className="text-sm text-gray-600 mb-1">Logged in as:</p>
-          <h2 className="text-lg font-semibold text-gray-900">
-            {business_name || email}
-          </h2>
-          {business_name && email && (
-            <p className="text-sm text-gray-600">{email}</p>
-          )}
-        </div>
-      )}
-
+    <div className="p-6 max-h-screen overflow-y-auto">
       {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600 mt-1">Manage your product inventory</p>
+          <p className="text-gray-600 mt-1">
+            Manage your product inventory
+            {totalCount > 0 && (
+              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                {totalCount} {totalCount === 1 ? 'product' : 'products'}
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={() => router.push('/dashboard/products/create')}
