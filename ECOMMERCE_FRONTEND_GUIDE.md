@@ -1,117 +1,80 @@
-class Order(Document):
-    """Order model for Instagram ecommerce."""
-    order_number: Annotated[str, Indexed(unique=True)]
-    customer_id: str  # Marketer/customer ID (seller)
-    buyer_id: str  # Buyer's Instagram user ID
-    instagram_user_id: Optional[str] = None  # Deprecated: use buyer_id instead (kept for backward compatibility)
-    buyer_instagram_username: Optional[str] = None  # Instagram username of buyer (for seller to identify)
-    conversation_id: str  # Instagram conversation ID
-    items: List[Dict[str, Any]] = []  # Store as dict for Beanie compatibility
-    total: float
-    
-    # Customer details (optional initially, filled later)
-    customer_name: Optional[str] = None
-    shipping_address: Optional[str] = None
-    phone: Optional[str] = None
-    
-    # Payment tracking
-    payment_reference: Optional[str] = None
-    payment_method: Optional[str] = None
-    payment_confirmed_at: Optional[datetime] = None
-    
-    status: str = "pending_details"  # pending_details, confirmed, processing, shipped, delivered, cancelled
-    notes: Optional[str] = None
-    created_at: datetime = datetime.now(timezone.utc)
-    updated_at: datetime = datetime.now(timezone.utc)
+# Sending Attachments via Chat
 
-    class Settings:
-        name = "orders"
-        indexes = ["customer_id", "buyer_id", "instagram_user_id", "conversation_id", "status"]
+## Quick Flow
 
+**1. Get Upload URL** → **2. Upload File** → **3. Send Message**
 
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+---
 
-from beanie import Document, Indexed
+## Single Attachment
 
+```javascript
+// 1. Get presigned URL
+const { presigned_url, image_url } = await fetch(
+  '/api/v2/dashboard/upload-attachment?filename=image.png&content_type=image/png',
+  { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
+).then(r => r.json());
 
-class Conversation(Document):
-    """
-    Stores a single conversation thread between a Page and a user.
-    """
+// 2. Upload file to S3
+await fetch(presigned_url, {
+  method: 'PUT',
+  body: imageFile,
+  headers: { 'Content-Type': 'image/png' }
+});
 
-    # Graph identifiers
-    conversation_id: str  # Meta conversation ID
-    page_id: str
-    platform: str  # e.g. "instagram"
+// 3. Send message with attachment
+await fetch('/api/v2/customer/dashboard/reply', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  body: JSON.stringify({
+    conversation_id: "...",
+    message: "Here's the image",
+    recipient_user_id: "1606353541281402",
+    platform: "instagram",
+    attachment_url: image_url,      // ← Use this
+    attachment_type: "image"        // "image", "video", "audio", "file"
+  })
+});
+```
 
-    # Participant identifiers (for quick filtering)
-    customer_id: Optional[str] = None  # our Customer.id as string
-    instagram_user_id: Optional[str] = None  # Business/seller Instagram ID
-    
-    # Buyer identifiers (extracted from participants for easy access)
-    buyer_id: Optional[str] = None  # Buyer's Instagram user ID
-    buyer_username: Optional[str] = None  # Buyer's Instagram username
+---
 
-    # Summary fields
-    participants: List[Dict[str, Any]] = []
-    last_message: Optional[Dict[str, Any]] = None
-    updated_time: Optional[str] = None  # ISO8601 from Meta
+## Multiple Attachments
 
-    created_at: datetime = datetime.now(timezone.utc)
-    updated_at: datetime = datetime.now(timezone.utc)
+⚠️ **Meta Limitation:** One attachment per message. Send multiple messages.
 
-    class Settings:
-        name = "conversations"
-        indexes = [
-            "conversation_id",
-            "page_id",
-            "instagram_user_id",
-            "buyer_id",
-        ]
+```javascript
+const files = [file1, file2, file3];
 
+for (const file of files) {
+  // 1. Upload
+  const { presigned_url, image_url } = await uploadToS3(file);
+  
+  // 2. Send separate message for each
+  await sendMessage({
+    message: "",  // Empty text, just attachment
+    attachment_url: image_url,
+    attachment_type: "image"
+  });
+}
+```
 
-class ConversationMessage(Document):
-    """
-    Stores individual messages for a conversation, so we can show full
-    history in the dashboard without re-pulling from Meta every time.
-    
-    Supports:
-    - Text messages
-    - Postback payloads (button clicks, quick replies)
-    - Attachments (images, videos, files)
-    - Stickers
-    """
+---
 
-    conversation_id: str  # Meta conversation ID
-    page_id: str
-    platform: str  # "instagram"
+## Attachment Types
 
-    message_id: str
-    created_time: str  # keep Meta's ISO8601 string
-    text: Optional[str] = None
-    from_user: Optional[Dict[str, Any]] = None
-    to_users: List[Dict[str, Any]] = []
+- `"image"` - PNG, JPG, GIF
+- `"video"` - MP4, MOV
+- `"audio"` - MP3, WAV
+- `"file"` - PDF, documents
 
-    is_from_business: bool = False
+---
 
-    # New interaction types (postbacks, attachments, stickers)
-    postback: Optional[Dict[str, Any]] = None  # Contains payload from button clicks
-    attachments: Optional[List[Dict[str, Any]]] = None  # Images, videos, files, etc.
-    sticker: Optional[str] = None  # Sticker URL
+## Storage
 
-    instagram_user_id: Optional[str] = None  # Business Instagram ID (for backward compatibility)
-    buyer_id: Optional[str] = None  # Buyer's Instagram user ID
-    customer_id: Optional[str] = None  # our Customer.id as string
+**Inbox attachments auto-delete after 10 days** (S3 lifecycle policy).
 
-    created_at: datetime = datetime.now(timezone.utc)
-
-    class Settings:
-        name = "conversation_messages"
-        indexes = [
-            "conversation_id",
-            "message_id",
-            "instagram_user_id",
-            "buyer_id",
-        ]
-
+For permanent storage (QR codes, logos), use:
+```javascript
+POST /api/v2/business-config/upload-url
+```

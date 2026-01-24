@@ -25,6 +25,8 @@ export default function ConversationView({ conversationId }: ConversationViewPro
   const orders = useAppSelector((state) => state.orders.orders);
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; type: string; file: File } | null>(null);
 
   // Find all orders related to this conversation
   const relatedOrders = useMemo(() => {
@@ -66,7 +68,87 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     }
   }, [conversationId, dispatch, messageCache]);
 
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    let attachmentType: 'image' | 'video' | 'audio' | 'file' = 'file';
+    if (file.type.startsWith('image/')) attachmentType = 'image';
+    else if (file.type.startsWith('video/')) attachmentType = 'video';
+    else if (file.type.startsWith('audio/')) attachmentType = 'audio';
+
+    const previewUrl = URL.createObjectURL(file);
+    setAttachmentPreview({ url: previewUrl, type: attachmentType, file });
+  };
+
+  const handleSendAttachment = async () => {
+    if (!attachmentPreview || !conversationId || isSending) return;
+
+    const conversation = conversations.find(c => c.conversation_id === conversationId);
+    if (!conversation) {
+      alert('Conversation not found');
+      return;
+    }
+
+    let recipientUserId = conversation.buyer_id;
+    if (!recipientUserId && conversation.participants && conversation.participants.length > 0) {
+      recipientUserId = conversation.participants[0]?.id;
+    }
+
+    if (!recipientUserId) {
+      alert('Recipient user ID not found');
+      return;
+    }
+
+    setIsUploadingAttachment(true);
+    setIsSending(true);
+
+    try {
+      const filename = attachmentPreview.file.name;
+      const contentType = attachmentPreview.file.type;
+      const uploadResponse = await apiClient.post<{ presigned_url: string; image_url: string }>(
+        `/dashboard/upload-attachment?filename=${encodeURIComponent(filename)}&content_type=${encodeURIComponent(contentType)}`
+      );
+
+      const { presigned_url, image_url } = uploadResponse.data;
+
+      await fetch(presigned_url, {
+        method: 'PUT',
+        body: attachmentPreview.file,
+        headers: { 'Content-Type': contentType }
+      });
+
+      await apiClient.post('/dashboard/reply', {
+        conversation_id: conversationId,
+        message: messageInput.trim() || '',
+        recipient_user_id: recipientUserId,
+        platform: 'facebook',
+        attachment_url: image_url,
+        attachment_type: attachmentPreview.type
+      });
+
+      setMessageInput('');
+      setAttachmentPreview(null);
+      URL.revokeObjectURL(attachmentPreview.url);
+
+      setTimeout(() => {
+        dispatch(fetchMessengerMessages({ conversationId, forceRefresh: true }));
+      }, 1000);
+    } catch (error: any) {
+      console.error('Failed to send attachment:', error);
+      alert(error.response?.data?.detail || 'Failed to send attachment. Please try again.');
+    } finally {
+      setIsUploadingAttachment(false);
+      setIsSending(false);
+    }
+  };
+
   const handleSendMessage = async () => {
+    if (attachmentPreview) {
+      await handleSendAttachment();
+      return;
+    }
+
     if (!messageInput.trim() || !conversationId || isSending) return;
 
     // Find the conversation to get buyer info
@@ -220,40 +302,74 @@ export default function ConversationView({ conversationId }: ConversationViewPro
 
       {/* Message Input Area - Fixed at bottom */}
       <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-lg">
+        {attachmentPreview && (
+          <div className="mb-3 bg-gray-50 rounded-lg p-3 flex items-center gap-3">
+            {attachmentPreview.type === 'image' && (
+              <img src={attachmentPreview.url} alt="Preview" className="h-20 w-20 object-cover rounded" />
+            )}
+            {attachmentPreview.type === 'video' && (
+              <video src={attachmentPreview.url} className="h-20 w-20 object-cover rounded" />
+            )}
+            {(attachmentPreview.type === 'audio' || attachmentPreview.type === 'file') && (
+              <div className="h-20 w-20 bg-gray-200 rounded flex items-center justify-center">
+                <span className="text-2xl">
+                  {attachmentPreview.type === 'audio' ? '🎵' : '📄'}
+                </span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{attachmentPreview.file.name}</p>
+              <p className="text-xs text-gray-500">{(attachmentPreview.file.size / 1024).toFixed(1)} KB</p>
+            </div>
+            <button
+              onClick={() => {
+                URL.revokeObjectURL(attachmentPreview.url);
+                setAttachmentPreview(null);
+              }}
+              className="text-red-500 hover:text-red-700 p-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <input
             type="text"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 handleSendMessage();
               }
             }}
-            placeholder="Type your message..."
+            placeholder={attachmentPreview ? "Add a caption (optional)" : "Type your message..."}
             className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
           />
           <button
             onClick={handleSendMessage}
-            disabled={!messageInput.trim() || isSending}
+            disabled={(!messageInput.trim() && !attachmentPreview) || isSending}
             className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            {isSending ? 'Sending...' : 'Send'}
+            {isUploadingAttachment ? 'Uploading...' : isSending ? 'Sending...' : 'Send'}
           </button>
-          <button
-            type="button"
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Microphone"
-          >
-            <MicIcon sx={{ width: 20, height: 20 }} />
-          </button>
-          <button
-            type="button"
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Image"
+          <input
+            type="file"
+            id="attachment-input-messenger"
+            onChange={handleFileSelect}
+            accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+            className="hidden"
+          />
+          <label
+            htmlFor="attachment-input-messenger"
+            className="cursor-pointer rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            title="Attach file"
           >
             <ImageIcon sx={{ width: 20, height: 20 }} />
-          </button>
+          </label>
           <button
             type="button"
             className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
