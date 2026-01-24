@@ -19,6 +19,7 @@ import { DynamicAttributeFields } from '../(components)/DynamicAttributeFields';
 import { ImageUploader } from '../(components)/ImageUploader';
 import VariantBuilder from '../(components)/VariantBuilder';
 import Image from 'next/image';
+import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
 
 const categoryIcons: Record<string, string> = {
   clothing: '👕',
@@ -35,6 +36,7 @@ export default function EditProductPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const params = useParams();
+  const { showToast } = useToast();
   const productId = params.id as string;
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -230,7 +232,7 @@ export default function EditProductPage() {
       const updatedProduct = await productService.getProduct(productId);
       setProduct(updatedProduct);
       setError(null);
-      alert('Product updated successfully!');
+      showToast('Product updated successfully!', 'success');
     } catch (err) {
       setError((err as Error).message || 'Failed to update product');
     } finally {

@@ -31,6 +31,7 @@ import { useAppSelector, useAppDispatch } from '@/app/dashboard/lib/hooks';
 import { useEffect } from 'react';
 import { setCustomer } from '@/app/dashboard/lib/slices/customerSlice';
 import { getCustomerFromToken } from '@/app/dashboard/lib/utils/jwt';
+import { ToastProvider } from '@/app/dashboard/lib/components/ToastContainer';
 
 const drawerWidth = 240;
 
@@ -139,6 +140,7 @@ export default function DashboardLayout({
 
   return (
     <RouteGuard>
+      <ToastProvider>
       <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
         <CssBaseline />
         <Drawer
@@ -358,10 +360,10 @@ export default function DashboardLayout({
             flexDirection: 'column', 
             minHeight: 0,
             height: '100vh',
-            overflow: 'hidden'
+            overflow: 'auto'
           }}
         >
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', height: '100%' }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', height: '100%' }}>
             {children}
           </Box>
         </Box>
@@ -391,6 +393,7 @@ export default function DashboardLayout({
           </Button>
         </DialogActions>
       </Dialog>
+      </ToastProvider>
     </RouteGuard>
   );
 }

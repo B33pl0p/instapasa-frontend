@@ -12,6 +12,7 @@ import {
   fetchOrders,
 } from '../../lib/slices/orderSlice';
 import { OrderStatus } from '../../lib/types/order';
+import { useToast } from '../../lib/components/ToastContainer';
 
 interface OrderDetailModalProps {
   orderId: string;
@@ -30,6 +31,7 @@ const statusColors: Record<OrderStatus, string> = {
 export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { showToast } = useToast();
   const { currentOrder, loading, statusFilter } = useAppSelector((state) => state.orders);
   const instagramConversations = useAppSelector((state) => state.instagramMessages.conversations);
   const messengerConversations = useAppSelector((state) => state.messengerMessages.conversations);
@@ -45,7 +47,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
 
     const buyerId = currentOrder.buyer_id;
     if (!buyerId) {
-      alert('Buyer information not available for this order.');
+      showToast('Buyer information not available for this order.', 'warning');
       return;
     }
 
@@ -72,7 +74,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
     }
 
     // If conversation not found in loaded state
-    alert('Conversation not found. Please sync messages first from the Messages page.');
+    showToast('Conversation not found. Please sync messages first from the Messages page.', 'info');
   };
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
       await dispatch(fetchOrders(status));
     } catch (error) {
       console.error('Failed to update order details:', error);
-      alert('Failed to update order details. Please try again.');
+      showToast('Failed to update order details. Please try again.', 'error');
     } finally {
       setIsSavingDetails(false);
     }
@@ -132,7 +134,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
       await dispatch(fetchOrders(status));
     } catch (error) {
       console.error('Failed to update order status:', error);
-      alert('Failed to update order status. Please try again.');
+      showToast('Failed to update order status. Please try again.', 'error');
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -153,7 +155,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
       await dispatch(fetchOrders(status));
     } catch (error) {
       console.error('Failed to cancel order:', error);
-      alert('Failed to cancel order. Please try again.');
+      showToast('Failed to cancel order. Please try again.', 'error');
     } finally {
       setIsUpdatingStatus(false);
     }

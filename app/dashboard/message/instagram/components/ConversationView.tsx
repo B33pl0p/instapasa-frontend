@@ -7,6 +7,7 @@ import { fetchMessages, setCurrentConversation } from '@/app/dashboard/lib/slice
 import { fetchOrders } from '@/app/dashboard/lib/slices/orderSlice';
 import apiClient from '@/app/dashboard/lib/apiClient';
 import MessageBox from '@/app/dashboard/message/components/MessageBox';
+import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
 import MicIcon from '@mui/icons-material/Mic';
 import ImageIcon from '@mui/icons-material/Image';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
@@ -19,6 +20,7 @@ interface ConversationViewProps {
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { showToast } = useToast();
   const { messages, businessUsername, messageLoading, error, currentConversationId, messageCache, conversations } = useAppSelector(
     (state) => state.instagramMessages
   );
@@ -116,7 +118,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     // Find the conversation to get buyer info
     const conversation = conversations.find(c => c.conversation_id === conversationId);
     if (!conversation) {
-      alert('Conversation not found');
+      showToast('Conversation not found', 'error');
       return;
     }
 
@@ -128,7 +130,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     }
 
     if (!recipientUserId) {
-      alert('Recipient user ID not found');
+      showToast('Recipient user ID not found', 'error');
       return;
     }
 
@@ -173,7 +175,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       }, 1000);
     } catch (error: any) {
       console.error('Failed to send attachment:', error);
-      alert(error.response?.data?.detail || 'Failed to send attachment. Please try again.');
+      showToast(error.response?.data?.detail || 'Failed to send attachment. Please try again.', 'error');
     } finally {
       setIsUploadingAttachment(false);
       setIsSending(false);
@@ -192,7 +194,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     // Find the conversation to get buyer info
     const conversation = conversations.find(c => c.conversation_id === conversationId);
     if (!conversation) {
-      alert('Conversation not found');
+      showToast('Conversation not found', 'error');
       return;
     }
 
@@ -206,7 +208,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     }
 
     if (!recipientUserId) {
-      alert('Recipient user ID not found');
+      showToast('Recipient user ID not found', 'error');
       return;
     }
 
@@ -228,7 +230,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       }, 1000);
     } catch (error: any) {
       console.error('Failed to send message:', error);
-      alert(error.response?.data?.detail || 'Failed to send message. Please try again.');
+      showToast(error.response?.data?.detail || 'Failed to send message. Please try again.', 'error');
     } finally {
       setIsSending(false);
     }

@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../lib/hooks';
 import { fetchOrders, setStatusFilter, updateOrderStatus } from '../lib/slices/orderSlice';
 import { OrderStatus } from '../lib/types/order';
 import OrderDetailModal from './(components)/OrderDetailModal';
+import { useToast } from '../lib/components/ToastContainer';
 
 const statusTabs: { label: string; value: OrderStatus | 'all' }[] = [
   { label: 'All Orders', value: 'all' },
@@ -29,6 +30,7 @@ const statusColors: Record<OrderStatus, string> = {
 export default function OrdersPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { showToast } = useToast();
   const { orders, loading, statusFilter } = useAppSelector((state) => state.orders);
   const instagramConversations = useAppSelector((state) => state.instagramMessages.conversations);
   const messengerConversations = useAppSelector((state) => state.messengerMessages.conversations);
@@ -51,7 +53,7 @@ export default function OrdersPage() {
   const handleChatWithBuyer = (order: typeof orders[0]) => {
     const buyerId = order.buyer_id;
     if (!buyerId) {
-      alert('Buyer information not available for this order.');
+      showToast('Buyer information not available for this order.', 'warning');
       return;
     }
 
@@ -75,7 +77,7 @@ export default function OrdersPage() {
       return;
     }
 
-    alert('Conversation not found. Please sync messages first from the Messages page.');
+    showToast('Conversation not found. Please sync messages first from the Messages page.', 'info');
   };
 
   const handleCloseModal = () => {
@@ -91,7 +93,7 @@ export default function OrdersPage() {
       await dispatch(fetchOrders(status));
     } catch (error) {
       console.error('Failed to update status:', error);
-      alert('Failed to update order status. Please try again.');
+      showToast('Failed to update order status. Please try again.', 'error');
     } finally {
       setUpdatingOrderId(null);
     }

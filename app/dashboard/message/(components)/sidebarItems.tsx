@@ -7,6 +7,7 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import messenger from '@/public/messengerIcon.svg';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import SettingsIcon from '@mui/icons-material/Settings';
 type SidebarSection = 'General' | 'Messages' | 'Services' | 'Prodcuts';
 
 export type SidebarItem = {
@@ -52,5 +53,11 @@ export const sidebarItems: SidebarItem[] = [
     icon: <ReceiptLongIcon />,
     href: '/dashboard/orders',
     section: 'Prodcuts',
+  },
+  {
+    label: 'Settings',
+    icon: <SettingsIcon />,
+    href: '/dashboard/settings',
+    section: 'General',
   }
 ];
