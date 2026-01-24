@@ -42,6 +42,8 @@ export interface MessengerConversation {
     from: MessengerParticipant;
     to: MessengerParticipant[];
   };
+  buyer_id?: string;
+  buyer_username?: string;
 }
 
 export interface MessengerMessagesOverviewResponse {

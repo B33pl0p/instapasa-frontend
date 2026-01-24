@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
   fetchOrderById,
@@ -28,13 +29,51 @@ const statusColors: Record<OrderStatus, string> = {
 
 export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalProps) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { currentOrder, loading, statusFilter } = useAppSelector((state) => state.orders);
+  const instagramConversations = useAppSelector((state) => state.instagramMessages.conversations);
+  const messengerConversations = useAppSelector((state) => state.messengerMessages.conversations);
 
   const [customerName, setCustomerName] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  const handleChatWithCustomer = () => {
+    if (!currentOrder) return;
+
+    const buyerId = currentOrder.buyer_id;
+    if (!buyerId) {
+      alert('Buyer information not available for this order.');
+      return;
+    }
+
+    // Search in Instagram conversations first
+    const instagramConv = instagramConversations.find(
+      (conv) => conv.buyer_id === buyerId || conv.participants.some((p) => p.id === buyerId)
+    );
+
+    if (instagramConv) {
+      router.push(`/dashboard/message/instagram?conversation=${instagramConv.conversation_id}`);
+      onClose();
+      return;
+    }
+
+    // Search in Messenger conversations
+    const messengerConv = messengerConversations.find(
+      (conv) => conv.buyer_id === buyerId || conv.participants.some((p) => p.id === buyerId)
+    );
+
+    if (messengerConv) {
+      router.push(`/dashboard/message/messenger?conversation=${messengerConv.conversation_id}`);
+      onClose();
+      return;
+    }
+
+    // If conversation not found in loaded state
+    alert('Conversation not found. Please sync messages first from the Messages page.');
+  };
 
   useEffect(() => {
     dispatch(fetchOrderById(orderId));
@@ -199,7 +238,20 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
 
           {/* Customer Details Section */}
           <div className="border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Details</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Customer Details</h3>
+              {currentOrder.buyer_id && (
+                <button
+                  onClick={handleChatWithCustomer}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Chat with Customer
+                </button>
+              )}
+            </div>
             {currentOrder.status === 'pending_details' ? (
               <div className="space-y-4">
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">

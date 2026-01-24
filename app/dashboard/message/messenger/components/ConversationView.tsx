@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchMessengerMessages, setCurrentConversation } from '@/app/dashboard/lib/slices/messengerMessagesSlice';
+import { fetchOrders } from '@/app/dashboard/lib/slices/orderSlice';
+import apiClient from '@/app/dashboard/lib/apiClient';
 import MessageBox from '@/app/dashboard/message/components/MessageBox';
 import MicIcon from '@mui/icons-material/Mic';
 import ImageIcon from '@mui/icons-material/Image';
@@ -15,10 +18,41 @@ interface ConversationViewProps {
 
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
-  const { messages, messageLoading, error, currentConversationId, messageCache } = useAppSelector(
+  const router = useRouter();
+  const { messages, messageLoading, error, currentConversationId, messageCache, conversations } = useAppSelector(
     (state) => state.messengerMessages
   );
+  const orders = useAppSelector((state) => state.orders.orders);
   const [messageInput, setMessageInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
+
+  // Find all orders related to this conversation
+  const relatedOrders = useMemo(() => {
+    if (!conversationId || !conversations || conversations.length === 0) return [];
+    
+    const conversation = conversations.find(c => c.conversation_id === conversationId);
+    if (!conversation) return [];
+    
+    // Try to get buyer_id from multiple sources
+    let buyerId = conversation.buyer_id;
+    
+    // Fallback: get first participant's id
+    if (!buyerId && conversation.participants && conversation.participants.length > 0) {
+      buyerId = conversation.participants[0]?.id;
+    }
+    
+    if (!buyerId) return [];
+    
+    // Find ALL orders by buyer_id
+    return orders.filter(order => order.buyer_id === buyerId || order.instagram_user_id === buyerId);
+  }, [conversationId, conversations, orders]);
+
+  // Fetch orders on mount to ensure we have order data
+  useEffect(() => {
+    if (orders.length === 0) {
+      dispatch(fetchOrders());
+    }
+  }, [dispatch, orders.length]);
 
   useEffect(() => {
     dispatch(setCurrentConversation(conversationId));
@@ -32,11 +66,51 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     }
   }, [conversationId, dispatch, messageCache]);
 
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    // TODO: Implement send message API call
-    console.log('Sending message:', messageInput);
-    setMessageInput('');
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !conversationId || isSending) return;
+
+    // Find the conversation to get buyer info
+    const conversation = conversations.find(c => c.conversation_id === conversationId);
+    if (!conversation) {
+      alert('Conversation not found');
+      return;
+    }
+
+    // Get recipient_user_id (buyer_id)
+    let recipientUserId = conversation.buyer_id;
+    
+    // Fallback: get first participant's id
+    if (!recipientUserId && conversation.participants && conversation.participants.length > 0) {
+      recipientUserId = conversation.participants[0]?.id;
+    }
+
+    if (!recipientUserId) {
+      alert('Recipient user ID not found');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await apiClient.post('/dashboard/reply', {
+        conversation_id: conversationId,
+        message: messageInput.trim(),
+        recipient_user_id: recipientUserId,
+        platform: 'facebook'
+      });
+
+      // Clear input
+      setMessageInput('');
+
+      // Refresh messages to show the new one
+      setTimeout(() => {
+        dispatch(fetchMessengerMessages({ conversationId, forceRefresh: true }));
+      }, 1000);
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      alert(error.response?.data?.detail || 'Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (!conversationId) {
@@ -67,6 +141,63 @@ export default function ConversationView({ conversationId }: ConversationViewPro
         display: 'flex',
       }}
     >
+      {/* Order Backlink Banner */}
+      {relatedOrders.length > 0 && (
+        <div className="shrink-0 bg-blue-50 border-b border-blue-200">
+          {relatedOrders.length === 1 ? (
+            <div className="px-4 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <span className="text-blue-900 font-medium">{relatedOrders[0].order_number}</span>
+                <span className="text-blue-700">• Rs. {relatedOrders[0].total.toFixed(2)}</span>
+                <span className="text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full">{relatedOrders[0].status.replace('_', ' ')}</span>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/orders')}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              >
+                View Order
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <div className="px-4 py-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span className="text-blue-900 font-medium">{relatedOrders.length} Orders</span>
+                  <span className="text-blue-700">• Total: Rs. {relatedOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}</span>
+                </div>
+                <button
+                  onClick={() => router.push('/dashboard/orders')}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                >
+                  View All Orders
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {relatedOrders.map((order) => (
+                  <div key={order.id} className="text-xs bg-white border border-blue-200 rounded px-2 py-1 flex items-center gap-2">
+                    <span className="font-medium text-blue-900">{order.order_number}</span>
+                    <span className="text-gray-500">Rs. {order.total.toFixed(0)}</span>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{order.status.replace('_', ' ')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Messages Area - Fixed height with scrollbar */}
       <div 
         className="flex-1 overflow-hidden bg-gray-50" 
@@ -104,10 +235,10 @@ export default function ConversationView({ conversationId }: ConversationViewPro
           />
           <button
             onClick={handleSendMessage}
-            disabled={!messageInput.trim()}
+            disabled={!messageInput.trim() || isSending}
             className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            Send
+            {isSending ? 'Sending...' : 'Send'}
           </button>
           <button
             type="button"

@@ -24,6 +24,7 @@ export default function MessengerLayout({
   const { conversations, conversationLoading, error, conversationsLoaded } = useAppSelector(
     (state) => state.messengerMessages
   );
+  const orders = useAppSelector((state) => state.orders.orders);
 
   // On mobile, hide list when conversation is selected
   useEffect(() => {
@@ -144,6 +145,10 @@ export default function MessengerLayout({
                 const isSelected = selectedConversationId === conversation.conversation_id;
                 // Ensure unique key - use index as fallback if conversation_id is missing/duplicate
                 const uniqueKey = conversation.conversation_id || `conv-${index}-${conversation.updated_time}`;
+                
+                // Find related order
+                const buyerId = conversation.buyer_id || conversation.participants[0]?.id;
+                const relatedOrder = buyerId ? orders.find(order => order.buyer_id === buyerId) : null;
 
                 return (
                   <div
@@ -175,6 +180,16 @@ export default function MessengerLayout({
                         <p className="mt-1 truncate text-xs text-gray-500">
                           {conversation.last_message?.text || 'No messages'}
                         </p>
+                        {relatedOrder && (
+                          <div className="mt-1 flex items-center gap-1 text-xs">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            <span className="font-medium text-green-700">{relatedOrder.order_number}</span>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-600">Rs. {relatedOrder.total.toFixed(0)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

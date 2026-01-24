@@ -19,6 +19,8 @@ export interface Conversation {
   updated_time: string;
   participants: Participant[];
   last_message: LastMessage;
+  buyer_id?: string;
+  buyer_username?: string;
 }
 
 export interface MessagesOverviewResponse {

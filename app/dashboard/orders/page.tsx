@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '../lib/hooks';
 import { fetchOrders, setStatusFilter, updateOrderStatus } from '../lib/slices/orderSlice';
 import { OrderStatus } from '../lib/types/order';
@@ -27,7 +28,10 @@ const statusColors: Record<OrderStatus, string> = {
 
 export default function OrdersPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { orders, loading, statusFilter } = useAppSelector((state) => state.orders);
+  const instagramConversations = useAppSelector((state) => state.instagramMessages.conversations);
+  const messengerConversations = useAppSelector((state) => state.messengerMessages.conversations);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
@@ -42,6 +46,36 @@ export default function OrdersPage() {
 
   const handleViewOrder = (orderId: string) => {
     setSelectedOrderId(orderId);
+  };
+
+  const handleChatWithBuyer = (order: typeof orders[0]) => {
+    const buyerId = order.buyer_id;
+    if (!buyerId) {
+      alert('Buyer information not available for this order.');
+      return;
+    }
+
+    // Search in Instagram conversations
+    const instagramConv = instagramConversations.find(
+      (conv) => conv.buyer_id === buyerId || conv.participants.some((p) => p.id === buyerId)
+    );
+
+    if (instagramConv) {
+      router.push(`/dashboard/message/instagram?conversation=${instagramConv.conversation_id}`);
+      return;
+    }
+
+    // Search in Messenger conversations
+    const messengerConv = messengerConversations.find(
+      (conv) => conv.buyer_id === buyerId || conv.participants.some((p) => p.id === buyerId)
+    );
+
+    if (messengerConv) {
+      router.push(`/dashboard/message/messenger?conversation=${messengerConv.conversation_id}`);
+      return;
+    }
+
+    alert('Conversation not found. Please sync messages first from the Messages page.');
   };
 
   const handleCloseModal = () => {
@@ -202,6 +236,17 @@ export default function OrdersPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-3">
+                      {order.buyer_id && (
+                        <button
+                          onClick={() => handleChatWithBuyer(order)}
+                          className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
+                          title="Chat with customer"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </button>
+                      )}
                       <button
                         onClick={() => handleViewOrder(order.id)}
                         className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"

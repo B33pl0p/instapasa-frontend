@@ -18,7 +18,9 @@ export interface Order {
   id: string;
   order_number: string;
   customer_id: string;
+  buyer_id: string;
   instagram_user_id: string;
+  buyer_instagram_username?: string;
   conversation_id: string;
   items: OrderItem[];
   total: number;
