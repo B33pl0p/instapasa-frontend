@@ -32,13 +32,14 @@ export default function IntegrationCard({
  
   const getStatusColor = (): 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' => {
     if (isConnected) return 'success';
-    if (isConnecting) return 'warning';
+    if (isConnecting) return 'info';
     return 'default';
   };
 
   const getStatusDotColor = () => {
     if (isConnected) return 'success.main';
-    return 'action.disabled';
+    if (isConnecting) return 'info.main';
+    return 'text.disabled';
   };
 
   return (
@@ -48,9 +49,12 @@ export default function IntegrationCard({
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: 'background.paper',
-        transition: 'all 0.3s ease',
+        border: '1px solid',
+        borderColor: 'divider',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         '&:hover': {
-          boxShadow: 4,
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+          borderColor: isConnected ? 'success.light' : 'divider',
         },
       }}
     >
@@ -79,7 +83,8 @@ export default function IntegrationCard({
               height: 12,
               borderRadius: '50%',
               backgroundColor: getStatusDotColor(),
-              boxShadow: isConnected ? `0 0 8px ${theme.palette.success.main}40` : 'none',
+              boxShadow: isConnected ? `0 0 12px ${theme.palette.success.main}60` : 'none',
+              transition: 'all 0.3s ease',
             }}
           />
         </Stack>
@@ -87,11 +92,14 @@ export default function IntegrationCard({
         {/* Status Chip */}
         <Box sx={{ mb: 2 }}>
           <Chip
-            label={status}
+            label={status.charAt(0).toUpperCase() + status.slice(1)}
             color={getStatusColor()}
-            variant="outlined"
+            variant={isConnected ? 'filled' : 'outlined'}
             size="small"
-            sx={{ textTransform: 'capitalize' }}
+            sx={{ 
+              fontWeight: 600,
+              minWidth: 120,
+            }}
           />
         </Box>
 

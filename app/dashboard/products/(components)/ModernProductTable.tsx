@@ -37,14 +37,14 @@ interface ModernProductTableProps {
 }
 
 const categoryIcons: Record<string, string> = {
-  clothing: '👕',
-  footwear: '👟',
-  electronics: '📱',
-  food: '🍔',
-  beauty: '💄',
-  home: '🏠',
-  books: '📚',
-  general: '📦',
+  clothing: 'Clothing',
+  footwear: 'Footwear',
+  electronics: 'Electronics',
+  food: 'Food',
+  beauty: 'Beauty',
+  home: 'Home',
+  books: 'Books',
+  general: 'Product',
 };
 
 export const ModernProductTable: React.FC<ModernProductTableProps> = ({
@@ -139,7 +139,7 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
         <TableBody>
           {products.map((product) => {
             const thumbnail = product.images?.[0];
-            const categoryIcon = categoryIcons[product.category || 'general'] || '📦';
+            const categoryLabel = categoryIcons[product.category || 'general'] || 'Product';
 
             return (
               <TableRow
@@ -209,7 +209,7 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                 <TableCell>
                   {product.category ? (
                     <Chip
-                      label={`${categoryIcon} ${product.category}`}
+                      label={product.category}
                       variant="outlined"
                       size="small"
                     />

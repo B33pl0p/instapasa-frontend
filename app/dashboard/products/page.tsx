@@ -231,21 +231,21 @@ export default function ProductPage() {
             color={viewMode === 'all' ? 'primary' : 'inherit'}
             onClick={() => setViewMode('all')}
           >
-            📦 All Products
+            All Products
           </Button>
           <Button
             variant={viewMode === 'active' ? 'contained' : 'outlined'}
             color={viewMode === 'active' ? 'success' : 'inherit'}
             onClick={() => setViewMode('active')}
           >
-            ✅ Active Only
+            Active Only
           </Button>
           <Button
             variant={viewMode === 'low-stock' ? 'contained' : 'outlined'}
             color={viewMode === 'low-stock' ? 'warning' : 'inherit'}
             onClick={() => setViewMode('low-stock')}
           >
-            ⚠️ Low Stock
+            Low Stock
           </Button>
         </Stack>
 

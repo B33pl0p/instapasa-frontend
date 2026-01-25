@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import Image from 'next/image';
 import {
   Container,
   Box,
@@ -14,8 +13,8 @@ import {
   Button,
   CircularProgress,
 } from '@mui/material';
-import instagramIcon from '@/public/instagramIcon.svg';
-import messengerIcon from '@/public/messengerIcon.svg';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import FacebookMessengerIcon from '@mui/icons-material/Facebook';
 import IntegrationCard from './(components)/IntegrationCard';
 import { useInstagramAuth } from './(components)/useInstagramAuth';
 import { useMessengerAuth } from './(components)/useMessengerAuth';
@@ -117,11 +116,7 @@ function MessageContent() {
             status={messengerStatus}
             onDisconnect={() => handleDisconnectClick('messenger')}
             image={
-              <Image
-                src={messengerIcon}
-                alt="Messenger"
-                style={{ width: 32, height: 32 }}
-              />
+              <FacebookMessengerIcon sx={{ fontSize: 32, color: 'text.primary' }} />
             }
           />
         </Box>
@@ -132,11 +127,7 @@ function MessageContent() {
             status={instagramStatus}
             onDisconnect={() => handleDisconnectClick('instagram')}
             image={
-              <Image
-                src={instagramIcon}
-                alt="Instagram"
-                style={{ width: 32, height: 32 }}
-              />
+              <InstagramIcon sx={{ fontSize: 32, color: 'text.primary' }} />
             }
           />
         </Box>

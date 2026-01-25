@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Box, IconButton } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import WarningIcon from '@mui/icons-material/Warning';
+import InfoIcon from '@mui/icons-material/Info';
+import CloseIcon from '@mui/icons-material/Close';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -34,68 +40,73 @@ const Toast = ({ message, onClose }: ToastProps) => {
   const getStyles = () => {
     switch (message.type) {
       case 'success':
-        return 'bg-green-500 border-green-600';
+        return { bgcolor: 'success.main', color: 'success.contrastText' };
       case 'error':
-        return 'bg-red-500 border-red-600';
+        return { bgcolor: 'error.main', color: 'error.contrastText' };
       case 'warning':
-        return 'bg-yellow-500 border-yellow-600';
+        return { bgcolor: 'warning.main', color: 'warning.contrastText' };
       case 'info':
       default:
-        return 'bg-blue-500 border-blue-600';
+        return { bgcolor: 'info.main', color: 'info.contrastText' };
     }
   };
 
   const getIcon = () => {
     switch (message.type) {
       case 'success':
-        return (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        );
+        return <CheckCircleIcon sx={{ fontSize: 24 }} />;
       case 'error':
-        return (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        );
+        return <ErrorIcon sx={{ fontSize: 24 }} />;
       case 'warning':
-        return (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        );
+        return <WarningIcon sx={{ fontSize: 24 }} />;
       case 'info':
       default:
-        return (
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+        return <InfoIcon sx={{ fontSize: 24 }} />;
     }
   };
 
   return (
-    <div
-      className={`${getStyles()} text-white px-6 py-4 rounded-lg shadow-lg border-l-4 flex items-center gap-3 min-w-[300px] max-w-md transition-all duration-300 transform ${
-        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-      }`}
+    <Box
+      sx={{
+        ...getStyles(),
+        px: 3,
+        py: 2,
+        borderRadius: 1,
+        boxShadow: 3,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        minWidth: 300,
+        maxWidth: 'md',
+        transition: 'all 0.3s ease',
+        transform: isVisible ? 'translateX(0)' : 'translateX(400px)',
+        opacity: isVisible ? 1 : 0,
+      }}
     >
-      <div className="flex-shrink-0">{getIcon()}</div>
-      <p className="flex-1 text-sm font-medium">{message.message}</p>
-      <button
+      <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        {getIcon()}
+      </Box>
+      <Box sx={{ flex: 1, fontSize: '0.875rem', fontWeight: 500 }}>
+        {message.message}
+      </Box>
+      <IconButton
+        size="small"
         onClick={() => {
           setIsVisible(false);
           setTimeout(() => onClose(message.id), 300);
         }}
-        className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition-colors"
+        sx={{
+          color: 'inherit',
+          flexShrink: 0,
+          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
+        }}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
+        <CloseIcon sx={{ fontSize: 18 }} />
+      </IconButton>
+    </Box>
   );
 };
+
+
 
 export default Toast;

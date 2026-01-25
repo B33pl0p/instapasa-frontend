@@ -22,14 +22,14 @@ import Image from 'next/image';
 import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
 
 const categoryIcons: Record<string, string> = {
-  clothing: '👕',
-  footwear: '👟',
-  electronics: '📱',
-  food: '🍔',
-  beauty: '💄',
-  home: '🏠',
-  books: '📚',
-  general: '📦',
+  clothing: 'Clothing',
+  footwear: 'Footwear',
+  electronics: 'Electronics',
+  food: 'Food',
+  beauty: 'Beauty',
+  home: 'Home',
+  books: 'Books',
+  general: 'Product',
 };
 
 export default function EditProductPage() {
@@ -385,7 +385,7 @@ export default function EditProductPage() {
                       <option value="">-- Select Category --</option>
                       {categories.map((cat) => (
                         <option key={cat} value={cat}>
-                          {categoryIcons[cat] || '📦'} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
                         </option>
                       ))}
                     </select>

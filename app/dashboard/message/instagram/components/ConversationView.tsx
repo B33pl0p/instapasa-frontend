@@ -53,31 +53,31 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     console.log('💬 Total conversations:', conversations.length);
     
     if (!conversationId || !conversations || conversations.length === 0) {
-      console.log('❌ No conversation ID or conversations array empty');
+      console.log('No conversation ID or conversations array empty');
       return [];
     }
     
     const conversation = conversations.find(c => c.conversation_id === conversationId);
     if (!conversation) {
-      console.log('❌ Conversation not found in array');
+      console.log('Conversation not found in array');
       return [];
     }
     
-    console.log('✅ Found conversation:', conversation);
+    console.log('Found conversation:', conversation);
     
     // Try to get buyer_id from multiple sources
     let buyerId = conversation.buyer_id;
-    console.log('👤 buyer_id from conversation:', buyerId);
+    console.log('buyer_id from conversation:', buyerId);
     
     // Fallback: find participant that's not the business
     if (!buyerId && conversation.participants && conversation.participants.length > 0) {
       const buyerParticipant = conversation.participants.find(p => p.username !== businessUsername);
       buyerId = buyerParticipant?.id;
-      console.log('👤 buyer_id from participants:', buyerId);
+      console.log('buyer_id from participants:', buyerId);
     }
     
     if (!buyerId) {
-      console.log('❌ No buyer_id found');
+      console.log('No buyer_id found');
       return [];
     }
     
@@ -85,12 +85,12 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     const foundOrders = orders.filter(order => {
       const match = order.buyer_id === buyerId || order.instagram_user_id === buyerId;
       if (match) {
-        console.log('✅ Order matched:', order.order_number);
+        console.log('Order matched:', order.order_number);
       }
       return match;
     });
     
-    console.log('🎯 Total orders found:', foundOrders.length);
+    console.log('Total orders found:', foundOrders.length);
     return foundOrders;
   }, [conversationId, conversations, orders, businessUsername]);
 

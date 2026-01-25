@@ -28,14 +28,14 @@ import { DynamicAttributeFields } from '../(components)/DynamicAttributeFields';
 import VariantBuilder from '../(components)/VariantBuilder';
 
 const categoryIcons: Record<string, string> = {
-  clothing: '👕',
-  footwear: '👟',
-  electronics: '📱',
-  food: '🍔',
-  beauty: '💄',
-  home: '🏠',
-  books: '📚',
-  general: '📦',
+  clothing: 'Clothing',
+  footwear: 'Footwear',
+  electronics: 'Electronics',
+  food: 'Food',
+  beauty: 'Beauty',
+  home: 'Home',
+  books: 'Books',
+  general: 'Product',
 };
 
 export default function CreateProductPage() {
@@ -280,7 +280,7 @@ export default function CreateProductPage() {
                         <MenuItem value="">-- Select Category --</MenuItem>
                         {categories.map((cat) => (
                           <MenuItem key={cat} value={cat}>
-                            {categoryIcons[cat] || '📦'} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
                           </MenuItem>
                         ))}
                       </Select>
