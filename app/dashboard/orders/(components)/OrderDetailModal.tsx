@@ -2,6 +2,25 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@mui/material/styles';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Button,
+  TextField,
+  Card,
+  CardContent,
+  Typography,
+  Alert,
+  Chip,
+  IconButton,
+  CircularProgress,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import MessageIcon from '@mui/icons-material/Message';
 import { useAppDispatch, useAppSelector } from '../../lib/hooks';
 import {
   fetchOrderById,
@@ -19,18 +38,22 @@ interface OrderDetailModalProps {
   onClose: () => void;
 }
 
-const statusColors: Record<OrderStatus, string> = {
-  pending_details: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  processing: 'bg-purple-100 text-purple-800',
-  shipped: 'bg-indigo-100 text-indigo-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
+const getStatusColor = (status: OrderStatus): 'warning' | 'info' | 'success' | 'error' => {
+  const statusMap: Record<OrderStatus, 'warning' | 'info' | 'success' | 'error'> = {
+    pending_details: 'warning',
+    confirmed: 'info',
+    processing: 'info',
+    shipped: 'info',
+    delivered: 'success',
+    cancelled: 'error',
+  };
+  return statusMap[status];
 };
 
 export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const theme = useTheme();
   const { showToast } = useToast();
   const { currentOrder, loading, statusFilter } = useAppSelector((state) => state.orders);
   const instagramConversations = useAppSelector((state) => state.instagramMessages.conversations);
@@ -183,211 +206,225 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
     if (!nextStatus) return null;
 
     return (
-      <button
+      <Button
         onClick={() => handleStatusUpdate(nextStatus.next)}
         disabled={isUpdatingStatus}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="contained"
+        color="primary"
       >
         {isUpdatingStatus ? 'Updating...' : nextStatus.label}
-      </button>
+      </Button>
     );
   };
 
   if (loading || !currentOrder) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading order details...</p>
-        </div>
-      </div>
+      <Dialog open={true}>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, minWidth: 300 }}>
+          <CircularProgress sx={{ mb: 2 }} />
+          <Typography color="textSecondary">Loading order details...</Typography>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
-            <p className="text-sm text-gray-600">{currentOrder.order_number}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="p-6 space-y-6">
+    <Dialog open={true} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pr: 1 }}>
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+            Order Details
+          </Typography>
+          <Typography variant="caption" color="textSecondary">
+            {currentOrder.order_number}
+          </Typography>
+        </Box>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers sx={{ backgroundColor: 'background.default' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 2 }}>
           {/* Status Badge */}
-          <div className="flex items-center justify-between">
-            <span
-              className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                statusColors[currentOrder.status]
-              }`}
-            >
-              {currentOrder.status.replace('_', ' ').toUpperCase()}
-            </span>
-            <p className="text-sm text-gray-500">
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Chip
+              label={currentOrder.status.replace('_', ' ').toUpperCase()}
+              color={getStatusColor(currentOrder.status)}
+              variant="filled"
+            />
+            <Typography variant="caption" color="textSecondary">
               Created: {new Date(currentOrder.created_at).toLocaleString()}
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
           {/* Customer Details Section */}
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Customer Details</h3>
-              {currentOrder.buyer_id && (
-                <button
-                  onClick={handleChatWithCustomer}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  Chat with Customer
-                </button>
-              )}
-            </div>
-            {currentOrder.status === 'pending_details' ? (
-              <div className="space-y-4">
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-4">
-                  <p className="text-sm text-yellow-800">
+          <Card sx={{ backgroundColor: 'background.paper' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 'semibold', color: 'text.primary' }}>
+                  Customer Details
+                </Typography>
+                {currentOrder.buyer_id && (
+                  <Button
+                    onClick={handleChatWithCustomer}
+                    startIcon={<MessageIcon />}
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                  >
+                    Chat with Customer
+                  </Button>
+                )}
+              </Box>
+              {currentOrder.status === 'pending_details' ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Alert severity="warning">
                     📝 Please contact the customer and fill in their details below.
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Customer Name
-                  </label>
-                  <input
-                    type="text"
+                  </Alert>
+                  <TextField
+                    fullWidth
+                    label="Customer Name"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter customer name"
+                    size="small"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Shipping Address
-                  </label>
-                  <textarea
+                  <TextField
+                    fullWidth
+                    label="Shipping Address"
                     value={shippingAddress}
                     onChange={(e) => setShippingAddress(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter shipping address"
+                    multiline
                     rows={3}
+                    size="small"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
+                  <TextField
+                    fullWidth
+                    label="Phone Number"
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter phone number"
+                    size="small"
                   />
-                </div>
-                <button
-                  onClick={handleSaveDetails}
-                  disabled={isSavingDetails || (!customerName && !shippingAddress && !phone)}
-                  className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSavingDetails ? 'Saving...' : 'Save Customer Details'}
-                </button>
-                <p className="text-xs text-gray-500 text-center">
-                  Status will auto-change to &quot;Confirmed&quot; when all fields are filled
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Name:</span>{' '}
-                  <span className="text-sm text-gray-900">
-                    {currentOrder.customer_name || 'Not provided'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Address:</span>{' '}
-                  <span className="text-sm text-gray-900">
-                    {currentOrder.shipping_address || 'Not provided'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Phone:</span>{' '}
-                  <span className="text-sm text-gray-900">
-                    {currentOrder.phone || 'Not provided'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+                  <Button
+                    onClick={handleSaveDetails}
+                    disabled={isSavingDetails || (!customerName && !shippingAddress && !phone)}
+                    variant="contained"
+                    color="success"
+                    fullWidth
+                  >
+                    {isSavingDetails ? 'Saving...' : 'Save Customer Details'}
+                  </Button>
+                  <Typography variant="caption" color="textSecondary" align="center">
+                    Status will auto-change to &quot;Confirmed&quot; when all fields are filled
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                      Name:
+                    </Typography>
+                    <Typography variant="body2" color="text.primary">
+                      {currentOrder.customer_name || 'Not provided'}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                      Address:
+                    </Typography>
+                    <Typography variant="body2" color="text.primary">
+                      {currentOrder.shipping_address || 'Not provided'}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                      Phone:
+                    </Typography>
+                    <Typography variant="body2" color="text.primary">
+                      {currentOrder.phone || 'Not provided'}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Order Items */}
-          <div className="border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
-            <div className="space-y-3">
-              {currentOrder.items.map((item, index) => (
-                <div key={index} className="flex items-center space-x-4 border-b pb-3 last:border-b-0">
-                  {item.image_url && (
-                    <img
-                      src={item.image_url}
-                      alt={item.product_name}
-                      className="w-16 h-16 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{item.product_name}</p>
-                    <p className="text-sm text-gray-500">
-                      Quantity: {item.quantity} × Rs. {item.price.toFixed(2)}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-gray-900">
-                    Rs. {(item.quantity * item.price).toFixed(2)}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 pt-4 border-t">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">Total:</span>
-                <span className="text-xl font-bold text-gray-900">
-                  Rs. {currentOrder.total.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
+          <Card sx={{ backgroundColor: 'background.paper' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                Order Items
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {currentOrder.items.map((item, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      alignItems: 'flex-start',
+                      pb: 2,
+                      borderBottom: `1px solid ${theme.palette.divider}`,
+                      '&:last-child': { borderBottom: 'none' },
+                    }}
+                  >
+                    {item.image_url && (
+                      <Box
+                        component="img"
+                        src={item.image_url}
+                        alt={item.product_name}
+                        sx={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 1 }}
+                      />
+                    )}
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary' }}>
+                        {item.product_name}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        Quantity: {item.quantity} × Rs. {item.price.toFixed(2)}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 'semibold', color: 'text.primary' }}>
+                      Rs. {(item.quantity * item.price).toFixed(2)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+              <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', color: 'text.primary' }}>
+                    Total:
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
+                    Rs. {currentOrder.total.toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            {currentOrder.status !== 'cancelled' && currentOrder.status !== 'delivered' && (
-              <button
-                onClick={handleCancelOrder}
-                disabled={isUpdatingStatus}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel Order
-              </button>
-            )}
-            {getNextStatusButton()}
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ gap: 1, p: 2 }}>
+        {currentOrder.status !== 'cancelled' && currentOrder.status !== 'delivered' && (
+          <Button
+            onClick={handleCancelOrder}
+            disabled={isUpdatingStatus}
+            variant="contained"
+            color="error"
+          >
+            Cancel Order
+          </Button>
+        )}
+        {getNextStatusButton()}
+        <Button onClick={onClose} variant="outlined">
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

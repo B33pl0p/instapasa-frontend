@@ -91,7 +91,7 @@ export const ProductFilterComponent: React.FC<ProductFiltersProps> = ({
   };
 
   return (
-    <Box sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+    <Box sx={{ mb: 3, p: 2, backgroundColor: 'background.paper', borderRadius: 1 }}>
       <Grid container spacing={2} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <TextField

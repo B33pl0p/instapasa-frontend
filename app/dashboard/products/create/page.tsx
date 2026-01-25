@@ -3,6 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@mui/material/styles';
+import {
+  Box,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
+  Card,
+  CardContent,
+  Typography,
+  Alert,
+  FormHelperText,
+} from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import type { AppDispatch } from '@/app/dashboard/lib/store';
@@ -26,6 +41,7 @@ const categoryIcons: Record<string, string> = {
 export default function CreateProductPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const theme = useTheme();
 
   const [formData, setFormData] = useState<CreateProductRequest>({
     name: '',
@@ -187,256 +203,279 @@ export default function CreateProductPage() {
   };
 
   return (
-    <div className="p-6 max-h-screen overflow-y-auto">
+    <Box sx={{ p: 3, maxHeight: '100vh', overflowY: 'auto', backgroundColor: 'background.default' }}>
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Create New Product</h1>
-        <p className="text-gray-600 mt-1">Add a new product to your inventory</p>
-      </div>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 0.5 }}>
+          Create New Product
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Add a new product to your inventory
+        </Typography>
+      </Box>
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex justify-between items-center">
-          <p className="text-red-700">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-700 hover:text-red-900"
-          >
-            ✕
-          </button>
-        </div>
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{ mb: 3 }}
+        >
+          {error}
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Box component="form" onSubmit={handleSubmit}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
           {/* Main Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Basic Information Card */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
-              <div className="space-y-4">
-                {/* Product Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Product Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                    placeholder="Enter product name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description || ''}
-                    onChange={handleChange}
-                    disabled={loading}
-                    rows={4}
-                    placeholder="Enter product description"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category || ''}
-                    onChange={handleChange}
-                    disabled={loading || loadingCategories}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">-- Select Category --</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {categoryIcons[cat] || '📦'} {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Dynamic Category Attributes - Only for single-variant mode */}
-            {categoryConfig && !useVariants && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <DynamicAttributeFields
-                  categoryConfig={categoryConfig}
-                  attributes={formData.attributes || {}}
-                  onChange={handleAttributesChange}
-                />
-              </div>
-            )}
-
-            {/* Variants Builder - Only for multi-variant mode */}
-            {useVariants && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Product Variants</h2>
-                <VariantBuilder
-                  value={formData.variants || []}
-                  onChange={handleVariantsChange}
-                  category={formData.category}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Pricing & Stock Card */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Pricing & Inventory</h2>
-              <div className="space-y-4">
-                {/* Price */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Price (Rs.) {useVariants && <span className="text-sm font-normal text-gray-500">(Base Price)</span>}
-                  </label>
-                  <input
-                    type="number"
-                    name="price"
-                    step="0.01"
-                    min="0"
-                    value={formData.price ?? ''}
-                    onChange={handleChange}
-                    disabled={loading}
-                    placeholder="0.00"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {useVariants && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Variants can have individual price adjustments
-                    </p>
-                  )}
-                </div>
-
-                {/* SKU */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    SKU
-                  </label>
-                  <input
-                    type="text"
-                    name="sku"
-                    value={formData.sku || ''}
-                    onChange={handleChange}
-                    disabled={loading}
-                    placeholder="Enter SKU"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Variant Mode Toggle */}
-                <div className="pt-2 border-t border-gray-200">
-                  <label className="flex items-start space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={useVariants}
-                      onChange={(e) => handleUseVariantsToggle(e.target.checked)}
+          <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Basic Information Card */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                    Basic Information
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* Product Name */}
+                    <TextField
+                      fullWidth
+                      label="Product Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
                       disabled={loading}
-                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                      placeholder="Enter product name"
+                      variant="outlined"
+                      size="small"
                     />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">
-                        Multiple Variants (Size/Color)
-                      </span>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Enable to add variants with different sizes, colors, or other attributes
-                      </p>
-                    </div>
-                  </label>
-                </div>
 
-                {/* Stock - Only show for single-variant mode */}
-                {!useVariants && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Stock Quantity
-                    </label>
-                    <input
-                      type="number"
-                      name="stock"
-                      min="0"
-                      value={formData.stock ?? 0}
+                    {/* Description */}
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      name="description"
+                      value={formData.description || ''}
                       onChange={handleChange}
                       disabled={loading}
-                      placeholder="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      multiline
+                      rows={4}
+                      placeholder="Enter product description"
+                      variant="outlined"
+                      size="small"
                     />
-                  </div>
-                )}
 
-                {/* Variant stock info */}
-                {useVariants && formData.variants && formData.variants.length > 0 && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-blue-900">
-                      {formData.variants.length} variant{formData.variants.length !== 1 ? 's' : ''}
-                    </p>
-                    <p className="text-xs text-blue-700 mt-1">
-                      Total Stock: {formData.variants.reduce((sum, v) => sum + v.stock, 0)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+                    {/* Category */}
+                    <Box>
+                      <Select
+                        fullWidth
+                        name="category"
+                        value={formData.category || ''}
+                        onChange={(e) => handleChange(e as any)}
+                        disabled={loading || loadingCategories}
+                        displayEmpty
+                        size="small"
+                      >
+                        <MenuItem value="">-- Select Category --</MenuItem>
+                        {categories.map((cat) => (
+                          <MenuItem key={cat} value={cat}>
+                            {categoryIcons[cat] || '📦'} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
 
-            {/* Status Card */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Status</h2>
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="is_active"
-                  checked={formData.is_active ?? true}
-                  onChange={handleChange}
-                  disabled={loading}
-                  className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Active (visible to customers)
-                </span>
-              </label>
-            </div>
+              {/* Dynamic Category Attributes - Only for single-variant mode */}
+              {categoryConfig && !useVariants && (
+                <Card sx={{ backgroundColor: 'background.paper' }}>
+                  <CardContent>
+                    <DynamicAttributeFields
+                      categoryConfig={categoryConfig}
+                      attributes={formData.attributes || {}}
+                      onChange={handleAttributesChange}
+                    />
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Actions */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex flex-col space-y-3">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
-                >
-                  <SaveIcon fontSize="small" />
-                  <span>{loading ? 'Creating...' : 'Create Product'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push('/dashboard/products')}
-                  disabled={loading}
-                  className="w-full px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <CancelIcon fontSize="small" />
-                  <span>Cancel</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
+              {/* Variants Builder - Only for multi-variant mode */}
+              {useVariants && (
+                <Card sx={{ backgroundColor: 'background.paper' }}>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                      Product Variants
+                    </Typography>
+                    <VariantBuilder
+                      value={formData.variants || []}
+                      onChange={handleVariantsChange}
+                      category={formData.category}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
+          </Box>
+
+          {/* Sidebar */}
+          <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Pricing & Stock Card */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                    Pricing & Inventory
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* Price */}
+                    <Box>
+                      <TextField
+                        fullWidth
+                        label={useVariants ? 'Price (Rs.) - Base Price' : 'Price (Rs.)'}
+                        type="number"
+                        name="price"
+                        inputProps={{ step: '0.01', min: '0' }}
+                        value={formData.price ?? ''}
+                        onChange={handleChange}
+                        disabled={loading}
+                        placeholder="0.00"
+                        variant="outlined"
+                        size="small"
+                      />
+                      {useVariants && (
+                        <FormHelperText>
+                          Variants can have individual price adjustments
+                        </FormHelperText>
+                      )}
+                    </Box>
+
+                    {/* SKU */}
+                    <TextField
+                      fullWidth
+                      label="SKU"
+                      type="text"
+                      name="sku"
+                      value={formData.sku || ''}
+                      onChange={handleChange}
+                      disabled={loading}
+                      placeholder="Enter SKU"
+                      variant="outlined"
+                      size="small"
+                    />
+
+                    {/* Variant Mode Toggle */}
+                    <Box sx={{ pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={useVariants}
+                            onChange={(e) => handleUseVariantsToggle(e.target.checked)}
+                            disabled={loading}
+                            name="useVariants"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              Multiple Variants (Size/Color)
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+                              Enable to add variants with different sizes, colors, or other attributes
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Stock - Only show for single-variant mode */}
+                    {!useVariants && (
+                      <TextField
+                        fullWidth
+                        label="Stock Quantity"
+                        type="number"
+                        name="stock"
+                        inputProps={{ min: '0' }}
+                        value={formData.stock ?? 0}
+                        onChange={handleChange}
+                        disabled={loading}
+                        placeholder="0"
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+
+                    {/* Variant stock info */}
+                    {useVariants && formData.variants && formData.variants.length > 0 && (
+                      <Box sx={{ backgroundColor: 'info.lighter', border: `1px solid ${theme.palette.info.main}`, borderRadius: 1, p: 1.5 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'info.dark' }}>
+                          {formData.variants.length} variant{formData.variants.length !== 1 ? 's' : ''}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'info.main', display: 'block', mt: 0.5 }}>
+                          Total Stock: {formData.variants.reduce((sum, v) => sum + v.stock, 0)}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Status Card */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                    Status
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        name="is_active"
+                        checked={formData.is_active ?? true}
+                        onChange={handleChange}
+                        disabled={loading}
+                      />
+                    }
+                    label="Active (visible to customers)"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Actions */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      disabled={loading}
+                      startIcon={<SaveIcon />}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {loading ? 'Creating...' : 'Create Product'}
+                    </Button>
+                    <Button
+                      type="button"
+                      fullWidth
+                      variant="outlined"
+                      color="inherit"
+                      onClick={() => router.push('/dashboard/products')}
+                      disabled={loading}
+                      startIcon={<CancelIcon />}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }

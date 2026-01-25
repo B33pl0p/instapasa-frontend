@@ -2,17 +2,23 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
+import {
+  Container,
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  CircularProgress,
+} from '@mui/material';
 import instagramIcon from '@/public/instagramIcon.svg';
 import messengerIcon from '@/public/messengerIcon.svg';
 import IntegrationCard from './(components)/IntegrationCard';
 import { useInstagramAuth } from './(components)/useInstagramAuth';
 import { useMessengerAuth } from './(components)/useMessengerAuth';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
 
 function MessageContent() {
   const { status: instagramStatus, processOAuthCallback: processInstagramCallback, disconnect: disconnectInstagram } = useInstagramAuth();
@@ -86,39 +92,55 @@ function MessageContent() {
   }, [processInstagramCallback, processMessengerCallback]);
 
   return (
-    <main className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Integrations</h1>
-        <p className="text-gray-600 mt-1">Connect your messaging platforms</p>
-      </div>
+    <Container maxWidth="lg" sx={{ py: 4, backgroundColor: 'background.default', minHeight: '100vh' }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+          Integrations
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Connect your messaging platforms
+        </Typography>
+      </Box>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <IntegrationCard
-          name="Messenger"
-          status={messengerStatus}
-          onDisconnect={() => handleDisconnectClick('messenger')}
-          image={
-            <Image
-              src={messengerIcon}
-              alt="Messenger"
-              className="h-8 w-8"
-            />
-          }
-        />
+      {/* Integration Cards Grid */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+          gap: 3,
+        }}
+      >
+        <Box>
+          <IntegrationCard
+            name="Messenger"
+            status={messengerStatus}
+            onDisconnect={() => handleDisconnectClick('messenger')}
+            image={
+              <Image
+                src={messengerIcon}
+                alt="Messenger"
+                style={{ width: 32, height: 32 }}
+              />
+            }
+          />
+        </Box>
 
-        <IntegrationCard
-          name="Instagram"
-          status={instagramStatus}
-          onDisconnect={() => handleDisconnectClick('instagram')}
-          image={
-            <Image
-              src={instagramIcon}
-              alt="Instagram"
-              className="h-8 w-8"
-            />
-          }
-        />
-      </section>
+        <Box>
+          <IntegrationCard
+            name="Instagram"
+            status={instagramStatus}
+            onDisconnect={() => handleDisconnectClick('instagram')}
+            image={
+              <Image
+                src={instagramIcon}
+                alt="Instagram"
+                style={{ width: 32, height: 32 }}
+              />
+            }
+          />
+        </Box>
+      </Box>
 
       {/* Disconnect Confirmation Dialog */}
       <Dialog
@@ -144,7 +166,7 @@ function MessageContent() {
           </Button>
         </DialogActions>
       </Dialog>
-    </main>
+    </Container>
   );
 }
 
@@ -152,12 +174,17 @@ export default function Message() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-white p-16">
-          <h1 className="mb-6 text-2xl font-semibold text-gray-900">
-            Integrations
-          </h1>
-          <p>Loading...</p>
-        </main>
+        <Container maxWidth="lg" sx={{ minHeight: '100vh', py: 8, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress sx={{ mb: 2 }} />
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              Integrations
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Loading...
+            </Typography>
+          </Box>
+        </Container>
       }
     >
       <MessageContent />

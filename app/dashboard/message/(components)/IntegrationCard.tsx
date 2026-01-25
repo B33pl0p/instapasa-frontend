@@ -1,4 +1,13 @@
 'use client'
+import {
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  Chip,
+  Stack,
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import InstagramLoginButton from "@/app/(site)/components/instagramLoginButton";
 import InstagramDisconnectButton from "./InstagramDisconnectButton";
 import MessengerLoginButton from "@/app/(site)/components/messengerLoginButton";
@@ -17,63 +26,101 @@ export default function IntegrationCard({
   status,
   onDisconnect,
 }: IntegrationCardProps) {
+  const theme = useTheme();
   const isConnected = status === 'connected';
   const isConnecting = status === 'connecting';
  
+  const getStatusColor = (): 'default' | 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' => {
+    if (isConnected) return 'success';
+    if (isConnecting) return 'warning';
+    return 'default';
+  };
+
+  const getStatusDotColor = () => {
+    if (isConnected) return 'success.main';
+    return 'action.disabled';
+  };
+
   return (
-    <div className="w-full max-w-sm rounded-lg bg-white border border-gray-200 p-6 shadow-md hover:shadow-lg transition-shadow">
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 flex items-center justify-center">
-            {image}
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
-        </div>
-        <span
-          className={`h-3 w-3 rounded-full ${
-            isConnected ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-gray-400'
-          }`}
-        />
-      </div>
+    <Card
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'background.paper',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          boxShadow: 4,
+        },
+      }}
+    >
+      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Header with icon and status dot */}
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {image}
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {name}
+            </Typography>
+          </Stack>
+          <Box
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              backgroundColor: getStatusDotColor(),
+              boxShadow: isConnected ? `0 0 8px ${theme.palette.success.main}40` : 'none',
+            }}
+          />
+        </Stack>
 
-      <div className="mb-5">
-        <span
-          className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-wide ${
-            isConnected
-              ? 'bg-green-100 text-green-700'
-              : isConnecting
-              ? 'bg-yellow-100 text-yellow-700'
-              : 'bg-gray-100 text-gray-600'
-          }`}
-        >
-          {status}
-        </span>
-      </div>
+        {/* Status Chip */}
+        <Box sx={{ mb: 2 }}>
+          <Chip
+            label={status}
+            color={getStatusColor()}
+            variant="outlined"
+            size="small"
+            sx={{ textTransform: 'capitalize' }}
+          />
+        </Box>
 
-      {(name === 'Instagram' || name === 'Messenger') && (
-        <div className="mt-4 w-full">
-          {isConnected ? (
-            name === 'Instagram' ? (
-              <InstagramDisconnectButton 
-                onDisconnect={onDisconnect || (() => {})} 
-                disabled={isConnecting}
-              />
+        {/* Action Buttons */}
+        {(name === 'Instagram' || name === 'Messenger') && (
+          <Box sx={{ mt: 'auto' }}>
+            {isConnected ? (
+              name === 'Instagram' ? (
+                <InstagramDisconnectButton 
+                  onDisconnect={onDisconnect || (() => {})} 
+                  disabled={isConnecting}
+                />
+              ) : (
+                <MessengerDisconnectButton 
+                  onDisconnect={onDisconnect || (() => {})} 
+                  disabled={isConnecting}
+                />
+              )
             ) : (
-              <MessengerDisconnectButton 
-                onDisconnect={onDisconnect || (() => {})} 
-                disabled={isConnecting}
-              />
-            )
-          ) : (
-            name === 'Instagram' ? (
-              <InstagramLoginButton disabled={isConnecting} />
-            ) : (
-              <MessengerLoginButton disabled={isConnecting} />
-            )
-          )}
-        </div>
-      )}
-    </div>
+              name === 'Instagram' ? (
+                <InstagramLoginButton disabled={isConnecting} />
+              ) : (
+                <MessengerLoginButton disabled={isConnecting} />
+              )
+            )}
+          </Box>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

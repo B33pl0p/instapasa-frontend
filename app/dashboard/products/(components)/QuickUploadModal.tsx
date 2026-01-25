@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, IconButton, Box } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, IconButton, Box, Stack, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Product } from '@/app/dashboard/lib/types/product';
 import { ImageUploader } from './ImageUploader';
@@ -26,22 +26,26 @@ export const QuickUploadModal: React.FC<QuickUploadModalProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle className="flex items-center justify-between border-b">
-        <span className="text-lg font-semibold">Upload Product Images</span>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          Upload Product Images
+        </Typography>
         <IconButton onClick={onClose} size="small">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent className="mt-6">
+      <DialogContent sx={{ mt: 2 }}>
         {product && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">
-              Upload images for: <span className="font-medium text-gray-900">{product.name}</span>
-            </p>
+          <Stack spacing={0.5} sx={{ mb: 3 }}>
+            <Typography variant="body2">
+              Upload images for: <Typography component="span" variant="body2" sx={{ fontWeight: 600 }}>{product.name}</Typography>
+            </Typography>
             {product.sku && (
-              <p className="text-xs text-gray-500 mt-1">SKU: {product.sku}</p>
+              <Typography variant="caption" color="textSecondary">
+                SKU: {product.sku}
+              </Typography>
             )}
-          </div>
+          </Stack>
         )}
 
         <Box sx={{ mt: 2 }}>

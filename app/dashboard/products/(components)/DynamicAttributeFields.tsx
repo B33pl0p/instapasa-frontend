@@ -2,7 +2,20 @@
 
 import React from 'react';
 import { AttributeDefinition, CategoryConfig } from '@/app/dashboard/lib/types/product';
-import { TextField, Checkbox, FormControlLabel, Chip } from '@mui/material';
+import {
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  Chip,
+  Box,
+  Stack,
+  Typography,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+} from '@mui/material';
 
 interface DynamicAttributeFieldsProps {
   categoryConfig: CategoryConfig | null;
@@ -33,183 +46,162 @@ export const DynamicAttributeFields: React.FC<DynamicAttributeFieldsProps> = ({
     switch (attr.type) {
       case 'text':
         return (
-          <div key={attr.name} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {attr.label}
-              {attr.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => handleChange(attr.name, e.target.value)}
-              placeholder={attr.placeholder}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                hasError
-                  ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-            />
-            {hasError && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
-            {attr.help_text && !hasError && (
-              <p className="mt-1 text-xs text-gray-500">{attr.help_text}</p>
-            )}
-          </div>
+          <TextField
+            key={attr.name}
+            fullWidth
+            label={attr.label}
+            value={value}
+            onChange={(e) => handleChange(attr.name, e.target.value)}
+            placeholder={attr.placeholder}
+            required={attr.required}
+            error={hasError}
+            helperText={hasError ? errorMessage : attr.help_text}
+            variant="outlined"
+            size="small"
+          />
         );
 
       case 'number':
         return (
-          <div key={attr.name} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {attr.label}
-              {attr.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <input
-              type="number"
-              value={value}
-              onChange={(e) => handleChange(attr.name, parseFloat(e.target.value) || '')}
-              placeholder={attr.placeholder}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                hasError
-                  ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
-            />
-            {hasError && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
-            {attr.help_text && !hasError && (
-              <p className="mt-1 text-xs text-gray-500">{attr.help_text}</p>
-            )}
-          </div>
+          <TextField
+            key={attr.name}
+            fullWidth
+            label={attr.label}
+            type="number"
+            value={value}
+            onChange={(e) => handleChange(attr.name, parseFloat(e.target.value) || '')}
+            placeholder={attr.placeholder}
+            required={attr.required}
+            error={hasError}
+            helperText={hasError ? errorMessage : attr.help_text}
+            variant="outlined"
+            size="small"
+          />
         );
 
       case 'select':
         return (
-          <div key={attr.name} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {attr.label}
-              {attr.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <select
+          <FormControl key={attr.name} fullWidth size="small" error={hasError}>
+            <InputLabel>{attr.label}</InputLabel>
+            <Select
               value={value}
+              label={attr.label}
               onChange={(e) => handleChange(attr.name, e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                hasError
-                  ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-blue-500'
-              }`}
             >
-              <option value="">-- Select {attr.label} --</option>
+              <MenuItem value="">
+                <em>-- Select {attr.label} --</em>
+              </MenuItem>
               {attr.options?.map((option) => (
-                <option key={option} value={option}>
+                <MenuItem key={option} value={option}>
                   {option}
-                </option>
+                </MenuItem>
               ))}
-            </select>
-            {hasError && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
-            {attr.help_text && !hasError && (
-              <p className="mt-1 text-xs text-gray-500">{attr.help_text}</p>
-            )}
-          </div>
+            </Select>
+            {hasError && <FormHelperText>{errorMessage}</FormHelperText>}
+            {!hasError && attr.help_text && <FormHelperText>{attr.help_text}</FormHelperText>}
+          </FormControl>
         );
 
-      case 'multi_select':
+      case 'multi_select': {
         const selectedValues = Array.isArray(value) ? value : [];
         return (
-          <div key={attr.name} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {attr.label}
-              {attr.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {selectedValues.map((val: string) => (
-                <Chip
-                  key={val}
-                  label={val}
-                  onDelete={() => {
-                    const newValues = selectedValues.filter((v: string) => v !== val);
-                    handleChange(attr.name, newValues);
-                  }}
-                  size="small"
-                  color="primary"
-                />
-              ))}
-            </div>
-            <select
-              value=""
-              onChange={(e) => {
-                if (e.target.value && !selectedValues.includes(e.target.value)) {
-                  handleChange(attr.name, [...selectedValues, e.target.value]);
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">-- Add {attr.label} --</option>
-              {attr.options
-                ?.filter((option) => !selectedValues.includes(option))
-                .map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
+          <FormControl key={attr.name} fullWidth size="small" error={hasError}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                {attr.label}
+                {attr.required && <span style={{ color: '#d32f2f' }}>*</span>}
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap' }}>
+                {selectedValues.map((val: string) => (
+                  <Chip
+                    key={val}
+                    label={val}
+                    onDelete={() => {
+                      const newValues = selectedValues.filter((v: string) => v !== val);
+                      handleChange(attr.name, newValues);
+                    }}
+                    size="small"
+                    color="primary"
+                  />
                 ))}
-            </select>
-            {hasError && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
-            {attr.help_text && !hasError && (
-              <p className="mt-1 text-xs text-gray-500">{attr.help_text}</p>
-            )}
-          </div>
+              </Stack>
+              <Select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value && !selectedValues.includes(e.target.value)) {
+                    handleChange(attr.name, [...selectedValues, e.target.value]);
+                  }
+                }}
+              >
+                <MenuItem value="">
+                  <em>-- Add {attr.label} --</em>
+                </MenuItem>
+                {attr.options
+                  ?.filter((option) => !selectedValues.includes(option))
+                  .map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+              </Select>
+              {hasError && <FormHelperText error>{errorMessage}</FormHelperText>}
+              {!hasError && attr.help_text && <FormHelperText>{attr.help_text}</FormHelperText>}
+            </Box>
+          </FormControl>
         );
+      }
 
       case 'color':
         return (
-          <div key={attr.name} className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <Box key={attr.name}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
               {attr.label}
-              {attr.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
-            <div className="flex items-center space-x-3">
+              {attr.required && <span style={{ color: '#d32f2f' }}>*</span>}
+            </Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
               <input
                 type="color"
                 value={value || '#000000'}
                 onChange={(e) => handleChange(attr.name, e.target.value)}
-                className="w-16 h-10 border border-gray-300 rounded cursor-pointer"
+                style={{
+                  width: 60,
+                  height: 40,
+                  border: '1px solid #ddd',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                }}
               />
-              <input
-                type="text"
+              <TextField
                 value={value || ''}
                 onChange={(e) => handleChange(attr.name, e.target.value)}
                 placeholder="#000000"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                size="small"
+                error={hasError}
+                helperText={hasError ? errorMessage : attr.help_text}
+                sx={{ flex: 1 }}
               />
-            </div>
-            {hasError && <p className="mt-1 text-xs text-red-500">{errorMessage}</p>}
-            {attr.help_text && !hasError && (
-              <p className="mt-1 text-xs text-gray-500">{attr.help_text}</p>
-            )}
-          </div>
+            </Stack>
+          </Box>
         );
 
       case 'boolean':
         return (
-          <div key={attr.name} className="mb-4">
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={!!value}
-                  onChange={(e) => handleChange(attr.name, e.target.checked)}
-                  color="primary"
-                />
-              }
-              label={
-                <span className="text-sm text-gray-700">
-                  {attr.label}
-                  {attr.required && <span className="text-red-500 ml-1">*</span>}
-                </span>
-              }
-            />
-            {hasError && <p className="mt-1 ml-8 text-xs text-red-500">{errorMessage}</p>}
-            {attr.help_text && !hasError && (
-              <p className="mt-1 ml-8 text-xs text-gray-500">{attr.help_text}</p>
-            )}
-          </div>
+          <FormControlLabel
+            key={attr.name}
+            control={
+              <Checkbox
+                checked={!!value}
+                onChange={(e) => handleChange(attr.name, e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <Typography variant="body2">
+                {attr.label}
+                {attr.required && <span style={{ color: '#d32f2f' }}>*</span>}
+              </Typography>
+            }
+          />
         );
 
       default:
@@ -218,11 +210,13 @@ export const DynamicAttributeFields: React.FC<DynamicAttributeFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-1">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <Stack spacing={2}>
+      <Typography variant="h6" sx={{ fontWeight: 700 }}>
         {categoryConfig.display_name} Attributes
-      </h3>
-      {categoryConfig.attributes.map((attr) => renderField(attr))}
-    </div>
+      </Typography>
+      <Stack spacing={2}>
+        {categoryConfig.attributes.map((attr) => renderField(attr))}
+      </Stack>
+    </Stack>
   );
 };

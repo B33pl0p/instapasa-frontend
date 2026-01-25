@@ -8,6 +8,11 @@ import {
   Container,
   Typography,
   Alert,
+  ButtonGroup,
+  Chip,
+  Card,
+  CardContent,
+  Stack,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -186,162 +191,169 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="p-6 max-h-screen overflow-y-auto">
-      {/* Header */}
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your product inventory
-            {totalCount > 0 && (
-              <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                {totalCount} {totalCount === 1 ? 'product' : 'products'}
-              </span>
-            )}
-          </p>
-        </div>
-        <button
-          onClick={() => router.push('/dashboard/products/create')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <AddIcon fontSize="small" />
-          Add Product
-        </button>
-      </div>
-
-      {/* Quick Filter Buttons */}
-      <div className="mb-6 flex gap-3">
-        <button
-          onClick={() => setViewMode('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
-            viewMode === 'all'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          📦 All Products
-        </button>
-        <button
-          onClick={() => setViewMode('active')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
-            viewMode === 'active'
-              ? 'bg-green-600 text-white shadow-md'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          ✅ Active Only
-        </button>
-        <button
-          onClick={() => setViewMode('low-stock')}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
-            viewMode === 'low-stock'
-              ? 'bg-orange-600 text-white shadow-md'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          ⚠️ Low Stock
-        </button>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex justify-between items-center">
-          <p className="text-red-700">{error}</p>
-          <button
-            onClick={() => dispatch(clearError())}
-            className="text-red-700 hover:text-red-900"
+    <Box sx={{ py: 4, px: 3, backgroundColor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="lg">
+        {/* Header Section */}
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+              Products
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body1" color="textSecondary">
+                Manage your product inventory
+              </Typography>
+              {totalCount > 0 && (
+                <Chip
+                  label={`${totalCount} ${totalCount === 1 ? 'product' : 'products'}`}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                />
+              )}
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => router.push('/dashboard/products/create')}
+            size="large"
           >
-            ✕
-          </button>
-        </div>
-      )}
+            Add Product
+          </Button>
+        </Box>
 
-      {/* Filters */}
-      <ProductFilterComponent filters={filters} onFilterChange={handleFilterChange} />
-
-      {/* Bulk Actions */}
-      {selectedItems.length > 0 && (
-        <div className="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg flex justify-between items-center">
-          <p className="text-blue-800">{selectedItems.length} item(s) selected</p>
-          <button
-            onClick={handleBulkDelete}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center gap-2"
+        {/* Filter View Buttons */}
+        <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+          <Button
+            variant={viewMode === 'all' ? 'contained' : 'outlined'}
+            color={viewMode === 'all' ? 'primary' : 'inherit'}
+            onClick={() => setViewMode('all')}
           >
-            <DeleteIcon fontSize="small" />
-            Delete ({selectedItems.length})
-          </button>
-        </div>
-      )}
+            📦 All Products
+          </Button>
+          <Button
+            variant={viewMode === 'active' ? 'contained' : 'outlined'}
+            color={viewMode === 'active' ? 'success' : 'inherit'}
+            onClick={() => setViewMode('active')}
+          >
+            ✅ Active Only
+          </Button>
+          <Button
+            variant={viewMode === 'low-stock' ? 'contained' : 'outlined'}
+            color={viewMode === 'low-stock' ? 'warning' : 'inherit'}
+            onClick={() => setViewMode('low-stock')}
+          >
+            ⚠️ Low Stock
+          </Button>
+        </Stack>
 
-      {/* Product Table */}
-      <ModernProductTable
-        products={items}
-        selectedItems={selectedItems}
-        onSelectItem={(id) => dispatch(toggleSelectItem(id))}
-        onSelectAll={() => dispatch(selectAllItems())}
-        onEdit={(id) => router.push(`/dashboard/products/${id}`)}
-        onDelete={handleDeleteProduct}
-        onQuickUpload={handleQuickUpload}
-        loading={loading}
-      />
+        {/* Error Alert */}
+        {error && (
+          <Alert
+            severity="error"
+            onClose={() => dispatch(clearError())}
+            sx={{ mb: 3 }}
+          >
+            {error}
+          </Alert>
+        )}
 
-      {/* Pagination */}
-      <ProductPagination
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-      />
+        {/* Filters */}
+        <Box sx={{ mb: 3 }}>
+          <ProductFilterComponent filters={filters} onFilterChange={handleFilterChange} />
+        </Box>
 
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        open={confirmDelete}
-        title="Confirm Delete"
-        message={
-          deleteItemId
-            ? 'Are you sure you want to delete this product?'
-            : `Are you sure you want to delete ${selectedItems.length} product(s)?`
-        }
-        confirmText="Delete"
-        onConfirm={deleteItemId ? handleConfirmDelete : handleConfirmBulkDelete}
-        onCancel={() => {
-          setConfirmDelete(false);
-          setDeleteItemId(null);
-        }}
-        loading={loading}
-      />
+        {/* Bulk Actions Card */}
+        {selectedItems.length > 0 && (
+          <Card sx={{ mb: 3, backgroundColor: 'info.lighter' }}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {selectedItems.length} item(s) selected
+              </Typography>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleBulkDelete}
+              >
+                Delete ({selectedItems.length})
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Quick Upload Modal */}
-      <QuickUploadModal
-        open={quickUploadOpen}
-        onClose={() => {
-          setQuickUploadOpen(false);
-          setQuickUploadProduct(null);
-        }}
-        product={quickUploadProduct}
-        onSuccess={handleQuickUploadSuccess}
-      />
+        {/* Product Table */}
+        <Box sx={{ mb: 3 }}>
+          <ModernProductTable
+            products={items}
+            selectedItems={selectedItems}
+            onSelectItem={(id) => dispatch(toggleSelectItem(id))}
+            onSelectAll={() => dispatch(selectAllItems())}
+            onEdit={(id) => router.push(`/dashboard/products/${id}`)}
+            onDelete={handleDeleteProduct}
+            onQuickUpload={handleQuickUpload}
+            loading={loading}
+          />
+        </Box>
 
-      {/* Notification Toast */}
-      {showNotification && (
-        <div className="fixed bottom-4 right-4 min-w-[300px] p-4 bg-white border-l-4 rounded-lg shadow-lg z-50"
-          style={{
-            borderLeftColor: showNotification.type === 'success' ? '#10b981' : '#ef4444'
+        {/* Pagination */}
+        <Box sx={{ mb: 3 }}>
+          <ProductPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+          />
+        </Box>
+
+        {/* Confirm Delete Dialog */}
+        <ConfirmDialog
+          open={confirmDelete}
+          title="Confirm Delete"
+          message={
+            deleteItemId
+              ? 'Are you sure you want to delete this product?'
+              : `Are you sure you want to delete ${selectedItems.length} product(s)?`
+          }
+          confirmText="Delete"
+          onConfirm={deleteItemId ? handleConfirmDelete : handleConfirmBulkDelete}
+          onCancel={() => {
+            setConfirmDelete(false);
+            setDeleteItemId(null);
           }}
-        >
-          <div className="flex justify-between items-center">
-            <p className={showNotification.type === 'success' ? 'text-green-700' : 'text-red-700'}>
-              {showNotification.message}
-            </p>
-            <button
-              onClick={() => setShowNotification(null)}
-              className="ml-4 text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+          loading={loading}
+        />
+
+        {/* Quick Upload Modal */}
+        <QuickUploadModal
+          open={quickUploadOpen}
+          onClose={() => {
+            setQuickUploadOpen(false);
+            setQuickUploadProduct(null);
+          }}
+          product={quickUploadProduct}
+          onSuccess={handleQuickUploadSuccess}
+        />
+
+        {/* Notification Toast */}
+        {showNotification && (
+          <Alert
+            severity={showNotification.type}
+            onClose={() => setShowNotification(null)}
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              minWidth: 300,
+              zIndex: 1000,
+            }}
+          >
+            {showNotification.message}
+          </Alert>
+        )}
+      </Container>
+    </Box>
   );
 }

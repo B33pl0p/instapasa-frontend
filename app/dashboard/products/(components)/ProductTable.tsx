@@ -128,10 +128,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   sx={{
                     mb: 1,
                     padding: '4px 8px',
-                    backgroundColor: product.is_active ? '#e8f5e9' : '#ffebee',
+                    backgroundColor: product.is_active ? 'success.light' : 'error.light',
                     borderRadius: '4px',
                     display: 'inline-block',
-                    color: product.is_active ? '#2e7d32' : '#c62828',
+                    color: product.is_active ? 'success.dark' : 'error.dark',
                   }}
                 >
                   {product.is_active ? 'Active' : 'Inactive'}
@@ -159,7 +159,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   return (
     <TableContainer component={Paper}>
       <Table>
-        <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+        <TableHead sx={{ backgroundColor: 'action.hover' }}>
           <TableRow>
             <TableCell padding="checkbox">
               <Checkbox
@@ -182,7 +182,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <TableRow
               key={product.id}
               sx={{
-                '&:hover': { backgroundColor: '#f9f9f9' },
+                '&:hover': { backgroundColor: 'action.hover' },
               }}
             >
               <TableCell padding="checkbox">
@@ -201,9 +201,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   variant="body2"
                   sx={{
                     padding: '4px 8px',
-                    backgroundColor: product.is_active ? '#e8f5e9' : '#ffebee',
+                    backgroundColor: product.is_active ? 'success.light' : 'error.light',
                     borderRadius: '4px',
-                    color: product.is_active ? '#2e7d32' : '#c62828',
+                    color: product.is_active ? 'success.dark' : 'error.dark',
                     display: 'inline-block',
                   }}
                 >

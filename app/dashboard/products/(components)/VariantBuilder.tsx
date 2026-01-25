@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Chip,
+  Checkbox,
   IconButton,
   Table,
   TableBody,
@@ -17,11 +18,14 @@ import {
   TextField,
   Typography,
   Alert,
+  InputAdornment,
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
   Add as AddIcon,
   AutoAwesome as AutoAwesomeIcon,
+  AddCircleOutline as AddCircleIcon,
+  RemoveCircleOutline as RemoveCircleIcon,
 } from '@mui/icons-material';
 import { ProductVariantCreate } from '@/app/dashboard/lib/types/product';
 
@@ -303,7 +307,7 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
 
   return (
     <Box>
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, backgroundColor: 'background.paper' }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             Variant Generator
@@ -334,11 +338,10 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                       <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
                         {availableSizes.map((size) => (
                           <Box key={size} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <input
-                              type="checkbox"
+                            <Checkbox
+                              size="small"
                               checked={selectedSizes.includes(size)}
                               onChange={() => toggleSize(size)}
-                              style={{ marginRight: 8 }}
                             />
                             <Typography variant="body2">{size}</Typography>
                           </Box>
@@ -403,11 +406,10 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                       <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
                         {availableColors.map((color) => (
                           <Box key={color} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <input
-                              type="checkbox"
+                            <Checkbox
+                              size="small"
                               checked={selectedColors.includes(color)}
                               onChange={() => toggleColor(color)}
-                              style={{ marginRight: 8 }}
                             />
                             <Typography variant="body2">{color}</Typography>
                           </Box>
@@ -472,11 +474,10 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                     <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
                       {availableGenders.map((gender) => (
                         <Box key={gender} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                          <input
-                            type="checkbox"
+                          <Checkbox
+                            size="small"
                             checked={selectedGenders.includes(gender)}
                             onChange={() => toggleGender(gender)}
-                            style={{ marginRight: 8 }}
                           />
                           <Typography variant="body2">{gender}</Typography>
                         </Box>
@@ -541,11 +542,10 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                       <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
                         {availableStorage.map((storage) => (
                           <Box key={storage} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <input
-                              type="checkbox"
+                            <Checkbox
+                              size="small"
                               checked={selectedStorage.includes(storage)}
                               onChange={() => toggleStorage(storage)}
-                              style={{ marginRight: 8 }}
                             />
                             <Typography variant="body2">{storage}</Typography>
                           </Box>
@@ -610,11 +610,10 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                       <Box sx={{ maxHeight: 200, overflowY: 'auto', mb: 2 }}>
                         {availableMaterial.map((material) => (
                           <Box key={material} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <input
-                              type="checkbox"
+                            <Checkbox
+                              size="small"
                               checked={selectedMaterial.includes(material)}
                               onChange={() => toggleMaterial(material)}
-                              style={{ marginRight: 8 }}
                             />
                             <Typography variant="body2">{material}</Typography>
                           </Box>
@@ -725,7 +724,7 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
             </Box>
 
             {/* Add Custom Attribute Section */}
-            <Card variant="outlined" sx={{ mb: 2, bgcolor: 'background.paper' }}>
+            <Card variant="outlined" sx={{ mb: 2, backgroundColor: 'background.paper' }}>
               <CardContent>
                 <Typography variant="subtitle2" gutterBottom>
                   Add Custom Attribute
@@ -771,8 +770,7 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                 <TableHead>
                   <TableRow>
                     <TableCell padding="checkbox">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedVariantIndices.length === value.length && value.length > 0}
                         onChange={(e) => {
                           if (e.target.checked) {
@@ -795,8 +793,7 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                   {value.map((variant, index) => (
                     <TableRow key={index}>
                       <TableCell padding="checkbox">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selectedVariantIndices.includes(index)}
                           onChange={() => toggleVariantSelection(index)}
                         />
@@ -828,8 +825,34 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                           onChange={(e) =>
                             updateVariantStock(index, parseInt(e.target.value) || 0)
                           }
-                          inputProps={{ min: 0, style: { textAlign: 'right' } }}
-                          sx={{ width: 80 }}
+                          inputProps={{ min: 0, style: { textAlign: 'center' } }}
+                          sx={{ width: 100 }}
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateVariantStock(index, Math.max(0, variant.stock - 1))}
+                                    sx={{ p: 0 }}
+                                  >
+                                    <RemoveCircleIcon fontSize="small" />
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => updateVariantStock(index, variant.stock + 1)}
+                                    sx={{ p: 0 }}
+                                  >
+                                    <AddCircleIcon fontSize="small" />
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            },
+                          }}
                         />
                       </TableCell>
                       {showPriceAdjustment && (
@@ -844,8 +867,34 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                                 parseFloat(e.target.value) || 0
                               )
                             }
-                            inputProps={{ step: 0.01, style: { textAlign: 'right' } }}
-                            sx={{ width: 100 }}
+                            inputProps={{ step: 0.01, style: { textAlign: 'center' } }}
+                            sx={{ width: 120 }}
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => updateVariantPriceAdjustment(index, (variant.price_adjustment || 0) - 1)}
+                                      sx={{ p: 0 }}
+                                    >
+                                      <RemoveCircleIcon fontSize="small" />
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => updateVariantPriceAdjustment(index, (variant.price_adjustment || 0) + 1)}
+                                      sx={{ p: 0 }}
+                                    >
+                                      <AddCircleIcon fontSize="small" />
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                              },
+                            }}
                           />
                         </TableCell>
                       )}

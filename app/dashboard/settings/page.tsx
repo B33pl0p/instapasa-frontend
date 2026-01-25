@@ -1,6 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {
+  Box,
+  Container,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Paper,
+  CircularProgress,
+  Alert,
+  IconButton,
+  Tooltip,
+  Stack,
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import SaveIcon from '@mui/icons-material/Save';
 import apiClient from '../lib/apiClient';
 import { useAppSelector } from '../lib/hooks';
 import { useToast } from '../lib/components/ToastContainer';
@@ -152,162 +170,250 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading settings...</p>
-        </div>
-      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress sx={{ mb: 2 }} />
+          <Typography color="textSecondary">Loading settings...</Typography>
+        </Box>
+      </Box>
     );
   }
 
   return (
-    <div className="p-6 pb-20 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Business Settings</h1>
-        <p className="text-gray-600 mt-2">
-          {config ? 'Manage your business configuration and Instagram menu' : 'Set up your business to start selling'}
-        </p>
-      </div>
+    <Box sx={{ py: 4, backgroundColor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="md">
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
+            Business Settings
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            {config ? 'Manage your business configuration and Instagram menu' : 'Set up your business to start selling'}
+          </Typography>
+        </Box>
 
-      {/* Welcome Banner for First Time */}
-      {!config && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-blue-900 mb-2">👋 Welcome to Your Dashboard!</h2>
-          <p className="text-blue-800">
-            Let's set up your business information. This will be used to configure your Instagram shopping experience.
-          </p>
-        </div>
-      )}
+        {/* Welcome Banner for First Time */}
+        {!config && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              👋 Welcome to Your Dashboard!
+            </Typography>
+            <Typography variant="body2">
+              Let's set up your business information. This will be used to configure your Instagram shopping experience.
+            </Typography>
+          </Alert>
+        )}
 
-      {/* Form */}
-      <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
-        {/* Business Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Business Description
-          </label>
-          <textarea
-            value={formData.business_description}
-            onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
-            placeholder="What does your business do? (e.g., We sell handmade jewelry and custom accessories)"
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            maxLength={1000}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {formData.business_description.length}/1000 characters
-          </p>
-        </div>
-
-        {/* Support Email */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Support Email
-          </label>
-          <input
-            type="email"
-            value={formData.support_email}
-            onChange={(e) => setFormData({ ...formData, support_email: e.target.value })}
-            placeholder="support@yourbusiness.com"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        {/* Support Phone */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Support Phone
-          </label>
-          <input
-            type="tel"
-            value={formData.support_phone}
-            onChange={(e) => setFormData({ ...formData, support_phone: e.target.value })}
-            placeholder="+1234567890"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        {/* Payment QR Codes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Payment QR Codes
-          </label>
-          <p className="text-sm text-gray-500 mb-3">
-            Upload QR codes for eSewa, Khalti, FonePay, or other payment methods
-          </p>
-
-          {/* QR Code Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
-            {formData.payment_qr_codes.map((url, index) => (
-              <div key={url} className="relative group">
-                <img
-                  src={url}
-                  alt={`QR Code ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border border-gray-200"
+        {/* Form Card */}
+        <Card sx={{ mb: 4 }}>
+          <CardContent sx={{ p: 4 }}>
+            <Stack spacing={3}>
+              {/* Business Description */}
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
+                  Business Description
+                </Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={formData.business_description}
+                  onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
+                  placeholder="What does your business do? (e.g., We sell handmade jewelry and custom accessories)"
+                  inputProps={{ maxLength: 1000 }}
+                  variant="outlined"
                 />
-                <button
-                  onClick={() => removeQRCode(url)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 1 }}>
+                  {formData.business_description.length}/1000 characters
+                </Typography>
+              </Box>
 
-            {/* Upload Button */}
-            <label className="w-full h-32 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-                disabled={uploading}
-              />
-              {uploading ? (
-                <>
-                  <div className="animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600 mb-2"></div>
-                  <span className="text-xs text-gray-500">Uploading...</span>
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span className="text-xs text-gray-500">Add QR Code</span>
-                </>
-              )}
-            </label>
-          </div>
-        </div>
+              {/* Support Email and Phone */}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
+                  Support Email
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="email"
+                  value={formData.support_email}
+                  onChange={(e) => setFormData({ ...formData, support_email: e.target.value })}
+                  placeholder="support@yourbusiness.com"
+                  variant="outlined"
+                />
+                </Box>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 pt-4 border-t">
-          <button
-            onClick={handleSave}
-            disabled={saving || uploading}
-            className="flex-1 sm:flex-none px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-          >
-            {saving ? 'Saving & Deploying Menu...' : config ? 'Update & Deploy Menu' : 'Save & Deploy Menu'}
-          </button>
-        </div>
+              {/* Support Phone */}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
+                  Support Phone
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="tel"
+                  value={formData.support_phone}
+                  onChange={(e) => setFormData({ ...formData, support_phone: e.target.value })}
+                  placeholder="+1234567890"
+                  variant="outlined"
+                />
+              </Box>
+              </Stack>
+
+              {/* Payment QR Codes */}
+              <Box>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                  Payment QR Codes
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  Upload QR codes for eSewa, Khalti, FonePay, or other payment methods
+                </Typography>
+
+                {/* QR Code Grid */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+                  {formData.payment_qr_codes.map((url, index) => (
+                    <Box key={url}>
+                      <Paper
+                        sx={{
+                          position: 'relative',
+                          overflow: 'hidden',
+                          '&:hover .delete-btn': {
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={url}
+                          alt={`QR Code ${index + 1}`}
+                          sx={{
+                            width: '100%',
+                            height: 120,
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+                        <Tooltip title="Delete">
+                          <IconButton
+                            className="delete-btn"
+                            onClick={() => removeQRCode(url)}
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              opacity: 0,
+                              transition: 'opacity 0.2s',
+                              backgroundColor: 'error.main',
+                              color: 'white',
+                              '&:hover': {
+                                backgroundColor: 'error.dark',
+                              },
+                            }}
+                            size="small"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Paper>
+                    </Box>
+                  ))}
+
+                  {/* Upload Button */}
+                  <Paper
+                      component="label"
+                      sx={{
+                        height: 120,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: uploading ? 'not-allowed' : 'pointer',
+                        opacity: uploading ? 0.6 : 1,
+                        transition: 'all 0.2s',
+                        border: '2px dashed',
+                        borderColor: 'divider',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileSelect}
+                        style={{ display: 'none' }}
+                        disabled={uploading}
+                      />
+                      {uploading ? (
+                        <>
+                          <CircularProgress size={24} sx={{ mb: 1 }} />
+                          <Typography variant="caption">Uploading...</Typography>
+                        </>
+                      ) : (
+                        <>
+                          <CloudUploadIcon sx={{ fontSize: 32, color: 'primary.main', mb: 1 }} />
+                          <Typography variant="caption" sx={{ textAlign: 'center' }}>
+                            Add QR Code
+                          </Typography>
+                        </>
+                      )}
+                    </Paper>
+                </Box>
+              </Box>
+            </Stack>
+
+            {/* Action Buttons */}
+            <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<SaveIcon />}
+                onClick={handleSave}
+                disabled={saving || uploading}
+                sx={{ flexGrow: { xs: 1, sm: 0 } }}
+              >
+                {saving ? 'Saving...' : config ? 'Update & Deploy Menu' : 'Save & Deploy Menu'}
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Info Box */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-medium text-gray-900 mb-2">ℹ️ What happens when you save?</h3>
-          <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-            <li>Saves your business configuration</li>
-            <li>Automatically deploys persistent menu to Instagram DMs</li>
-            <li>Customers can browse products and place orders</li>
-            <li>Your payment QR codes will be shown at checkout</li>
-            <li>Support info will be accessible to buyers</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+        <Card sx={{ backgroundColor: 'action.hover' }}>
+          <CardContent>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5 }}>
+              ℹ️ What happens when you save?
+            </Typography>
+            <Box component="ul" sx={{ ml: 2, mb: 0 }}>
+              <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                Saves your business configuration
+              </Typography>
+              <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                Automatically deploys persistent menu to Instagram DMs
+              </Typography>
+              <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                Customers can browse products and place orders
+              </Typography>
+              <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                Your payment QR codes will be shown at checkout
+              </Typography>
+              <Typography component="li" variant="body2">
+                Support info will be accessible to buyers
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Container>
+    </Box>
   );
 }

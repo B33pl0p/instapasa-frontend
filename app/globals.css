@@ -107,3 +107,30 @@ html {
     backdrop-filter: blur(10px);
   }
 }
+
+/* Hide default number input spinners and style custom ones */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  cursor: pointer;
+}
+
+/* Style the number input with better contrast */
+input[type="number"] {
+  color: #E8E8E8;
+  caret-color: #8B5CF6;
+}
+
+input[type="number"]::placeholder {
+  color: #6B7280;
+}

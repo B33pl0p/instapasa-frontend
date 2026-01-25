@@ -2,12 +2,15 @@
 
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchMessengerMessages, setCurrentConversation } from '@/app/dashboard/lib/slices/messengerMessagesSlice';
 import { fetchOrders } from '@/app/dashboard/lib/slices/orderSlice';
 import apiClient from '@/app/dashboard/lib/apiClient';
 import MessageBox from '@/app/dashboard/message/components/MessageBox';
 import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
+import { Box, Button, TextField, IconButton, CircularProgress, Paper, Stack, Typography, Chip, Divider } from '@mui/material';
+import { Send as SendIcon, AttachFile as AttachFileIcon, Close as CloseIcon, ShoppingBag as ShoppingBagIcon } from '@mui/icons-material';
 import MicIcon from '@mui/icons-material/Mic';
 import ImageIcon from '@mui/icons-material/Image';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
@@ -19,7 +22,9 @@ interface ConversationViewProps {
 
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
-  const router = useRouter();  const { showToast } = useToast();  const { messages, messageLoading, error, currentConversationId, messageCache, conversations } = useAppSelector(
+  const router = useRouter();  
+  const theme = useTheme();
+  const { showToast } = useToast();  const { messages, messageLoading, error, currentConversationId, messageCache, conversations } = useAppSelector(
     (state) => state.messengerMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
@@ -197,147 +202,150 @@ export default function ConversationView({ conversationId }: ConversationViewPro
 
   if (!conversationId) {
     return (
-      <div className="flex h-full items-center justify-center bg-white">
-        <p className="text-center text-sm text-gray-500">
+      <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.paper' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Select a conversation to view messages
-        </p>
-      </div>
+        </Typography>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center bg-white p-4">
-        <p className="text-center text-sm text-red-500">{error}</p>
-      </div>
+      <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.paper', p: 2 }}>
+        <Typography variant="body2" sx={{ color: 'error.main', textAlign: 'center' }}>
+          {error}
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <div 
-      className="flex h-full w-full flex-col bg-white" 
-      style={{ 
-        minHeight: 0, 
-        height: '100%', 
-        maxHeight: '100vh', 
-        display: 'flex',
-      }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', minHeight: 0 }}>
       {/* Order Backlink Banner */}
       {relatedOrders.length > 0 && (
-        <div className="shrink-0 bg-blue-50 border-b border-blue-200">
+        <Paper sx={{ bgcolor: 'info.lighter', borderRadius: 0, boxShadow: 'none', borderBottom: '1px solid', borderColor: 'divider' }}>
           {relatedOrders.length === 1 ? (
-            <div className="px-4 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <span className="text-blue-900 font-medium">{relatedOrders[0].order_number}</span>
-                <span className="text-blue-700">• Rs. {relatedOrders[0].total.toFixed(2)}</span>
-                <span className="text-xs bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full">{relatedOrders[0].status.replace('_', ' ')}</span>
-              </div>
-              <button
+            <Stack direction="row" sx={{ px: 2, py: 1.5, alignItems: 'center', justifyContent: 'space-between' }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <ShoppingBagIcon sx={{ width: 16, height: 16, color: 'info.main' }} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'info.dark' }}>
+                  {relatedOrders[0].order_number}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                  • Rs. {relatedOrders[0].total.toFixed(2)}
+                </Typography>
+                <Chip
+                  label={relatedOrders[0].status.replace('_', ' ')}
+                  size="small"
+                  variant="outlined"
+                  color="info"
+                />
+              </Stack>
+              <Button
+                size="small"
                 onClick={() => router.push('/dashboard/orders')}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                endIcon={<SendIcon sx={{ width: 16, height: 16 }} />}
               >
                 View Order
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
+              </Button>
+            </Stack>
           ) : (
-            <div className="px-4 py-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                  <span className="text-blue-900 font-medium">{relatedOrders.length} Orders</span>
-                  <span className="text-blue-700">• Total: Rs. {relatedOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}</span>
-                </div>
-                <button
+            <Stack spacing={1.5} sx={{ px: 2, py: 1.5 }}>
+              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <ShoppingBagIcon sx={{ width: 16, height: 16, color: 'info.main' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'info.dark' }}>
+                    {relatedOrders.length} Orders
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                    • Total: Rs. {relatedOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}
+                  </Typography>
+                </Stack>
+                <Button
+                  size="small"
                   onClick={() => router.push('/dashboard/orders')}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                  endIcon={<SendIcon sx={{ width: 16, height: 16 }} />}
                 >
                   View All Orders
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
+                </Button>
+              </Stack>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
                 {relatedOrders.map((order) => (
-                  <div key={order.id} className="text-xs bg-white border border-blue-200 rounded px-2 py-1 flex items-center gap-2">
-                    <span className="font-medium text-blue-900">{order.order_number}</span>
-                    <span className="text-gray-500">Rs. {order.total.toFixed(0)}</span>
-                    <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">{order.status.replace('_', ' ')}</span>
-                  </div>
+                  <Chip
+                    key={order.id}
+                    label={
+                      <Stack direction="row" spacing={0.5}>
+                        <span>{order.order_number}</span>
+                        <span>• Rs. {order.total.toFixed(0)}</span>
+                        <span>{order.status.replace('_', ' ')}</span>
+                      </Stack>
+                    }
+                    size="small"
+                    variant="outlined"
+                    color="info"
+                  />
                 ))}
-              </div>
-            </div>
+              </Stack>
+            </Stack>
           )}
-        </div>
+        </Paper>
       )}
 
       {/* Messages Area - Fixed height with scrollbar */}
-      <div 
-        className="flex-1 overflow-hidden bg-gray-50" 
-        style={{ 
-          minHeight: 0,
-          flex: '1 1 auto',
-          display: 'flex', 
-          flexDirection: 'column',
-          position: 'relative',
-          height: '100%',
-          width: '100%',
-        }}
-      >
+      <Box sx={{ flex: '1 1 auto', overflow: 'hidden', backgroundColor: 'background.default', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <MessageBox 
           messages={messages} 
           businessUsername={null}
           loading={messageLoading}
         />
-      </div>
+      </Box>
 
       {/* Message Input Area - Fixed at bottom */}
-      <div className="shrink-0 border-t border-gray-200 bg-white p-4 shadow-lg">
+      <Paper sx={{ flexShrink: 0, borderRadius: 0, boxShadow: 'none', borderTop: '1px solid', borderColor: 'divider' }}>
         {attachmentPreview && (
-          <div className="mb-3 bg-gray-50 rounded-lg p-3 flex items-center gap-3">
+          <Paper sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 1.5 }}>
             {attachmentPreview.type === 'image' && (
-              <img src={attachmentPreview.url} alt="Preview" className="h-20 w-20 object-cover rounded" />
+              <Box component="img" src={attachmentPreview.url} alt="Preview" sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
             )}
             {attachmentPreview.type === 'video' && (
-              <video src={attachmentPreview.url} className="h-20 w-20 object-cover rounded" />
+              <Box component="video" src={attachmentPreview.url} sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
             )}
             {(attachmentPreview.type === 'audio' || attachmentPreview.type === 'file') && (
-              <div className="h-20 w-20 bg-gray-200 rounded flex items-center justify-center">
-                <span className="text-2xl">
+              <Box sx={{ width: 60, height: 60, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant="h6">
                   {attachmentPreview.type === 'audio' ? '🎵' : '📄'}
-                </span>
-              </div>
+                </Typography>
+              </Box>
             )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{attachmentPreview.file.name}</p>
-              <p className="text-xs text-gray-500">{(attachmentPreview.file.size / 1024).toFixed(1)} KB</p>
-            </div>
-            <button
+            <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {attachmentPreview.file.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {(attachmentPreview.file.size / 1024).toFixed(1)} KB
+              </Typography>
+            </Stack>
+            <IconButton
+              size="small"
               onClick={() => {
                 URL.revokeObjectURL(attachmentPreview.url);
                 setAttachmentPreview(null);
               }}
-              className="text-red-500 hover:text-red-700 p-1"
+              sx={{ color: 'error.main' }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+              <CloseIcon sx={{ width: 20, height: 20 }} />
+            </IconButton>
+          </Paper>
         )}
 
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
+        <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'flex-end' }}>
+          <TextField
+            fullWidth
+            multiline
+            maxRows={3}
+            size="small"
+            variant="outlined"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={(e) => {
@@ -347,38 +355,31 @@ export default function ConversationView({ conversationId }: ConversationViewPro
               }
             }}
             placeholder={attachmentPreview ? "Add a caption (optional)" : "Type your message..."}
-            className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 transition-all"
           />
-          <button
+          <IconButton component="label" size="small">
+            <input
+              type="file"
+              hidden
+              onChange={handleFileSelect}
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+            />
+            <AttachFileIcon sx={{ width: 20, height: 20 }} />
+          </IconButton>
+          <IconButton size="small" color="default">
+            <EmojiEmotionsIcon sx={{ width: 20, height: 20 }} />
+          </IconButton>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
             onClick={handleSendMessage}
             disabled={(!messageInput.trim() && !attachmentPreview) || isSending}
-            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            endIcon={isUploadingAttachment || isSending ? <CircularProgress size={16} /> : <SendIcon />}
           >
-            {isUploadingAttachment ? 'Uploading...' : isSending ? 'Sending...' : 'Send'}
-          </button>
-          <input
-            type="file"
-            id="attachment-input-messenger"
-            onChange={handleFileSelect}
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-            className="hidden"
-          />
-          <label
-            htmlFor="attachment-input-messenger"
-            className="cursor-pointer rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            title="Attach file"
-          >
-            <ImageIcon sx={{ width: 20, height: 20 }} />
-          </label>
-          <button
-            type="button"
-            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Emoji"
-          >
-            <EmojiEmotionsIcon sx={{ width: 20, height: 20 }} />
-          </button>
-        </div>
-      </div>
-    </div>
+            Send
+          </Button>
+        </Stack>
+      </Paper>
+    </Box>
   );
 }
