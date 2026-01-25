@@ -1,415 +1,200 @@
-# Business Config / Onboarding - Frontend Guide
+# Analytics Dashboard API Documentation
 
 ## Overview
-Simple business configuration for storing contact info and payment QR codes.
+Single endpoint providing **14 real-time metrics** for the seller dashboard. All data calculated from MongoDB with parallel queries for optimal performance.
+
+**Endpoint:** `GET /api/v2/dashboard/analytics`
+
+**Response Time:** ~1-2 seconds (all metric groups run in parallel)
 
 ---
 
-## API Endpoints
+## Response Structure
 
-### Base URL
-```
-/api/v2/dashboard/business-config
-```
-
----
-
-## 1. Create Business Config
-
-**POST** `/api/v2/dashboard/business-config`
-
-### Request Body
 ```json
 {
-  "business_description": "We sell handmade jewelry and custom accessories",
-  "support_email": "support@store.com",
-  "support_phone": "+1234567890",
-  "payment_qr_codes": [
-    "https://s3.../business-configs/customer123/payment-qr-20260124_103045-gpay.png",
-    "https://s3.../business-configs/customer123/payment-qr-20260124_103046-paytm.png"
-  ]
-}
-```
-
-### Response (201)
-```json
-{
-  "id": "config_id_123",
-  "customer_id": "customer_id_123",
-  "business_description": "We sell handmade jewelry...",
-  "support_email": "support@store.com",
-  "support_phone": "+1234567890",
-  "payment_qr_codes": ["url1", "url2"],
-  "created_at": "2026-01-24T10:30:00Z",
-  "updated_at": "2026-01-24T10:30:00Z"
-}
-```
-
-### Notes
-- All fields are **optional**
-- If config already exists, returns existing config (400 error)
-
----
-
-## 2. Get Business Config
-
-**GET** `/api/v2/dashboard/business-config`
-
-### Response (200)
-```json
-{
-  "id": "config_id_123",
-  "customer_id": "customer_id_123",
-  "business_description": "We sell handmade jewelry...",
-  "support_email": "support@store.com",
-  "support_phone": "+1234567890",
-  "payment_qr_codes": ["url1", "url2"],
-  "created_at": "2026-01-24T10:30:00Z",
-  "updated_at": "2026-01-24T10:30:00Z"
-}
-```
-
-### Response (404)
-```json
-{
-  "detail": "Business config not found"
+  "total_revenue": 5000.00,
+  "total_orders_sold": 50,
+  "average_order_value": 100.00,
+  "best_selling_product": {
+    "product_id": "123",
+    "product_name": "T-Shirt",
+    "units_sold": 150,
+    "total_revenue": 2250.00
+  },
+  "total_units_sold": 200,
+  "revenue_per_product": [...],
+  "week_orders": 12,
+  "month_orders": 50,
+  "total_conversations": 100,
+  "total_messages": 500,
+  "chat_to_order_conversion_rate": 25.5,
+  "abandoned_chats": 30,
+  "active_chats": 5,
+  "most_asked_questions": [
+    { "question": "what is the price?", "frequency": 25 }
+  ],
+  "low_stock_products": [...]
 }
 ```
 
 ---
 
-## 3. Update Business Config
+## Metrics Breakdown
 
-**PUT** `/api/v2/dashboard/business-config`
+### Sales Metrics (6)
+| Metric | Type | Description |
+|--------|------|-------------|
+| `total_revenue` | float | Sum of all order totals (₹) |
+| `total_orders_sold` | int | Total number of orders |
+| `average_order_value` | float | Revenue ÷ Orders |
+| `best_selling_product` | object | Top product by revenue |
+| `total_units_sold` | int | Sum of all quantities |
+| `revenue_per_product` | array | All products ranked by revenue |
 
-### Request Body
-```json
-{
-  "business_description": "Updated description",
-  "support_email": "new@email.com",
-  "payment_qr_codes": ["new_url1", "new_url2", "new_url3"]
-}
-```
+### Period Metrics (2)
+| Metric | Type | Description |
+|--------|------|-------------|
+| `week_orders` | int | Orders in last 7 days |
+| `month_orders` | int | Orders in last 30 days |
 
-### Notes
-- Send only fields you want to update
-- To **add** QR codes: fetch existing, append new URLs, send full array
-- To **remove** QR codes: send array without removed URLs
+### Chat Metrics (5)
+| Metric | Type | Description |
+|--------|------|-------------|
+| `total_conversations` | int | Total Instagram conversations |
+| `total_messages` | int | Total messages across all chats |
+| `chat_to_order_conversion_rate` | float | % of chats that led to orders |
+| `abandoned_chats` | int | Conversations without purchases |
+| `active_chats` | int | Updated in last 48 hours |
+| `most_asked_questions` | array | Top 5 FAQ (extracted from messages) |
 
----
-
-## 4. Delete Business Config
-
-**DELETE** `/api/v2/dashboard/business-config`
-
-### Response (204)
-No content - successful deletion
-
----
-
-## 5. Upload Payment QR Codes
-
-**POST** `/api/v2/dashboard/business-config/upload-payment-qr`
-
-### Request Body
-```json
-{
-  "file_name": "gpay-qr.png",
-  "content_type": "image/png"
-}
-```
-
-### Response (200)
-```json
-{
-  "upload_url": "https://s3.presigned.url.for.upload...",
-  "file_url": "https://s3.../business-configs/customer123/payment-qr-20260124_103045-gpay.png",
-  "expires_in": 3600
-}
-```
-
-### Upload Flow
-1. Call `/upload-payment-qr` → Get `upload_url` and `file_url`
-2. Upload file to S3: `PUT upload_url` with file binary + headers:
-   ```javascript
-   await fetch(upload_url, {
-     method: 'PUT',
-     body: file,
-     headers: {
-       'Content-Type': file.type,
-       'x-amz-acl': 'public-read'  // Required for Instagram to access images
-     }
-   });
-   ```
-3. Use `file_url` in `payment_qr_codes` array
+### Bonus (1)
+| Metric | Type | Description |
+|--------|------|-------------|
+| `low_stock_products` | array | Products with stock < 10 |
 
 ---
 
-## React Implementation Example
+## React Usage Examples
 
-### Onboarding Form Component
-
+### Fetch Analytics
 ```jsx
-function BusinessOnboarding() {
-  const [formData, setFormData] = useState({
-    business_description: '',
-    support_email: '',
-    support_phone: '',
-    payment_qr_codes: []
-  });
-  const [qrFiles, setQrFiles] = useState([]);
-  const [uploading, setUploading] = useState(false);
+const [analytics, setAnalytics] = useState(null);
+const [loading, setLoading] = useState(true);
 
-  // Upload QR codes to S3
-  const uploadQRCodes = async (files) => {
-    const uploadedUrls = [];
-    
-    for (const file of files) {
-      // Get presigned URL
-      const { upload_url, file_url } = await fetch(
-        '/api/v2/dashboard/business-config/upload-payment-qr',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            file_name: file.name,
-            content_type: file.type
-          })
-        }
-      ).then(r => r.json());
-      
-      // Upload to S3
-      await fetch(upload_url, {
-        method: 'PUT',
-        body: file,
-        headers: { 
-          'Content-Type': file.type,
-          'x-amz-acl': 'public-read'  // Make publicly accessible
-        }
-      });
-      
-      uploadedUrls.push(file_url);
-    }
-    
-    return uploadedUrls;
-  };
-
-  // Submit form
-  const handleSubmit = async () => {
-    setUploading(true);
-    
-    // Upload QR codes first
-    const qrUrls = await uploadQRCodes(qrFiles);
-    
-    // Create config with QR URLs
-    await fetch('/api/v2/dashboard/business-config', {
-      method: 'POST',
-      body: JSON.stringify({
-        ...formData,
-        payment_qr_codes: qrUrls
-      })
-    });
-    
-    setUploading(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <textarea 
-        placeholder="What does your business do?"
-        value={formData.business_description}
-        onChange={e => setFormData({...formData, business_description: e.target.value})}
-      />
-      
-      <input 
-        type="email"
-        placeholder="Support Email"
-        value={formData.support_email}
-        onChange={e => setFormData({...formData, support_email: e.target.value})}
-      />
-      
-      <input 
-        type="tel"
-        placeholder="Support Phone"
-        value={formData.support_phone}
-        onChange={e => setFormData({...formData, support_phone: e.target.value})}
-      />
-      
-      <input 
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={e => setQrFiles(Array.from(e.target.files))}
-      />
-      
-      <button type="submit" disabled={uploading}>
-        {uploading ? 'Uploading...' : 'Save Configuration'}
-      </button>
-    </form>
-  );
-}
+useEffect(() => {
+  fetch('/api/v2/dashboard/analytics', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+    .then(r => r.json())
+    .then(data => {
+      setAnalytics(data);
+      setLoading(false);
+    })
+    .catch(err => console.error(err));
+}, []);
 ```
 
----
-
-### Edit Configuration Component
-
+### Display Revenue Card
 ```jsx
-function EditBusinessConfig() {
-  const [config, setConfig] = useState(null);
-  const [formData, setFormData] = useState({});
+<Card>
+  <h3>Total Revenue</h3>
+  <p className="text-2xl">₹{analytics?.total_revenue.toLocaleString()}</p>
+  <small>{analytics?.total_orders_sold} orders</small>
+</Card>
+```
 
-  // Fetch existing config
-  useEffect(() => {
-    fetch('/api/v2/dashboard/business-config')
-      .then(r => r.json())
-      .then(data => {
-        setConfig(data);
-        setFormData({
-          business_description: data.business_description,
-          support_email: data.support_email,
-          support_phone: data.support_phone,
-          payment_qr_codes: data.payment_qr_codes
-        });
-      })
-      .catch(() => {
-        // No config exists - show onboarding
-      });
-  }, []);
+### Best Selling Product
+```jsx
+{analytics?.best_selling_product && (
+  <div>
+    <h4>{analytics.best_selling_product.product_name}</h4>
+    <p>₹{analytics.best_selling_product.total_revenue}</p>
+    <p>{analytics.best_selling_product.units_sold} units sold</p>
+  </div>
+)}
+```
 
-  // Add new QR code
-  const addQRCode = async (file) => {
-    const { upload_url, file_url } = await fetch(
-      '/api/v2/dashboard/business-config/upload-payment-qr',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          file_name: file.name,
-          content_type: file.type
-        })
-      }
-    ).then(r => r.json());
-    
-    await fetch(upload_url, {
-      method: 'PUT',
-      body: file,
-      headers: { 
-        'Content-Type': file.type,
-        'x-amz-acl': 'public-read'
-      }
-    });
-    
-    // Add to existing QR codes
-    setFormData({
-      ...formData,
-      payment_qr_codes: [...formData.payment_qr_codes, file_url]
-    });
-  };
+### Sales Trend (Week vs Month)
+```jsx
+<LineChart data={[
+  { period: 'Week', orders: analytics?.week_orders },
+  { period: 'Month', orders: analytics?.month_orders }
+]} />
+```
 
-  // Remove QR code
-  const removeQRCode = (urlToRemove) => {
-    setFormData({
-      ...formData,
-      payment_qr_codes: formData.payment_qr_codes.filter(url => url !== urlToRemove)
-    });
-  };
+### Chat Conversion Funnel
+```jsx
+<div>
+  <p>Conversations: {analytics?.total_conversations}</p>
+  <p>Conversion Rate: {analytics?.chat_to_order_conversion_rate.toFixed(1)}%</p>
+  <p>Abandoned: {analytics?.abandoned_chats}</p>
+  <p>Active: {analytics?.active_chats}</p>
+</div>
+```
 
-  // Update config
-  const handleUpdate = async () => {
-    await fetch('/api/v2/dashboard/business-config', {
-      method: 'PUT',
-      body: JSON.stringify(formData)
-    });
-  };
+### FAQ Section
+```jsx
+<ul>
+  {analytics?.most_asked_questions.map(faq => (
+    <li key={faq.question}>
+      <strong>Q:</strong> {faq.question} 
+      <span badge>{faq.frequency} times</span>
+    </li>
+  ))}
+</ul>
+```
 
-  return (
-    <form onSubmit={handleUpdate}>
-      {/* Form fields same as onboarding */}
-      
-      {/* QR Codes display */}
-      <div className="qr-codes">
-        {formData.payment_qr_codes?.map(url => (
-          <div key={url}>
-            <img src={url} alt="Payment QR" />
-            <button onClick={() => removeQRCode(url)}>Remove</button>
-          </div>
-        ))}
-        <input 
-          type="file"
-          accept="image/*"
-          onChange={e => addQRCode(e.target.files[0])}
-        />
-      </div>
-      
-      <button type="submit">Update Configuration</button>
-    </form>
-  );
-}
+### Low Stock Alert
+```jsx
+{analytics?.low_stock_products.length > 0 && (
+  <Alert severity="warning">
+    {analytics.low_stock_products.map(p => (
+      <p key={p.product_id}>
+        {p.product_name}: {p.current_stock}/{p.threshold}
+      </p>
+    ))}
+  </Alert>
+)}
 ```
 
 ---
 
-## Important Notes
+## Error Handling
 
-### QR Code Storage
-- **Location**: `business-configs/{customer_id}/payment-qr-{timestamp}-{filename}`
-- **Lifecycle**: Permanent (no auto-delete)
-- **Format**: Images only (PNG, JPG recommended)
+On error, API returns **zero/empty values** (graceful degradation):
+```jsx
+// Check if loading
+if (loading) return <Skeleton />;
 
-### Error Handling
-- **409**: Config already exists (use PUT to update)
-- **404**: Config not found (need to create first)
-- **500**: Server error (S3 upload failed, etc.)
-
-### Best Practices
-1. **Show loading states** during QR upload (can take 2-5 seconds)
-2. **Validate files** before upload (max size, image only)
-3. **Handle upload failures** gracefully (retry option)
-4. **Preview QR codes** before submission
-5. **Check if config exists** on mount (GET endpoint)
-6. If config exists → Show edit mode
-7. If not → Show onboarding mode
-
----
-
-## Fields Reference
-
-| Field | Type | Required | Max Length | Notes |
-|-------|------|----------|------------|-------|
-| `business_description` | string | No | 1000 chars | What your business does |
-| `support_email` | string | No | - | Contact email |
-| `support_phone` | string | No | - | Contact phone |
-| `payment_qr_codes` | array[string] | No | - | S3 URLs of QR images |
-
-All fields are optional - save what you have!
-
----
-
-## Troubleshooting
-
-### Images not showing in Instagram/Messenger
-**Problem**: Sent image appears blank or doesn't load
-
-**Solution**: Make sure you include `'x-amz-acl': 'public-read'` header when uploading to S3:
-```javascript
-await fetch(upload_url, {
-  method: 'PUT',
-  body: file,
-  headers: {
-    'Content-Type': file.type,
-    'x-amz-acl': 'public-read'  // ✅ Required!
-  }
-});
+// All values safe (never null/undefined)
+<p>Revenue: ₹{analytics?.total_revenue || 0}</p>
 ```
 
-Without this header, Instagram can't access the image (403 Forbidden).
+---
 
-### Supported Image Formats
-- ✅ PNG (image/png)
-- ✅ JPEG (image/jpeg)
-- ✅ GIF (image/gif)
-- ❌ WebP (not supported by Instagram API)
-- ❌ SVG (not supported by Instagram API)
+## Tips for Frontend
 
-### File Size Limits
-- **Recommended**: < 8 MB
-- **Maximum**: 25 MB (Instagram API limit)
+1. **Cache the data** - Results don't change frequently, cache for 5-10 minutes
+2. **Lazy load** - Show KPI cards first, detailed charts after
+3. **Real-time updates** - Consider polling every 5 minutes or WebSocket
+4. **Mobile responsive** - Cards stack on mobile
+5. **Timezone aware** - "Last 7 days" uses UTC timezone
+
+---
+
+## Performance Notes
+
+- ✅ All 4 metric groups fetch in **parallel** (not sequential)
+- ✅ Typical response: **~1-2 seconds**
+- ✅ No pagination needed (dashboard data)
+- ✅ Returns zero values on partial errors (no 500s)
+
+---
+
+## Related Endpoints
+
+- Product Management: `/api/v2/products`
+- Orders: `/api/v2/orders`
+- Conversations: `/api/v2/conversations`
+- Business Config: `/api/v2/dashboard/business-config`

@@ -19,6 +19,12 @@ import {
   Skeleton,
   Typography,
   Stack,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -57,7 +63,28 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
   onQuickUpload,
   loading,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   if (loading) {
+    if (isMobile) {
+      return (
+        <Grid container spacing={2}>
+          {[...Array(5)].map((_, i) => (
+            <Grid size={{ xs: 12 }} key={i}>
+              <Card>
+                <CardContent>
+                  <Skeleton variant="text" height={24} sx={{ mb: 1 }} />
+                  <Skeleton variant="text" width="80%" />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      );
+    }
+
     return (
       <Paper>
         <TableContainer>
@@ -75,9 +102,9 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                       </Box>
                     </Stack>
                   </TableCell>
+                  {!isTablet && <TableCell><Skeleton variant="text" /></TableCell>}
                   <TableCell><Skeleton variant="text" /></TableCell>
-                  <TableCell><Skeleton variant="text" /></TableCell>
-                  <TableCell><Skeleton variant="text" /></TableCell>
+                  {!isTablet && <TableCell><Skeleton variant="text" /></TableCell>}
                   <TableCell><Skeleton variant="text" /></TableCell>
                   <TableCell><Skeleton variant="text" /></TableCell>
                 </TableRow>
@@ -91,11 +118,11 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
 
   if (!products || products.length === 0) {
     return (
-      <Paper sx={{ p: 4, textAlign: 'center' }}>
+      <Paper sx={{ p: isMobile ? 2 : 4, textAlign: 'center' }}>
         <Box sx={{ color: 'text.secondary', mb: 2 }}>
-          <ImageIcon sx={{ fontSize: 48 }} />
+          <ImageIcon sx={{ fontSize: isMobile ? 40 : 48 }} />
         </Box>
-        <Typography variant="h6" sx={{ mb: 1 }}>
+        <Typography variant={isMobile ? 'body1' : 'h6'} sx={{ mb: 1, fontWeight: 600 }}>
           No products found
         </Typography>
         <Typography variant="body2" color="textSecondary">
@@ -105,62 +132,28 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
     );
   }
 
-  return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: 'action.hover' }}>
-            <TableCell padding="checkbox" width="5%">
-              <Checkbox
-                checked={selectedItems.length === products.length && products.length > 0}
-                onChange={onSelectAll}
-              />
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700 }} width="30%">
-              Product
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700 }} width="15%">
-              Category
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700 }} width="12%">
-              Price
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700 }} width="12%">
-              Stock
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700 }} width="12%">
-              Status
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: 700 }} width="14%">
-              Actions
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {products.map((product) => {
-            const thumbnail = product.images?.[0];
-            const categoryLabel = categoryIcons[product.category || 'general'] || 'Product';
-
-            return (
-              <TableRow
-                key={product.id}
-                hover
-                onClick={() => onEdit(product.id)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    checked={selectedItems.includes(product.id)}
-                    onChange={() => onSelectItem(product.id)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={2} alignItems="flex-start">
+  // Mobile Card View
+  if (isMobile) {
+    return (
+      <Grid container spacing={2}>
+        {products.map((product) => {
+          const thumbnail = product.images?.[0];
+          return (
+            <Grid size={{ xs: 12 }} key={product.id}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 2 }}>
+                    <Checkbox
+                      checked={selectedItems.includes(product.id)}
+                      onChange={() => onSelectItem(product.id)}
+                      size="small"
+                      sx={{ mt: -0.5 }}
+                    />
                     <Box
                       sx={{
                         position: 'relative',
-                        width: 64,
-                        height: 64,
+                        width: 48,
+                        height: 48,
                         flexShrink: 0,
                         backgroundColor: 'action.hover',
                         borderRadius: 1,
@@ -185,12 +178,182 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                             color: 'text.secondary',
                           }}
                         >
-                          <ImageIcon />
+                          <ImageIcon fontSize="small" />
                         </Box>
                       )}
                     </Box>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }} noWrap>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                        Rs. {product.price ? product.price.toFixed(2) : '-'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                    <Chip
+                      label={product.is_active ? 'Active' : 'Inactive'}
+                      color={product.is_active ? 'success' : 'default'}
+                      variant="outlined"
+                      size="small"
+                    />
+                    {product.category && (
+                      <Chip
+                        label={product.category}
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+                  </Stack>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'flex-end', pt: 0 }}>
+                  <Tooltip title="Quick Upload">
+                    <IconButton
+                      size="small"
+                      onClick={() => onQuickUpload(product.id)}
+                      color="primary"
+                    >
+                      <AddPhotoAlternateIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      size="small"
+                      onClick={() => onEdit(product.id)}
+                      color="primary"
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      onClick={() => onDelete(product.id)}
+                      color="error"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </CardActions>
+              </Card>
+            </Grid>
+          );
+        })}
+      </Grid>
+    );
+  }
+
+  // Desktop/Tablet Table View
+  return (
+    <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+      <Table size={isTablet ? 'small' : 'medium'}>
+        <TableHead>
+          <TableRow sx={{ backgroundColor: 'action.hover' }}>
+            <TableCell padding="checkbox" width={isTablet ? '5%' : '5%'}>
+              <Checkbox
+                checked={selectedItems.length === products.length && products.length > 0}
+                onChange={onSelectAll}
+              />
+            </TableCell>
+            <TableCell sx={{ fontWeight: 700 }} width={isTablet ? '40%' : '30%'}>
+              Product
+            </TableCell>
+            {!isTablet && (
+              <TableCell sx={{ fontWeight: 700 }} width="15%">
+                Category
+              </TableCell>
+            )}
+            <TableCell sx={{ fontWeight: 700 }} width={isTablet ? '25%' : '12%'}>
+              Price
+            </TableCell>
+            {!isTablet && (
+              <TableCell sx={{ fontWeight: 700 }} width="12%">
+                Stock
+              </TableCell>
+            )}
+            <TableCell sx={{ fontWeight: 700 }} width={isTablet ? '20%' : '12%'}>
+              Status
+            </TableCell>
+            <TableCell align="right" sx={{ fontWeight: 700 }} width={isTablet ? '10%' : '14%'}>
+              Actions
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {products.map((product) => {
+            const thumbnail = product.images?.[0];
+
+            return (
+              <TableRow
+                key={product.id}
+                hover
+                onClick={() => onEdit(product.id)}
+                sx={{ cursor: 'pointer' }}
+              >
+                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    checked={selectedItems.includes(product.id)}
+                    onChange={() => onSelectItem(product.id)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={isTablet ? 1 : 2} alignItems="flex-start">
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: isTablet ? 48 : 64,
+                        height: isTablet ? 48 : 64,
+                        flexShrink: 0,
+                        backgroundColor: 'action.hover',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {thumbnail ? (
+                        <Image
+                          src={thumbnail}
+                          alt={product.name}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'text.secondary',
+                          }}
+                        >
+                          <ImageIcon fontSize={isTablet ? 'small' : 'medium'} />
+                        </Box>
+                      )}
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        variant={isTablet ? 'caption' : 'body2'}
+                        sx={{
+                          fontWeight: 600,
+                          mb: 0.5,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
                         {product.name}
                       </Typography>
                       {product.sku && (
@@ -198,106 +361,116 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                           SKU: {product.sku}
                         </Typography>
                       )}
-                      {product.description && (
-                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }} noWrap>
+                      {product.description && !isTablet && (
+                        <Typography
+                          variant="caption"
+                          color="textSecondary"
+                          sx={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            mt: 0.5,
+                          }}
+                        >
                           {product.description}
                         </Typography>
                       )}
                     </Box>
                   </Stack>
                 </TableCell>
+                {!isTablet && (
+                  <TableCell>
+                    {product.category ? (
+                      <Chip label={product.category} variant="outlined" size="small" />
+                    ) : (
+                      <Typography variant="caption" color="textSecondary">
+                        -
+                      </Typography>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell>
-                  {product.category ? (
-                    <Chip
-                      label={product.category}
-                      variant="outlined"
-                      size="small"
-                    />
-                  ) : (
-                    <Typography variant="caption" color="textSecondary">
-                      -
-                    </Typography>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography variant={isTablet ? 'caption' : 'body2'} sx={{ fontWeight: 600 }}>
                     {product.price ? `Rs. ${product.price.toFixed(2)}` : '-'}
                   </Typography>
                 </TableCell>
-                <TableCell>
-                  {product.variants && product.variants.length > 0 ? (
-                    <Box>
+                {!isTablet && (
+                  <TableCell>
+                    {product.variants && product.variants.length > 0 ? (
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: (product.total_stock || 0) > 10
+                              ? 'success.main'
+                              : (product.total_stock || 0) > 0
+                              ? 'warning.main'
+                              : 'error.main',
+                          }}
+                        >
+                          {product.total_stock || 0}
+                        </Typography>
+                        <Chip
+                          label={`${product.variants.length} variant${product.variants.length !== 1 ? 's' : ''}`}
+                          variant="outlined"
+                          size="small"
+                          sx={{ mt: 0.5 }}
+                        />
+                      </Box>
+                    ) : (
                       <Typography
                         variant="body2"
                         sx={{
                           fontWeight: 600,
-                          color: (product.total_stock || 0) > 10
+                          color: (product.stock || 0) > 10
                             ? 'success.main'
-                            : (product.total_stock || 0) > 0
+                            : (product.stock || 0) > 0
                             ? 'warning.main'
                             : 'error.main',
                         }}
                       >
-                        {product.total_stock || 0}
+                        {product.stock || 0}
                       </Typography>
-                      <Chip
-                        label={`${product.variants.length} variant${product.variants.length !== 1 ? 's' : ''}`}
-                        variant="outlined"
-                        size="small"
-                        sx={{ mt: 0.5 }}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontWeight: 600,
-                        color: (product.stock || 0) > 10
-                          ? 'success.main'
-                          : (product.stock || 0) > 0
-                          ? 'warning.main'
-                          : 'error.main',
-                      }}
-                    >
-                      {product.stock || 0}
-                    </Typography>
-                  )}
-                </TableCell>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell>
                   <Chip
                     label={product.is_active ? 'Active' : 'Inactive'}
                     color={product.is_active ? 'success' : 'default'}
                     variant="outlined"
-                    size="small"
+                    size={isTablet ? 'small' : 'medium'}
                   />
                 </TableCell>
                 <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                  <Stack direction="row" spacing={isTablet ? 0 : 0.5} justifyContent="flex-end">
                     <Tooltip title="Quick Upload Image">
                       <IconButton
-                        size="small"
+                        size={isTablet ? 'small' : 'medium'}
                         onClick={() => onQuickUpload(product.id)}
                         color="primary"
                       >
-                        <AddPhotoAlternateIcon fontSize="small" />
+                        <AddPhotoAlternateIcon fontSize={isTablet ? 'small' : 'medium'} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit Product">
                       <IconButton
-                        size="small"
+                        size={isTablet ? 'small' : 'medium'}
                         onClick={() => onEdit(product.id)}
                         color="primary"
                       >
-                        <EditIcon fontSize="small" />
+                        <EditIcon fontSize={isTablet ? 'small' : 'medium'} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete Product">
                       <IconButton
-                        size="small"
+                        size={isTablet ? 'small' : 'medium'}
                         onClick={() => onDelete(product.id)}
                         color="error"
                       >
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon fontSize={isTablet ? 'small' : 'medium'} />
                       </IconButton>
                     </Tooltip>
                   </Stack>
