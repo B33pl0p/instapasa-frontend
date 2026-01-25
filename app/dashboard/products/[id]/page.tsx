@@ -335,9 +335,9 @@ export default function EditProductPage() {
         {/* Tab Content */}
         {activeTab === 'details' ? (
           <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
               {/* Main Details */}
-              <Grid item xs={12} lg={8}>
+              <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'auto' } }}>
                 <Stack spacing={3}>
                   {/* Basic Information Card */}
                   <Card>
@@ -424,10 +424,10 @@ export default function EditProductPage() {
                     </Card>
                   )}
                 </Stack>
-              </Grid>
+              </Box>
 
               {/* Sidebar */}
-              <Grid item xs={12} lg={4}>
+              <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'auto' } }}>
                 <Stack spacing={3}>
                   {/* Pricing & Stock Card */}
                   <Card>
@@ -569,8 +569,8 @@ export default function EditProductPage() {
                     </CardContent>
                   </Card>
                 </Stack>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </Box>
         ) : (
           /* Images Tab */
@@ -586,9 +586,9 @@ export default function EditProductPage() {
                   <Typography variant="body2" sx={{ fontWeight: 600, mb: 2 }}>
                     Current Images
                   </Typography>
-                  <Grid container spacing={2}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
                     {product.images.map((image, index) => (
-                      <Grid item xs={6} sm={4} md={3} key={index}>
+                      <Box key={index}>
                         <Box sx={{ position: 'relative', paddingBottom: '100%', overflow: 'hidden' }}>
                           <Image
                             src={image}
@@ -614,9 +614,9 @@ export default function EditProductPage() {
                             />
                           </Box>
                         </Box>
-                      </Grid>
+                      </Box>
                     ))}
-                  </Grid>
+                  </Box>
                 </Box>
               )}
 

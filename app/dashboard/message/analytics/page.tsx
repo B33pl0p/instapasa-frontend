@@ -181,8 +181,8 @@ export default function Analytics() {
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>
               Sales Metrics
             </Typography>
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6} md={4}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
+              <Box>
                 <MetricCard
                   title="Total Revenue"
                   value={`₹${analytics.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
@@ -190,8 +190,8 @@ export default function Analytics() {
                   subtext={`${analytics.total_orders_sold} orders`}
                   color="success"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+              </Box>
+              <Box>
                 <MetricCard
                   title="Total Orders"
                   value={analytics.total_orders_sold}
@@ -199,8 +199,8 @@ export default function Analytics() {
                   subtext={`Avg: ₹${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
                   color="primary"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
+              </Box>
+              <Box>
                 <MetricCard
                   title="Units Sold"
                   value={analytics.total_units_sold}
@@ -208,126 +208,126 @@ export default function Analytics() {
                   subtext={`Avg per order: ${(analytics.total_units_sold / analytics.total_orders_sold || 0).toFixed(1)}`}
                   color="info"
                 />
-              </Grid>
+              </Box>
+            </Box>
 
-              {/* Best Selling Product */}
-              {analytics.best_selling_product && (
-                <Grid item xs={12} md={6}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                    }}
-                  >
-                    <CardContent>
-                      <Typography color="textSecondary" sx={{ fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', mb: 2 }}>
-                        Best Selling Product
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                        {analytics.best_selling_product.product_name}
-                      </Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                          <Typography color="textSecondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
-                            Revenue
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            ₹{analytics.best_selling_product.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography color="textSecondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
-                            Units Sold
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {analytics.best_selling_product.units_sold}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
+            {/* Best Selling Product */}
+            {analytics.best_selling_product && (
+              <Box sx={{ mb: 4 }}>
+                <Card
+                  sx={{
+                    height: '100%',
+                  }}
+                >
+                  <CardContent>
+                    <Typography color="textSecondary" sx={{ fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', mb: 2 }}>
+                      Best Selling Product
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                      {analytics.best_selling_product.product_name}
+                    </Typography>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      <Box>
+                        <Typography color="textSecondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
+                          Revenue
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          ₹{analytics.best_selling_product.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography color="textSecondary" sx={{ fontSize: '0.75rem', mb: 0.5 }}>
+                          Units Sold
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {analytics.best_selling_product.units_sold}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
 
-              {/* Average Order Value */}
-              <Grid item xs={12} md={6}>
-                <MetricCard
-                  title="Average Order Value"
-                  value={`₹${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
-                  icon={<CurrencyRupeeIcon sx={{ fontSize: 28 }} />}
-                  color="secondary"
-                />
-              </Grid>
-            </Grid>
+            {/* Average Order Value */}
+            <Box sx={{ mb: 4 }}>
+              <MetricCard
+                title="Average Order Value"
+                value={`₹${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                icon={<CurrencyRupeeIcon sx={{ fontSize: 28 }} />}
+                color="warning"
+              />
+            </Box>
 
             {/* Period Metrics */}
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>
               Period Metrics
             </Typography>
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 4 }}>
+              <Box>
                 <MetricCard
                   title="Orders This Week"
                   value={analytics.week_orders}
                   icon={<TrendingUpIcon sx={{ fontSize: 28 }} />}
                   color="info"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Box>
+              <Box>
                 <MetricCard
                   title="Orders This Month"
                   value={analytics.month_orders}
                   icon={<TrendingUpIcon sx={{ fontSize: 28 }} />}
                   color="success"
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             {/* Chat Metrics */}
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>
               Chat & Engagement Metrics
             </Typography>
-            <Grid container spacing={2} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6} md={3}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2, mb: 4 }}>
+              <Box>
                 <MetricCard
                   title="Total Conversations"
                   value={analytics.total_conversations}
                   icon={<ChatIcon sx={{ fontSize: 28 }} />}
                   color="info"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              </Box>
+              <Box>
                 <MetricCard
                   title="Total Messages"
                   value={analytics.total_messages}
                   icon={<ChatIcon sx={{ fontSize: 28 }} />}
                   color="primary"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              </Box>
+              <Box>
                 <MetricCard
                   title="Conversion Rate"
                   value={`${analytics.chat_to_order_conversion_rate.toFixed(1)}%`}
                   icon={<PercentIcon sx={{ fontSize: 28 }} />}
                   color="success"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
+              </Box>
+              <Box>
                 <MetricCard
                   title="Active Chats"
                   value={analytics.active_chats}
                   icon={<CheckCircleIcon sx={{ fontSize: 28 }} />}
                   color="success"
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              </Box>
+              <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'auto', md: 'auto' } }}>
                 <MetricCard
                   title="Abandoned Chats"
                   value={analytics.abandoned_chats}
                   icon={<WarningIcon sx={{ fontSize: 28 }} />}
                   color="warning"
                 />
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             {/* Revenue per Product Table */}
             {analytics.revenue_per_product.length > 0 && (
@@ -370,23 +370,22 @@ export default function Analytics() {
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>
                   Most Asked Questions
                 </Typography>
-                <Grid container spacing={2} sx={{ mb: 4 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
                   {analytics.most_asked_questions.map((faq, index) => (
-                    <Grid item xs={12} key={index}>
-                      <Card
-                        sx={{
-                          p: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Typography sx={{ flex: 1 }}>{faq.question}</Typography>
-                        <Chip label={`${faq.frequency} times`} color="primary" variant="outlined" />
-                      </Card>
-                    </Grid>
+                    <Card
+                      key={index}
+                      sx={{
+                        p: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Typography sx={{ flex: 1 }}>{faq.question}</Typography>
+                      <Chip label={`${faq.frequency} times`} color="primary" variant="outlined" />
+                    </Card>
                   ))}
-                </Grid>
+                </Box>
               </>
             )}
 
