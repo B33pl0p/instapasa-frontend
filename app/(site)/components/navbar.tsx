@@ -8,71 +8,55 @@ import { useAuth } from "../lib/auth";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated } = useAuth();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <nav className="relative z-50 flex items-center justify-between px-6 py-4 md:px-12">
-      <h1 className="text-2xl md:text-[52px] font-black leading-[1.1] md:tracking-[-0.05em]">
-         <Link
+    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? "bg-[#161616]/95 backdrop-blur-md shadow-lg border-b border-gray-800" 
+        : "bg-transparent"
+    }`}>
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        {/* Logo */}
+        <h1 className="text-2xl md:text-3xl font-black leading-tight">
+          <Link
             href="/"
-            className=" hover:text-gray-300 underline-offset-4 " 
-            >Lakhey Labs
-          </Link>
-      </h1>
-
-      {/* Desktop */}
-      <div className="hidden md:flex items-center gap-6">
-        <a className="hover:text-brand">About Us</a>
-        <a className="hover:text-brand">Contact</a>
-        <Link
-              href="/services"
-              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">Our Services</Link>
-        {isAuthenticated ? (
-          <Link
-            href="/dashboard/message"
-            className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+            className="hover:text-purple-400 transition-colors duration-200 flex items-center gap-2" 
           >
-            Dashboard
+            <span className="bg-gradient-to-r from-purple-400 to-pink-400 w-8 h-8 rounded-lg flex items-center justify-center font-bold">
+              L
+            </span>
+            <span className="hidden sm:inline">Lakhey Labs</span>
           </Link>
-        ) : (
-          <>
-            <Link
-              href="/login"
-              className="hover:text-brand border border-white bg-gray-200/20 px-4 py-1 rounded-md"
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
-            >
-              Sign Up
-            </Link>
-          </>
-        )}
-      </div>
+        </h1>
 
-      {/* Mobile */}
-      <button
-        className="md:hidden"
-        onClick={() => setOpen(prev => !prev)}
-      >
-        ☰
-      </button>
-
-      {open && (
-        <div className="absolute top-16 left-0 top-full w-full bg-gray-800 flex flex-col items-center gap-4 py-6 md:hidden z-50">
-          <a>About Us</a>
-          <a>Contact</a>
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-6">
+          <Link href="/#about" className="hover:text-purple-400 transition-colors duration-200">
+            About Us
+          </Link>
+          <Link href="/#contact" className="hover:text-purple-400 transition-colors duration-200">
+            Contact
+          </Link>
           <Link
-           href="/services"
-           className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md">
-           Our Services
+            href="/services"
+            className="hover:text-purple-400 transition-colors duration-200 px-4 py-2 rounded-lg border border-purple-500/50 hover:border-purple-400 hover:bg-purple-500/10">
+            Our Services
           </Link>
+          
           {isAuthenticated ? (
             <Link
               href="/dashboard/message"
-              className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg shadow-purple-500/30"
             >
               Dashboard
             </Link>
@@ -80,20 +64,93 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hover:text-brand border border-white bg-gray-200/20 px-4 py-1 rounded-md"
+                className="px-6 py-2 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/50 transition-all duration-200"
               >
                 Login
               </Link>
               <Link
                 href="/signup"
-                className="hover:text-brand bg-[#8A38F5] border border-transparent hover:border-white px-4 py-1 rounded-md"
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 px-6 py-2 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg shadow-purple-500/30"
               >
                 Sign Up
               </Link>
             </>
           )}
         </div>
-      )}
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden p-2 rounded-lg hover:bg-gray-800 transition-colors"
+          onClick={() => setOpen(prev => !prev)}
+          aria-label="Toggle menu"
+        >
+          {open ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ${
+        open ? "max-h-96 border-t border-gray-800" : "max-h-0"
+      }`}>
+        <div className="bg-[#161616]/98 backdrop-blur-md px-6 py-4 space-y-3">
+          <Link 
+            href="/#about" 
+            className="block py-2 hover:text-purple-400 transition-colors"
+            onClick={() => setOpen(false)}
+          >
+            About Us
+          </Link>
+          <Link 
+            href="/#contact" 
+            className="block py-2 hover:text-purple-400 transition-colors"
+            onClick={() => setOpen(false)}
+          >
+            Contact
+          </Link>
+          <Link
+            href="/services"
+            className="block py-2 px-4 rounded-lg border border-purple-500/50 hover:border-purple-400 hover:bg-purple-500/10 transition-all text-center"
+            onClick={() => setOpen(false)}
+          >
+            Our Services
+          </Link>
+          
+          {isAuthenticated ? (
+            <Link
+              href="/dashboard/message"
+              className="block bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 rounded-lg font-semibold text-center transition-all"
+              onClick={() => setOpen(false)}
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="block px-6 py-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/50 transition-all text-center"
+                onClick={() => setOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="block bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-3 rounded-lg font-semibold text-center transition-all"
+                onClick={() => setOpen(false)}
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }
