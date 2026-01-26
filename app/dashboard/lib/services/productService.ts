@@ -146,7 +146,7 @@ export const productService = {
 
       console.log('Starting S3 upload for file:', file.name, 'Size:', file.size, 'Type:', file.type);
       xhr.open('PUT', presignedUrl);
-      // Do NOT set Content-Type header - the presigned URL already includes it in the signature
+      // xhr.setRequestHeader('Content-Type', file.type);
       xhr.timeout = 30000; // 30 second timeout
       xhr.send(file);
     });
