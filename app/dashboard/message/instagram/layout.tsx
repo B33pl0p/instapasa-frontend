@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchConversations } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
+import { useTheme } from '@mui/material/styles';
+import { Box, Paper, CircularProgress, Typography } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -19,11 +21,13 @@ export default function InstagramLayout({
   const searchParams = useSearchParams();
   const selectedConversationId = searchParams.get('conversation') || undefined;
   const [showMobileList, setShowMobileList] = useState(!selectedConversationId);
+  const theme = useTheme();
 
   const dispatch = useAppDispatch();
-  const { conversations, businessUsername, loading, error, conversationsLoaded } = useAppSelector(
+  const { conversations, businessUsername, conversationLoading, error, conversationsLoaded } = useAppSelector(
     (state) => state.instagramMessages
   );
+  const orders = useAppSelector((state) => state.orders.orders);
 
   // On mobile, hide list when conversation is selected
   useEffect(() => {
@@ -32,13 +36,13 @@ export default function InstagramLayout({
     }
   }, [selectedConversationId]);
 
-  // Lazy loading: Only fetch conversations list on mount (fast)
+  // LAZY LOADING: Only fetch conversations list on mount (lightweight overview)
   useEffect(() => {
     // Only fetch if not already loaded
-    if (!conversationsLoaded && !loading) {
+    if (!conversationsLoaded && !conversationLoading) {
       dispatch(fetchConversations());
     }
-  }, [dispatch, conversationsLoaded, loading]);
+  }, [dispatch, conversationsLoaded, conversationLoading]);
 
   // Refresh conversations list (no sync, just refresh the list)
   const handleRefresh = async () => {
@@ -72,7 +76,7 @@ export default function InstagramLayout({
       (p) => p.username !== businessUsername
     );
     return otherParticipant?.username || 'Unknown User';
-  };
+  };;
 
   const formatTime = (timeString: string): string => {
     const date = new Date(timeString);
@@ -90,32 +94,40 @@ export default function InstagramLayout({
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-white" style={{ position: 'relative', height: '100vh', maxHeight: '100vh' }}>
-      {/* Left Panel - Conversation List (Desktop: Always visible, Mobile: Toggle) */}
-      <div 
-        className={`${
-          showMobileList ? 'flex' : 'hidden'
-        } md:flex absolute md:relative inset-0 md:inset-auto w-full sm:w-80 md:w-80 lg:w-80 z-10 md:z-auto shrink-0 border-r border-gray-200 bg-white flex-col`}
-        style={{ 
+    <Box sx={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
+      {/* Left Panel - Conversation List (Always visible on desktop, toggle on mobile) */}
+      <Box
+        sx={{
+          display: { xs: showMobileList ? 'flex' : 'none', md: 'flex' },
+          position: { xs: 'absolute', md: 'relative' },
+          inset: { xs: 0, md: 'auto' },
+          width: { xs: '100%', sm: '320px', md: '320px' },
+          zIndex: { xs: 10, md: 'auto' },
+          flexShrink: 0,
+          borderRight: `1px solid ${theme.palette.divider}`,
+          backgroundColor: theme.palette.background.paper,
+          flexDirection: 'column',
           height: '100vh',
           maxHeight: '100vh',
         }}
       >
-        <div className="flex h-full flex-col bg-white" style={{ height: '100%', maxHeight: '100vh' }}>
-          <div className="border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-3 shrink-0 flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Instagram Chats</h2>
+        <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column', backgroundColor: theme.palette.background.paper }}>
+          <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, px: { xs: 0.75, sm: 1 }, py: 0.75, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0 }}>
+              Instagram Chats
+            </Typography>
             <Tooltip title="Refresh conversations">
               <IconButton
                 size="small"
                 onClick={handleRefresh}
-                disabled={loading}
+                disabled={conversationLoading}
                 sx={{
-                  color: loading ? 'text.disabled' : 'text.primary',
+                  color: conversationLoading ? 'text.disabled' : 'text.primary',
                 }}
               >
                 <RefreshIcon
                   sx={{
-                    animation: loading ? 'spin 1s linear infinite' : 'none',
+                    animation: conversationLoading ? 'spin 1s linear infinite' : 'none',
                     '@keyframes spin': {
                       '0%': { transform: 'rotate(0deg)' },
                       '100%': { transform: 'rotate(360deg)' },
@@ -124,109 +136,183 @@ export default function InstagramLayout({
                 />
               </IconButton>
             </Tooltip>
-          </div>
+          </Box>
           
-          {loading ? (
-            <div className="flex flex-1 items-center justify-center">
-              <div className="text-center">
-                <div className="mb-2 h-8 w-8 animate-spin rounded-full border-4 border-[#8A38F5] border-t-transparent"></div>
-                <p className="text-sm text-gray-500">Loading conversations...</p>
-              </div>
-            </div>
+          {conversationLoading ? (
+            <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <CircularProgress sx={{ mb: 1 }} />
+                <Typography variant="caption" color="textSecondary">
+                  Loading conversations...
+                </Typography>
+              </Box>
+            </Box>
           ) : error ? (
-            <div className="flex flex-1 items-center justify-center p-4">
-              <p className="text-center text-sm text-red-500">{error}</p>
-            </div>
+            <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', p: 2 }}>
+              <Typography variant="caption" color="error" align="center">
+                {error}
+              </Typography>
+            </Box>
           ) : conversations.length === 0 ? (
-            <div className="flex flex-1 items-center justify-center p-4">
-              <p className="text-center text-sm text-gray-500">No conversations yet</p>
-            </div>
+            <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', p: 2 }}>
+              <Typography variant="caption" color="textSecondary" align="center">
+                No conversations yet
+              </Typography>
+            </Box>
           ) : (
-            <div className="flex-1 overflow-y-auto min-h-0" style={{ scrollbarWidth: 'thin' }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {conversations.map((conversation, index) => {
                 const participantName = getParticipantName(conversation);
                 const isSelected = selectedConversationId === conversation.conversation_id;
                 // Ensure unique key - use index as fallback if conversation_id is missing/duplicate
                 const uniqueKey = conversation.conversation_id || `conv-${index}-${conversation.updated_time}`;
+                
+                // Find related order
+                const buyerId = conversation.buyer_id || conversation.participants.find(p => p.username !== businessUsername)?.id;
+                const relatedOrder = buyerId ? orders.find(order => order.buyer_id === buyerId) : null;
 
                 return (
-                  <div
+                  <Box
                     key={uniqueKey}
                     onClick={() => handleSelectConversation(conversation.conversation_id)}
-                    className={`cursor-pointer border-b border-gray-100 px-3 sm:px-4 py-2 sm:py-3 transition-colors hover:bg-gray-50 ${
-                      isSelected ? 'bg-purple-50' : ''
-                    }`}
+                    sx={{
+                      cursor: 'pointer',
+                      borderBottom: `1px solid ${theme.palette.divider}`,
+                      px: { xs: 0.75, sm: 1 },
+                      py: 0.75,
+                      transition: 'all 0.2s ease',
+                      backgroundColor: isSelected ? theme.palette.action.selected : 'transparent',
+                      ...(!(isSelected) && {
+                        '&:hover': { backgroundColor: theme.palette.action.hover },
+                      }),
+                    }}
                   >
-                    <div className="flex items-start gap-3">
-                      <AccountCircleIcon
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          color: 'text.secondary',
-                          flexShrink: 0,
-                        }}
-                        className="shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="truncate text-sm font-medium text-gray-900">
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                      <AccountCircleIcon sx={{ width: 40, height: 40, color: 'text.secondary', flexShrink: 0 }} />
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: 500,
+                              color: 'text.primary',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
                             {participantName}
-                          </p>
-                          <span className="ml-2 shrink-0 text-xs text-gray-500">
+                          </Typography>
+                          <Typography variant="caption" sx={{ ml: 0.5, flexShrink: 0, color: 'text.secondary' }}>
                             {formatTime(conversation.updated_time)}
-                          </span>
-                        </div>
-                        <p className="mt-1 truncate text-xs text-gray-500">
+                          </Typography>
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            mt: 0.25,
+                            color: 'text.secondary',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block',
+                          }}
+                        >
                           {conversation.last_message?.text || 'No messages'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                        </Typography>
+                        {relatedOrder && (
+                          <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                            <Box
+                              component="svg"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              sx={{ width: '0.75rem', height: '0.75rem', color: 'success.main', flexShrink: 0 }}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </Box>
+                            <Typography variant="caption" sx={{ fontWeight: 500, color: 'success.main' }}>
+                              {relatedOrder.order_number}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                              •
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              Rs. {relatedOrder.total.toFixed(0)}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  </Box>
                 );
               })}
-            </div>
+            </Box>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       {/* Right Panel - Page Content (Flexible, Fixed) */}
-      <div 
-        className={`flex min-w-0 flex-1 min-h-0 overflow-hidden bg-white relative ${
-          showMobileList && selectedConversationId ? 'hidden md:flex' : 'flex'
-        }`}
-        style={{ 
+      <Box
+        sx={{
+          display: { xs: showMobileList ? 'none' : 'flex', md: 'flex' },
+          minWidth: 0,
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
+          backgroundColor: 'background.default',
+          position: 'relative',
           height: '100vh',
           maxHeight: '100vh',
+          flexDirection: 'column',
         }}
       >
         {selectedConversationId && (
-          <div className="md:hidden absolute top-0 left-0 right-0 z-20 bg-white border-b border-gray-200 px-3 sm:px-4 py-2 flex items-center gap-2 h-12 sm:h-14">
+          <Box
+            sx={{
+              display: { xs: 'flex', md: 'none' },
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 20,
+              backgroundColor: 'background.paper',
+              borderBottom: `1px solid ${theme.palette.divider}`,
+              px: 0.75,
+              py: 0.75,
+              alignItems: 'center',
+              gap: 0.5,
+              height: '3rem',
+            }}
+          >
             <IconButton size="small" onClick={handleBackToList}>
               <ArrowBackIcon />
             </IconButton>
-            <h2 className="text-sm sm:text-base font-semibold text-gray-900">Instagram Chats</h2>
-          </div>
+            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+              Instagram Chats
+            </Typography>
+          </Box>
         )}
-        <div 
-          className={`w-full h-full ${selectedConversationId ? 'pt-12 md:pt-0' : ''}`}
-          style={{ 
-            height: '100%', 
-            maxHeight: '100vh',
+        <Box
+          sx={{
+            width: '100%',
+            height: '100%',
+            paddingTop: selectedConversationId ? { xs: '3rem', md: 0 } : 0,
+            overflow: 'hidden',
           }}
         >
-          <div 
-            className="w-full h-full"
-            style={{
+          <Box
+            sx={{
+              width: '100%',
               height: '100%',
               maxHeight: '100vh',
             }}
           >
             {children}
-          </div>
-        </div>
-      </div>
-
-
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }

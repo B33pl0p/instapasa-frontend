@@ -7,7 +7,7 @@ const MetaSuccess = () => {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/message");
+    router.replace("/dashboard/message");
   }, [router]);
 
   return (

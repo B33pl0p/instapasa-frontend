@@ -2,12 +2,24 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import apiClient from '../apiClient';
 import type { Conversation, ConversationDetailResponse, Message } from '@/app/dashboard/message/instagram/types';
 
+// Cache for storing fetched messages per conversation
+interface MessageCache {
+  [conversationId: string]: {
+    messages: Message[];
+    businessUsername: string | null;
+    fetchedAt: number;
+  };
+}
+
 interface InstagramMessagesState {
   conversations: Conversation[];
   currentConversationId: string | null;
   messages: Message[];
   businessUsername: string | null;
+  messageCache: MessageCache;
   loading: boolean;
+  conversationLoading: boolean;
+  messageLoading: boolean;
   syncing: boolean;
   error: string | null;
   lastSyncedAt: string | null;
@@ -19,7 +31,10 @@ const initialState: InstagramMessagesState = {
   currentConversationId: null,
   messages: [],
   businessUsername: null,
+  messageCache: {},
   loading: false,
+  conversationLoading: false,
+  messageLoading: false,
   syncing: false,
   error: null,
   lastSyncedAt: null,
@@ -45,11 +60,12 @@ export const syncInstagramMessages = createAsyncThunk(
   }
 );
 
+// LAZY LOADING: Fetch only conversation overview (lightweight) for the left sidebar
 export const fetchConversations = createAsyncThunk(
   'instagramMessages/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/dashboard/conversations?limit=25');
+      const response = await apiClient.get('/dashboard/conversations?limit=50&platform=instagram');
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.detail || 'Failed to fetch conversations');
@@ -57,17 +73,21 @@ export const fetchConversations = createAsyncThunk(
   }
 );
 
+// LAZY LOADING: Fetch full messages only when user clicks on a conversation
 export const fetchMessages = createAsyncThunk(
   'instagramMessages/fetchMessages',
   async (
     { conversationId, forceRefresh = false }: { conversationId: string; forceRefresh?: boolean },
-    { rejectWithValue }
+    { rejectWithValue, getState }
   ) => {
     try {
       const response = await apiClient.get<ConversationDetailResponse>(
         `/dashboard/messages/${conversationId}?platform=instagram&force_refresh=${forceRefresh}`
       );
-      return response.data;
+      return {
+        conversationId,
+        data: response.data,
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.detail || 'Failed to fetch messages');
     }
@@ -80,12 +100,20 @@ const instagramMessagesSlice = createSlice({
   reducers: {
     setCurrentConversation: (state, action: PayloadAction<string | null>) => {
       state.currentConversationId = action.payload;
-      if (!action.payload) {
+      // Load messages from cache if available, otherwise empty
+      if (action.payload && state.messageCache[action.payload]) {
+        state.messages = state.messageCache[action.payload].messages;
+        state.businessUsername = state.messageCache[action.payload].businessUsername;
+      } else {
         state.messages = [];
       }
     },
     addMessage: (state, action: PayloadAction<Message>) => {
       state.messages.push(action.payload);
+      // Also update cache
+      if (state.currentConversationId && state.messageCache[state.currentConversationId]) {
+        state.messageCache[state.currentConversationId].messages.push(action.payload);
+      }
     },
     clearMessages: (state) => {
       state.messages = [];
@@ -93,6 +121,12 @@ const instagramMessagesSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    // Clear entire message cache (on logout, etc.)
+    clearMessageCache: (state) => {
+      state.messageCache = {};
+      state.messages = [];
+      state.currentConversationId = null;
     },
   },
   extraReducers: (builder) => {
@@ -115,42 +149,55 @@ const instagramMessagesSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Fetch conversations
+    // Fetch conversations (lightweight - just for sidebar)
     builder
       .addCase(fetchConversations.pending, (state) => {
-        state.loading = true;
+        state.conversationLoading = true;
         state.error = null;
       })
       .addCase(fetchConversations.fulfilled, (state, action) => {
-        state.loading = false;
+        state.conversationLoading = false;
         // The response is now an array of conversations directly
         state.conversations = Array.isArray(action.payload) ? action.payload : [];
         state.conversationsLoaded = true;
       })
       .addCase(fetchConversations.rejected, (state, action) => {
-        state.loading = false;
+        state.conversationLoading = false;
         state.error = action.payload as string;
         state.conversations = [];
       });
 
-    // Fetch messages
+    // Fetch full messages (lazy loading - only on demand)
     builder
       .addCase(fetchMessages.pending, (state) => {
-        state.loading = true;
+        state.messageLoading = true;
         state.error = null;
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.loading = false;
-        state.messages = action.payload.messages || [];
-        state.businessUsername = action.payload.instagram_username || null;
+        state.messageLoading = false;
+        const { conversationId, data } = action.payload;
+        const messages = data.messages || [];
+        const businessUsername = data.instagram_username || null;
+        
+        // Cache the messages by conversation_id
+        state.messageCache[conversationId] = {
+          messages,
+          businessUsername,
+          fetchedAt: Date.now(),
+        };
+        
+        // Set as current if this is the current conversation
+        if (state.currentConversationId === conversationId) {
+          state.messages = messages;
+          state.businessUsername = businessUsername;
+        }
       })
       .addCase(fetchMessages.rejected, (state, action) => {
-        state.loading = false;
+        state.messageLoading = false;
         state.error = action.payload as string;
-        state.messages = [];
       });
   },
 });
 
-export const { setCurrentConversation, addMessage, clearMessages, clearError } = instagramMessagesSlice.actions;
+export const { setCurrentConversation, addMessage, clearMessages, clearError, clearMessageCache } = instagramMessagesSlice.actions;
 export default instagramMessagesSlice.reducer;

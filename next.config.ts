@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'scontent-iad3-1.xx.fbcdn.net',
       },
+      {
+        protocol :'https',
+        hostname: 'lakhey-bot-images-bucket.s3.us-east-1.amazonaws.com',
+      }
     ],
   },
 };

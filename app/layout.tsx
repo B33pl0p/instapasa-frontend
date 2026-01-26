@@ -13,6 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Lakhey Labs",
   description: "We Build, Your Dreams",
+  viewport: "width=device-width, initial-scale=1.0, maximum-scale=5.0",
 };
 
 export default function RootLayout({

@@ -1,11 +1,12 @@
 'use client'
 
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
-import instagramIcon from '@/public/instagramIcon.svg';
-import Image from 'next/image';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import MapsUgcIcon from '@mui/icons-material/MapsUgc';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import messenger from '@/public/messengerIcon.svg';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import SettingsIcon from '@mui/icons-material/Settings';
 type SidebarSection = 'General' | 'Messages' | 'Services' | 'Prodcuts';
 
 export type SidebarItem = {
@@ -24,13 +25,13 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     label: 'Instagram',
-    icon: <Image src={instagramIcon} alt="instgram" />,
+    icon: <InstagramIcon />,
     href: '/dashboard/message/instagram',
     section: 'Messages',
   },
   {
     label: 'Messenger',
-    icon: <Image src={messenger} alt="instagram" />,
+    icon: <MapsUgcIcon />,
     href: '/dashboard/message/messenger',
     section: 'Messages',
   },
@@ -45,5 +46,17 @@ export const sidebarItems: SidebarItem[] = [
     icon: <ShoppingCartIcon />,
     href: '/dashboard/products',
     section: 'Prodcuts',
+  },
+  {
+    label: 'Orders',
+    icon: <ReceiptLongIcon />,
+    href: '/dashboard/orders',
+    section: 'Prodcuts',
+  },
+  {
+    label: 'Settings',
+    icon: <SettingsIcon />,
+    href: '/dashboard/settings',
+    section: 'General',
   }
 ];

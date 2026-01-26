@@ -2,7 +2,7 @@
 import React from "react";
 
 const META_APP_ID = "869172442507684";
-const REDIRECT_URI = "http://localhost:3000/message";
+const REDIRECT_URI = `${typeof window !== 'undefined' ? window.location.origin : 'http://lakhey.tech'}/dashboard/message`;
 
 type InstagramLoginButtonProps = {
   disabled?: boolean;

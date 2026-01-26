@@ -31,6 +31,10 @@ import { useAppSelector, useAppDispatch } from '@/app/dashboard/lib/hooks';
 import { useEffect } from 'react';
 import { setCustomer } from '@/app/dashboard/lib/slices/customerSlice';
 import { getCustomerFromToken } from '@/app/dashboard/lib/utils/jwt';
+import { ToastProvider } from '@/app/dashboard/lib/components/ToastContainer';
+import { ThemeProvider, useTheme } from '@/app/dashboard/lib/ThemeProvider';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 const drawerWidth = 240;
 
@@ -93,7 +97,19 @@ export default function DashboardLayout({
 }:{
     children: React.ReactNode;
 }) {
-  const [open, setOpen] = React.useState(false);
+  return (
+    <ThemeProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </ThemeProvider>
+  );
+}
+
+function DashboardLayoutContent({
+    children,
+}:{
+    children: React.ReactNode;
+}) {
+  const [open, setOpen] = React.useState(true);
   const pathname = usePathname();
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -102,6 +118,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const { logout } = useAuth();
   const { profilePictureUrl } = useInstagramAuth();
+  const { mode, toggleTheme } = useTheme();
   const [logoutDialogOpen, setLogoutDialogOpen] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
   
@@ -139,6 +156,7 @@ export default function DashboardLayout({
 
   return (
     <RouteGuard>
+      <ToastProvider>
       <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
         <CssBaseline />
         <Drawer
@@ -162,7 +180,7 @@ export default function DashboardLayout({
                 justifyContent: 'flex-start',
                 textTransform: 'none',
                 color: 'text.primary',
-                bgcolor: '#F3E5F5',
+                bgcolor: 'background.paper',
                 '&:hover': {
                   backgroundColor: 'action.hover',
                 },
@@ -232,9 +250,11 @@ export default function DashboardLayout({
                               {
                                 minHeight: 48,
                                 px: 2.5,
-                                bgcolor: isActive ? '#dbd9d9' : 'transparent',
+                                bgcolor: isActive ? 'primary.main' : 'transparent',
+                                color: isActive ? 'primary.contrastText' : 'text.primary',
                                 '&:hover': {
-                                  bgcolor: isActive ? '#dbd9d9' : 'action.hover',
+                                  bgcolor: isActive ? 'primary.dark' : 'action.hover',
+                                  color: isActive ? 'primary.contrastText' : 'text.primary',
                                 },
                               },
                               open
@@ -251,6 +271,7 @@ export default function DashboardLayout({
                                 {
                                   minWidth: 0,
                                   justifyContent: 'center',
+                                  color: isActive ? 'primary.contrastText' : 'inherit',
                                 },
                                 open
                                   ? {
@@ -286,6 +307,59 @@ export default function DashboardLayout({
             </List>
           </Box>
           
+          {/* Theme Toggle Button */}
+          <ListItem disablePadding sx={{ display: 'block' }}>
+            <ListItemButton
+              onClick={toggleTheme}
+              sx={[
+                {
+                  minHeight: 48,
+                  px: 2.5,
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                },
+                open
+                  ? {
+                      justifyContent: 'initial',
+                    }
+                  : {
+                      justifyContent: 'center',
+                    },
+              ]}
+            >
+              <ListItemIcon
+                sx={[
+                  {
+                    minWidth: 0,
+                    justifyContent: 'center',
+                  },
+                  open
+                    ? {
+                        mr: 3,
+                      }
+                    : {
+                        mr: 'auto',
+                      },
+                ]}
+              >
+                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+              </ListItemIcon>
+              <ListItemText
+                primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                sx={[
+                  open
+                    ? {
+                        opacity: 1,
+                      }
+                    : {
+                        opacity: 0,
+                      },
+                ]}
+              />
+            </ListItemButton>
+          </ListItem>
+
           {/* Logout Button at Bottom */}
           <Box
             sx={{
@@ -358,10 +432,10 @@ export default function DashboardLayout({
             flexDirection: 'column', 
             minHeight: 0,
             height: '100vh',
-            overflow: 'hidden'
+            overflow: 'auto'
           }}
         >
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', height: '100%' }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', height: '100%' }}>
             {children}
           </Box>
         </Box>
@@ -391,6 +465,7 @@ export default function DashboardLayout({
           </Button>
         </DialogActions>
       </Dialog>
+      </ToastProvider>
     </RouteGuard>
   );
 }

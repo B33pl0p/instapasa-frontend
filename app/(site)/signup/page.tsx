@@ -172,26 +172,26 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-2xl">
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-4xl font-bold text-white">Welcome</h1>
-          <p className="text-gray-400">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h1 className="mb-1 sm:mb-2 text-3xl sm:text-4xl font-bold text-white">Welcome</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
             Please enter the following information to complete the signup process
           </p>
         </div>
 
         {/* Form Container */}
-        <div className="rounded-lg bg-[#2A2A2A] p-8 shadow-lg">
+        <div className="rounded-lg bg-[#2A2A2A] p-6 sm:p-8 shadow-lg">
           {errors.general && (
-            <div className="mb-4 rounded-md bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
+            <div className="mb-4 rounded-md bg-red-500/20 border border-red-500/50 p-3 text-xs sm:text-sm text-red-300">
               {errors.general}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
               {/* Company Name */}
               <div>
                 <label

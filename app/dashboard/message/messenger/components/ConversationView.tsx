@@ -1,9 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTheme } from '@mui/material/styles';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchMessengerMessages, setCurrentConversation } from '@/app/dashboard/lib/slices/messengerMessagesSlice';
+import { fetchOrders } from '@/app/dashboard/lib/slices/orderSlice';
+import apiClient from '@/app/dashboard/lib/apiClient';
 import MessageBox from '@/app/dashboard/message/components/MessageBox';
+import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
+import { Box, Button, TextField, IconButton, CircularProgress, Paper, Stack, Typography, Chip, Divider } from '@mui/material';
+import { Send as SendIcon, AttachFile as AttachFileIcon, Close as CloseIcon, ShoppingBag as ShoppingBagIcon } from '@mui/icons-material';
 import MicIcon from '@mui/icons-material/Mic';
 import ImageIcon from '@mui/icons-material/Image';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
@@ -15,117 +22,364 @@ interface ConversationViewProps {
 
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
-  const { messages, loading, error, currentConversationId } = useAppSelector(
+  const router = useRouter();  
+  const theme = useTheme();
+  const { showToast } = useToast();  const { messages, messageLoading, error, currentConversationId, messageCache, conversations } = useAppSelector(
     (state) => state.messengerMessages
   );
+  const orders = useAppSelector((state) => state.orders.orders);
   const [messageInput, setMessageInput] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; type: string; file: File } | null>(null);
+
+  // Find all orders related to this conversation
+  const relatedOrders = useMemo(() => {
+    if (!conversationId || !conversations || conversations.length === 0) return [];
+    
+    const conversation = conversations.find(c => c.conversation_id === conversationId);
+    if (!conversation) return [];
+    
+    // Try to get buyer_id from multiple sources
+    let buyerId = conversation.buyer_id;
+    
+    // Fallback: get first participant's id
+    if (!buyerId && conversation.participants && conversation.participants.length > 0) {
+      buyerId = conversation.participants[0]?.id;
+    }
+    
+    if (!buyerId) return [];
+    
+    // Find ALL orders by buyer_id
+    return orders.filter(order => order.buyer_id === buyerId || order.instagram_user_id === buyerId);
+  }, [conversationId, conversations, orders]);
+
+  // Fetch orders on mount to ensure we have order data
+  useEffect(() => {
+    if (orders.length === 0) {
+      dispatch(fetchOrders());
+    }
+  }, [dispatch, orders.length]);
 
   useEffect(() => {
     dispatch(setCurrentConversation(conversationId));
     
     if (conversationId) {
-      // Only fetch if this is a different conversation or no messages loaded yet
-      // This prevents refetching when user clicks the same conversation again
-      if (currentConversationId !== conversationId || messages.length === 0) {
-        // Fetch from cache (fast) by default - lazy loading
+      // LAZY LOADING: Only fetch if not already cached
+      if (!messageCache[conversationId]) {
+        // Fetch from API (lazy loading on demand)
         dispatch(fetchMessengerMessages({ conversationId, forceRefresh: false }));
       }
     }
-  }, [conversationId, dispatch, currentConversationId, messages.length]);
+  }, [conversationId, dispatch, messageCache]);
 
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    // TODO: Implement send message API call
-    console.log('Sending message:', messageInput);
-    setMessageInput('');
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    let attachmentType: 'image' | 'video' | 'audio' | 'file' = 'file';
+    if (file.type.startsWith('image/')) attachmentType = 'image';
+    else if (file.type.startsWith('video/')) attachmentType = 'video';
+    else if (file.type.startsWith('audio/')) attachmentType = 'audio';
+
+    const previewUrl = URL.createObjectURL(file);
+    setAttachmentPreview({ url: previewUrl, type: attachmentType, file });
+  };
+
+  const handleSendAttachment = async () => {
+    if (!attachmentPreview || !conversationId || isSending) return;
+
+    const conversation = conversations.find(c => c.conversation_id === conversationId);
+    if (!conversation) {
+      showToast('Conversation not found', 'error');
+      return;
+    }
+
+    let recipientUserId = conversation.buyer_id;
+    if (!recipientUserId && conversation.participants && conversation.participants.length > 0) {
+      recipientUserId = conversation.participants[0]?.id;
+    }
+
+    if (!recipientUserId) {
+      showToast('Recipient user ID not found', 'error');
+      return;
+    }
+
+    setIsUploadingAttachment(true);
+    setIsSending(true);
+
+    try {
+      const filename = attachmentPreview.file.name;
+      const contentType = attachmentPreview.file.type;
+      const uploadResponse = await apiClient.post<{ presigned_url: string; image_url: string }>(
+        `/dashboard/upload-attachment?filename=${encodeURIComponent(filename)}&content_type=${encodeURIComponent(contentType)}`
+      );
+
+      const { presigned_url, image_url } = uploadResponse.data;
+
+      await fetch(presigned_url, {
+        method: 'PUT',
+        body: attachmentPreview.file,
+        headers: { 'Content-Type': contentType }
+      });
+
+      await apiClient.post('/dashboard/reply', {
+        conversation_id: conversationId,
+        message: messageInput.trim() || '',
+        recipient_user_id: recipientUserId,
+        platform: 'facebook',
+        attachment_url: image_url,
+        attachment_type: attachmentPreview.type
+      });
+
+      setMessageInput('');
+      setAttachmentPreview(null);
+      URL.revokeObjectURL(attachmentPreview.url);
+
+      setTimeout(() => {
+        dispatch(fetchMessengerMessages({ conversationId, forceRefresh: true }));
+      }, 1000);
+    } catch (error: any) {
+      console.error('Failed to send attachment:', error);
+      showToast(error.response?.data?.detail || 'Failed to send attachment. Please try again.', 'error');
+    } finally {
+      setIsUploadingAttachment(false);
+      setIsSending(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (attachmentPreview) {
+      await handleSendAttachment();
+      return;
+    }
+
+    if (!messageInput.trim() || !conversationId || isSending) return;
+
+    // Find the conversation to get buyer info
+    const conversation = conversations.find(c => c.conversation_id === conversationId);
+    if (!conversation) {
+      showToast('Conversation not found', 'error');
+      return;
+    }
+
+    // Get recipient_user_id (buyer_id)
+    let recipientUserId = conversation.buyer_id;
+    
+    // Fallback: get first participant's id
+    if (!recipientUserId && conversation.participants && conversation.participants.length > 0) {
+      recipientUserId = conversation.participants[0]?.id;
+    }
+
+    if (!recipientUserId) {
+      showToast('Recipient user ID not found', 'error');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await apiClient.post('/dashboard/reply', {
+        conversation_id: conversationId,
+        message: messageInput.trim(),
+        recipient_user_id: recipientUserId,
+        platform: 'facebook'
+      });
+
+      // Clear input
+      setMessageInput('');
+
+      // Refresh messages to show the new one
+      setTimeout(() => {
+        dispatch(fetchMessengerMessages({ conversationId, forceRefresh: true }));
+      }, 1000);
+    } catch (error: any) {
+      console.error('Failed to send message:', error);
+      showToast(error.response?.data?.detail || 'Failed to send message. Please try again.', 'error');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (!conversationId) {
     return (
-      <div className="flex h-full items-center justify-center bg-white">
-        <p className="text-center text-sm text-gray-500">
+      <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.paper' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Select a conversation to view messages
-        </p>
-      </div>
+        </Typography>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center bg-white p-4">
-        <p className="text-center text-sm text-red-500">{error}</p>
-      </div>
+      <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.paper', p: 2 }}>
+        <Typography variant="body2" sx={{ color: 'error.main', textAlign: 'center' }}>
+          {error}
+        </Typography>
+      </Box>
     );
   }
 
   return (
-    <div 
-      className="flex h-full w-full flex-col bg-white" 
-      style={{ 
-        minHeight: 0, 
-        height: '100%', 
-        maxHeight: '100vh', 
-        display: 'flex',
-      }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', minHeight: 0 }}>
+      {/* Order Backlink Banner */}
+      {relatedOrders.length > 0 && (
+        <Paper sx={{ bgcolor: 'info.lighter', borderRadius: 0, boxShadow: 'none', borderBottom: '1px solid', borderColor: 'divider' }}>
+          {relatedOrders.length === 1 ? (
+            <Stack direction="row" sx={{ px: 2, py: 1.5, alignItems: 'center', justifyContent: 'space-between' }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <ShoppingBagIcon sx={{ width: 16, height: 16, color: 'info.main' }} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'info.dark' }}>
+                  {relatedOrders[0].order_number}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                  • Rs. {relatedOrders[0].total.toFixed(2)}
+                </Typography>
+                <Chip
+                  label={relatedOrders[0].status.replace('_', ' ')}
+                  size="small"
+                  variant="outlined"
+                  color="info"
+                />
+              </Stack>
+              <Button
+                size="small"
+                onClick={() => router.push('/dashboard/orders')}
+                endIcon={<SendIcon sx={{ width: 16, height: 16 }} />}
+              >
+                View Order
+              </Button>
+            </Stack>
+          ) : (
+            <Stack spacing={1.5} sx={{ px: 2, py: 1.5 }}>
+              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <ShoppingBagIcon sx={{ width: 16, height: 16, color: 'info.main' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'info.dark' }}>
+                    {relatedOrders.length} Orders
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                    • Total: Rs. {relatedOrders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}
+                  </Typography>
+                </Stack>
+                <Button
+                  size="small"
+                  onClick={() => router.push('/dashboard/orders')}
+                  endIcon={<SendIcon sx={{ width: 16, height: 16 }} />}
+                >
+                  View All Orders
+                </Button>
+              </Stack>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                {relatedOrders.map((order) => (
+                  <Chip
+                    key={order.id}
+                    label={
+                      <Stack direction="row" spacing={0.5}>
+                        <span>{order.order_number}</span>
+                        <span>• Rs. {order.total.toFixed(0)}</span>
+                        <span>{order.status.replace('_', ' ')}</span>
+                      </Stack>
+                    }
+                    size="small"
+                    variant="outlined"
+                    color="info"
+                  />
+                ))}
+              </Stack>
+            </Stack>
+          )}
+        </Paper>
+      )}
+
       {/* Messages Area - Fixed height with scrollbar */}
-      <div 
-        className="flex-1 overflow-hidden bg-gray-50" 
-        style={{ 
-          minHeight: 0,
-          flex: '1 1 auto',
-          display: 'flex', 
-          flexDirection: 'column',
-          position: 'relative',
-          height: '100%',
-          width: '100%',
-        }}
-      >
+      <Box sx={{ flex: '1 1 auto', overflow: 'hidden', backgroundColor: 'background.default', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <MessageBox 
           messages={messages} 
           businessUsername={null}
-          loading={loading}
+          loading={messageLoading}
         />
-      </div>
+      </Box>
 
       {/* Message Input Area - Fixed at bottom */}
-      <div className="shrink-0 border-t border-gray-200 bg-white p-3 sm:p-4 shadow-sm">
-        <div className="flex items-center gap-1 sm:gap-2">
-          <input
-            type="text"
+      <Paper sx={{ flexShrink: 0, borderRadius: 0, boxShadow: 'none', borderTop: '1px solid', borderColor: 'divider' }}>
+        {attachmentPreview && (
+          <Paper sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {attachmentPreview.type === 'image' && (
+              <Box component="img" src={attachmentPreview.url} alt="Preview" sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
+            )}
+            {attachmentPreview.type === 'video' && (
+              <Box component="video" src={attachmentPreview.url} sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
+            )}
+            {(attachmentPreview.type === 'audio' || attachmentPreview.type === 'file') && (
+              <Box sx={{ width: 60, height: 60, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography variant="h6">
+                  {attachmentPreview.type === 'audio' ? '🎵' : '📄'}
+                </Typography>
+              </Box>
+            )}
+            <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
+              <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {attachmentPreview.file.name}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                {(attachmentPreview.file.size / 1024).toFixed(1)} KB
+              </Typography>
+            </Stack>
+            <IconButton
+              size="small"
+              onClick={() => {
+                URL.revokeObjectURL(attachmentPreview.url);
+                setAttachmentPreview(null);
+              }}
+              sx={{ color: 'error.main' }}
+            >
+              <CloseIcon sx={{ width: 20, height: 20 }} />
+            </IconButton>
+          </Paper>
+        )}
+
+        <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'flex-end' }}>
+          <TextField
+            fullWidth
+            multiline
+            maxRows={3}
+            size="small"
+            variant="outlined"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 handleSendMessage();
               }
             }}
-            placeholder="Message ..."
-            className="flex-1 rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-sm focus:border-[#0084ff] focus:outline-none focus:ring-2 focus:ring-[#0084ff] focus:ring-opacity-20"
+            placeholder={attachmentPreview ? "Add a caption (optional)" : "Type your message..."}
           />
-          <button
-            type="button"
-            className="rounded-lg p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Microphone"
+          <IconButton component="label" size="small">
+            <input
+              type="file"
+              hidden
+              onChange={handleFileSelect}
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+            />
+            <AttachFileIcon sx={{ width: 20, height: 20 }} />
+          </IconButton>
+          <IconButton size="small" color="default">
+            <EmojiEmotionsIcon sx={{ width: 20, height: 20 }} />
+          </IconButton>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleSendMessage}
+            disabled={(!messageInput.trim() && !attachmentPreview) || isSending}
+            endIcon={isUploadingAttachment || isSending ? <CircularProgress size={16} /> : <SendIcon />}
           >
-            <MicIcon sx={{ width: 18, height: 18, '@media (min-width: 640px)': { width: 20, height: 20 } }} />
-          </button>
-          <button
-            type="button"
-            className="rounded-lg p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Image"
-          >
-            <ImageIcon sx={{ width: 18, height: 18, '@media (min-width: 640px)': { width: 20, height: 20 } }} />
-          </button>
-          <button
-            type="button"
-            className="rounded-lg p-1.5 sm:p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-            aria-label="Emoji"
-          >
-            <EmojiEmotionsIcon sx={{ width: 18, height: 18, '@media (min-width: 640px)': { width: 20, height: 20 } }} />
-          </button>
-        </div>
-      </div>
-    </div>
+            Send
+          </Button>
+        </Stack>
+      </Paper>
+    </Box>
   );
 }
