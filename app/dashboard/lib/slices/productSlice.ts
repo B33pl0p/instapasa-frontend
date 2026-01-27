@@ -118,6 +118,7 @@ const productSlice = createSlice({
     setFilters: (state, action: PayloadAction<ProductFilters>) => {
       state.filters = action.payload;
       state.currentPage = 1;
+      state.selectedItems = [];
     },
     toggleSelectItem: (state, action: PayloadAction<string>) => {
       const index = state.selectedItems.indexOf(action.payload);
@@ -135,6 +136,11 @@ const productSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    setItems: (state, action: PayloadAction<{ items: Product[]; total: number }>) => {
+      state.items = action.payload.items;
+      state.totalCount = action.payload.total;
+      state.loading = false;
     },
   },
   extraReducers: (builder) => {
@@ -230,6 +236,7 @@ export const {
   selectAllItems,
   clearSelection,
   clearError,
+  setItems,
 } = productSlice.actions;
 
 export default productSlice.reducer;

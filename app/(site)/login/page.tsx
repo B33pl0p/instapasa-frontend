@@ -56,34 +56,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         {/* Form Container */}
-        <div className="rounded-lg bg-[#2A2A2A] p-8 shadow-lg">
-          <h1 className="mb-2 text-3xl font-bold text-white">Welcome Back</h1>
-          <p className="mb-6 text-sm text-gray-400">
+        <div className="rounded-lg bg-[#2A2A2A] p-6 sm:p-8 shadow-lg">
+          <h1 className="mb-1 sm:mb-2 text-2xl sm:text-3xl font-bold text-white">Welcome Back</h1>
+          <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-gray-400">
             Sign in with your account to continue
           </p>
 
           {errors.general && (
-            <div className="mb-4 rounded-md bg-red-500/20 border border-red-500/50 p-3 text-sm text-red-300">
+            <div className="mb-4 rounded-md bg-red-500/20 border border-red-500/50 p-3 text-xs sm:text-sm text-red-300">
               {errors.general}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* Email Field */}
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-medium text-white"
+                className="mb-2 block text-xs sm:text-sm font-medium text-white"
               >
                 Email Address
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg
-                    className="h-5 w-5 text-gray-400"
+                    className="h-4 sm:h-5 w-4 sm:w-5 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className={`w-full rounded-md bg-[#1A1A1A] py-2.5 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
+                  className={`w-full rounded-md bg-[#1A1A1A] py-2 sm:py-2.5 pl-10 pr-4 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
                     errors.email
                       ? 'border border-red-500 focus:ring-red-500'
                       : 'border border-gray-700 focus:ring-[#8A38F5]'
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-400">{errors.email}</p>
               )}
             </div>
 
@@ -119,14 +119,14 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-2 block text-sm font-medium text-white"
+                className="mb-2 block text-xs sm:text-sm font-medium text-white"
               >
                 Password
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <svg
-                    className="h-5 w-5 text-gray-400"
+                    className="h-4 sm:h-5 w-4 sm:w-5 text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className={`w-full rounded-md bg-[#1A1A1A] py-2.5 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
+                  className={`w-full rounded-md bg-[#1A1A1A] py-2 sm:py-2.5 pl-10 pr-4 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
                     errors.password
                       ? 'border border-red-500 focus:ring-red-500'
                       : 'border border-gray-700 focus:ring-[#8A38F5]'
@@ -154,7 +154,7 @@ export default function LoginPage() {
                 />
               </div>
               {errors.password && (
-                <p className="mt-1 text-sm text-red-400">{errors.password}</p>
+                <p className="mt-1 text-xs sm:text-sm text-red-400">{errors.password}</p>
               )}
             </div>
 
@@ -162,7 +162,7 @@ export default function LoginPage() {
             <div className="text-right">
               <Link
                 href="#"
-                className="text-sm text-gray-400 hover:text-gray-300"
+                className="text-xs sm:text-sm text-gray-400 hover:text-gray-300"
               >
                 Forgot Password
               </Link>
@@ -172,7 +172,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full rounded-md bg-[#8A38F5] py-2.5 px-4 font-semibold text-white transition-colors hover:bg-[#7A28E5] focus:outline-none focus:ring-2 focus:ring-[#8A38F5] focus:ring-offset-2 focus:ring-offset-[#2A2A2A] ${
+              className={`w-full rounded-md bg-[#8A38F5] py-2 sm:py-2.5 px-4 font-semibold text-sm sm:text-base text-white transition-colors hover:bg-[#7A28E5] focus:outline-none focus:ring-2 focus:ring-[#8A38F5] focus:ring-offset-2 focus:ring-offset-[#2A2A2A] ${
                 isLoading
                   ? 'cursor-not-allowed opacity-60'
                   : ''
@@ -181,7 +181,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <span className="flex items-center justify-center">
                   <svg
-                    className="mr-2 h-5 w-5 animate-spin"
+                    className="mr-2 h-4 sm:h-5 w-4 sm:w-5 animate-spin"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -208,7 +208,7 @@ export default function LoginPage() {
             </button>
 
             {/* Sign Up Link */}
-            <div className="text-center text-sm text-gray-400">
+            <div className="text-center text-xs sm:text-sm text-gray-400">
               Don&apos;t have an account?{' '}
               <Link
                 href="/signup"

@@ -7,13 +7,27 @@ export interface MessengerParticipant {
   id: string;
 }
 
+export interface MessengerPostback {
+  title: string;
+  payload: string;
+}
+
+export interface MessengerAttachment {
+  type: string;
+  url: string;
+  media?: any;
+}
+
 export interface MessengerMessage {
   id: string;
   created_time: string;
-  text: string;
+  text: string | null;
   from: MessengerParticipant;
   to: MessengerParticipant[];
   is_from_business: boolean;
+  postback?: MessengerPostback | null;
+  attachments?: MessengerAttachment[] | null;
+  sticker?: string | null;
 }
 
 export interface MessengerConversation {
@@ -28,6 +42,8 @@ export interface MessengerConversation {
     from: MessengerParticipant;
     to: MessengerParticipant[];
   };
+  buyer_id?: string;
+  buyer_username?: string;
 }
 
 export interface MessengerMessagesOverviewResponse {
@@ -43,11 +59,22 @@ export interface MessengerConversationDetailResponse {
   messages: MessengerMessage[];
 }
 
+// Cache for storing fetched messages per conversation
+interface MessageCache {
+  [conversationId: string]: {
+    messages: MessengerMessage[];
+    fetchedAt: number;
+  };
+}
+
 interface MessengerMessagesState {
   conversations: MessengerConversation[];
   currentConversationId: string | null;
   messages: MessengerMessage[];
+  messageCache: MessageCache;
   loading: boolean;
+  conversationLoading: boolean;
+  messageLoading: boolean;
   syncing: boolean;
   error: string | null;
   lastSyncedAt: string | null;
@@ -58,7 +85,10 @@ const initialState: MessengerMessagesState = {
   conversations: [],
   currentConversationId: null,
   messages: [],
+  messageCache: {},
   loading: false,
+  conversationLoading: false,
+  messageLoading: false,
   syncing: false,
   error: null,
   lastSyncedAt: null,
@@ -84,11 +114,12 @@ export const syncMessengerMessages = createAsyncThunk(
   }
 );
 
+// LAZY LOADING: Fetch only conversation overview (lightweight) for the left sidebar
 export const fetchMessengerConversations = createAsyncThunk(
   'messengerMessages/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/dashboard/conversations?limit=25');
+      const response = await apiClient.get('/dashboard/conversations?limit=50&platform=facebook');
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.detail || 'Failed to fetch conversations');
@@ -96,6 +127,7 @@ export const fetchMessengerConversations = createAsyncThunk(
   }
 );
 
+// LAZY LOADING: Fetch full messages only when user clicks on a conversation
 export const fetchMessengerMessages = createAsyncThunk(
   'messengerMessages/fetchMessages',
   async (
@@ -106,7 +138,10 @@ export const fetchMessengerMessages = createAsyncThunk(
       const response = await apiClient.get<MessengerConversationDetailResponse>(
         `/dashboard/messages/${conversationId}?platform=facebook&force_refresh=${forceRefresh}`
       );
-      return response.data;
+      return {
+        conversationId,
+        data: response.data,
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.detail || 'Failed to fetch messages');
     }
@@ -119,12 +154,19 @@ const messengerMessagesSlice = createSlice({
   reducers: {
     setCurrentConversation: (state, action: PayloadAction<string | null>) => {
       state.currentConversationId = action.payload;
-      if (!action.payload) {
+      // Load messages from cache if available, otherwise empty
+      if (action.payload && state.messageCache[action.payload]) {
+        state.messages = state.messageCache[action.payload].messages;
+      } else {
         state.messages = [];
       }
     },
     addMessage: (state, action: PayloadAction<MessengerMessage>) => {
       state.messages.push(action.payload);
+      // Also update cache
+      if (state.currentConversationId && state.messageCache[state.currentConversationId]) {
+        state.messageCache[state.currentConversationId].messages.push(action.payload);
+      }
     },
     clearMessages: (state) => {
       state.messages = [];
@@ -132,6 +174,12 @@ const messengerMessagesSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    // Clear entire message cache (on logout, etc.)
+    clearMessageCache: (state) => {
+      state.messageCache = {};
+      state.messages = [];
+      state.currentConversationId = null;
     },
   },
   extraReducers: (builder) => {
@@ -154,41 +202,52 @@ const messengerMessagesSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Fetch conversations
+    // Fetch conversations (lightweight - just for sidebar)
     builder
       .addCase(fetchMessengerConversations.pending, (state) => {
-        state.loading = true;
+        state.conversationLoading = true;
         state.error = null;
       })
       .addCase(fetchMessengerConversations.fulfilled, (state, action) => {
-        state.loading = false;
+        state.conversationLoading = false;
         // The response is now an array of conversations directly
         state.conversations = Array.isArray(action.payload) ? action.payload : [];
         state.conversationsLoaded = true;
       })
       .addCase(fetchMessengerConversations.rejected, (state, action) => {
-        state.loading = false;
+        state.conversationLoading = false;
         state.error = action.payload as string;
         state.conversations = [];
       });
 
-    // Fetch messages
+    // Fetch full messages (lazy loading - only on demand)
     builder
       .addCase(fetchMessengerMessages.pending, (state) => {
-        state.loading = true;
+        state.messageLoading = true;
         state.error = null;
       })
       .addCase(fetchMessengerMessages.fulfilled, (state, action) => {
-        state.loading = false;
-        state.messages = action.payload.messages || [];
+        state.messageLoading = false;
+        const { conversationId, data } = action.payload;
+        const messages = data.messages || [];
+        
+        // Cache the messages by conversation_id
+        state.messageCache[conversationId] = {
+          messages,
+          fetchedAt: Date.now(),
+        };
+        
+        // Set as current if this is the current conversation
+        if (state.currentConversationId === conversationId) {
+          state.messages = messages;
+        }
       })
       .addCase(fetchMessengerMessages.rejected, (state, action) => {
-        state.loading = false;
+        state.messageLoading = false;
         state.error = action.payload as string;
-        state.messages = [];
       });
   },
 });
 
-export const { setCurrentConversation, addMessage, clearMessages, clearError } = messengerMessagesSlice.actions;
+export const { setCurrentConversation, addMessage, clearMessages, clearError, clearMessageCache } = messengerMessagesSlice.actions;
 export default messengerMessagesSlice.reducer;

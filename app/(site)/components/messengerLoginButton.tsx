@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import MessageIcon from '@mui/icons-material/Message';
 
 const META_APP_ID = '869172442507684';
-const REDIRECT_URI = 'https://lakhey.tech/message';
+const REDIRECT_URI = `${typeof window !== 'undefined' ? window.location.origin : 'https://lakhey.tech'}/dashboard/message`;
 
 type MessengerLoginButtonProps = {
   disabled?: boolean;

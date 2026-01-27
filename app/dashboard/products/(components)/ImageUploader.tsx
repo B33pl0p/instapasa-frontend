@@ -7,8 +7,14 @@ import {
   LinearProgress,
   Typography,
   Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 import { productService } from '@/app/dashboard/lib/services/productService';
 
 interface ImageUploaderProps {
@@ -16,66 +22,171 @@ interface ImageUploaderProps {
   onUploadComplete: () => void;
 }
 
+interface UploadStatus {
+  file: File;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
+  error?: string;
+}
+
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
   productId,
   onUploadComplete,
 }) => {
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select a valid image file');
-      return;
+    const validFiles: File[] = [];
+    const errors: string[] = [];
+
+    files.forEach((file) => {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        errors.push(`${file.name}: Not a valid image file`);
+        return;
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        errors.push(`${file.name}: File size must be less than 5MB`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      setError(errors.join(', '));
+    } else {
+      setError(null);
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
-      return;
-    }
-
-    setSelectedFile(file);
-    setError(null);
+    setSelectedFiles(validFiles);
+    setUploadStatuses(
+      validFiles.map((file) => ({
+        file,
+        status: 'pending',
+        progress: 0,
+      }))
+    );
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
+  const uploadSingleFile = async (file: File, index: number): Promise<void> => {
+    // Update status to uploading
+    setUploadStatuses((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, status: 'uploading', progress: 0 } : item
+      )
+    );
+
+    // Update status to uploading
+    setUploadStatuses((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, status: 'uploading', progress: 0 } : item
+      )
+    );
+
+    try {
+      console.log('Starting upload for file:', file.name);
+
+      // Step 1: Get presigned URL with content type
+      const presignedData = await productService.getPresignedUrl(
+        productId,
+        file.type
+      );
+
+      // Step 2: Upload to S3 with matching content type
+      await productService.uploadToS3(
+        presignedData.presigned_url,
+        file,
+        file.type,
+        (p) => {
+          setUploadStatuses((prev) =>
+            prev.map((item, i) =>
+              i === index ? { ...item, progress: p } : item
+            )
+          );
+        }
+      );
+
+      // Step 3: Confirm upload completion with backend
+      await productService.confirmImageUpload(
+        productId,
+        presignedData.image_url,
+        presignedData.s3_key
+      );
+
+      // Update status to success
+      setUploadStatuses((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, status: 'success', progress: 100 } : item
+        )
+      );
+
+      console.log('Upload complete for:', file.name);
+    } catch (err) {
+      console.error('Upload error for', file.name, ':', err);
+      setUploadStatuses((prev) =>
+        prev.map((item, i) =>
+          i === index
+            ? {
+                ...item,
+                status: 'error',
+                error: (err as Error).message || 'Upload failed',
+              }
+            : item
+        )
+      );
+    }
+  };
+
+  const handleUploadAll = async () => {
+    if (selectedFiles.length === 0) return;
 
     try {
       setUploading(true);
       setError(null);
-      setProgress(0);
 
-      // Step 1: Get presigned URL
-      const presignedData = await productService.getPresignedUrl(productId);
+      // Upload files one by one
+      for (let i = 0; i < selectedFiles.length; i++) {
+        await uploadSingleFile(selectedFiles[i], i);
+      }
 
-      // Step 2: Upload to S3
-      await productService.uploadToS3(
-        presignedData.presigned_url,
-        selectedFile,
-        (p) => setProgress(p)
-      );
-
-      setProgress(100);
-      setSelectedFile(null);
-      onUploadComplete();
-
-      // Reset after 1 second
-      setTimeout(() => {
-        setProgress(0);
-      }, 1000);
+      // Check if all uploads succeeded
+      const allSuccess = uploadStatuses.every((s) => s.status === 'success');
+      if (allSuccess) {
+        onUploadComplete();
+        // Reset after showing success
+        setTimeout(() => {
+          setSelectedFiles([]);
+          setUploadStatuses([]);
+        }, 2000);
+      }
     } catch (err) {
-      setError((err as Error).message || 'Upload failed');
+      console.error('Batch upload error:', err);
+      setError('Some uploads failed. Please try again.');
     } finally {
       setUploading(false);
     }
+  };
+
+  const getStatusIcon = (status: UploadStatus['status']) => {
+    if (status === 'success') return <CheckCircleIcon color="success" />;
+    if (status === 'error') return <ErrorIcon color="error" />;
+    return null;
+  };
+
+  const getStatusColor = (status: UploadStatus['status']) => {
+    if (status === 'success') return 'success';
+    if (status === 'error') return 'error';
+    if (status === 'uploading') return 'primary';
+    return 'default';
   };
 
   return (
@@ -95,6 +206,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <input
           type="file"
           accept="image/*"
+          multiple
           onChange={handleFileSelect}
           disabled={uploading}
           style={{ display: 'none' }}
@@ -107,32 +219,79 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             disabled={uploading}
             fullWidth
           >
-            Select Image
+            Select Images
           </Button>
         </label>
 
-        {selectedFile && (
+        {selectedFiles.length > 0 && (
           <>
             <Typography variant="body2" color="textSecondary">
-              {selectedFile.name}
+              {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
             </Typography>
+
+            <List sx={{ width: '100%', maxHeight: 300, overflowY: 'auto' }}>
+              {uploadStatuses.map((status, index) => (
+                <ListItem
+                  key={index}
+                  sx={{
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 1,
+                    mb: 1,
+                  }}
+                >
+                  <ListItemText
+                    primary={status.file.name}
+                    secondary={
+                      <>
+                        {status.status === 'uploading' && (
+                          <LinearProgress
+                            variant="determinate"
+                            value={status.progress}
+                            sx={{ mt: 1, mb: 0.5 }}
+                          />
+                        )}
+                        {status.error && (
+                          <Typography variant="caption" color="error">
+                            {status.error}
+                          </Typography>
+                        )}
+                      </>
+                    }
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {status.status === 'uploading' && (
+                      <Typography variant="caption" color="textSecondary">
+                        {status.progress}%
+                      </Typography>
+                    )}
+                    {getStatusIcon(status.status) ? (
+                      <Chip
+                        label={status.status}
+                        color={getStatusColor(status.status)}
+                        size="small"
+                        icon={getStatusIcon(status.status)!}
+                      />
+                    ) : (
+                      <Chip
+                        label={status.status}
+                        color={getStatusColor(status.status)}
+                        size="small"
+                      />
+                    )}
+                  </Box>
+                </ListItem>
+              ))}
+            </List>
+
             <Button
               variant="contained"
               color="success"
-              onClick={handleUpload}
+              onClick={handleUploadAll}
               disabled={uploading}
               fullWidth
             >
-              {uploading ? 'Uploading...' : 'Upload Image'}
+              {uploading ? 'Uploading...' : `Upload ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`}
             </Button>
-            {uploading && (
-              <>
-                <LinearProgress variant="determinate" value={progress} sx={{ width: '100%' }} />
-                <Typography variant="caption" color="textSecondary">
-                  {progress}%
-                </Typography>
-              </>
-            )}
           </>
         )}
       </Box>

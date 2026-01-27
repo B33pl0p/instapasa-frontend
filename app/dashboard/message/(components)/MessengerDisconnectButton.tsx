@@ -18,21 +18,15 @@ export default function MessengerDisconnectButton({
       startIcon={<MessageIcon />}
       onClick={onDisconnect}
       disabled={disabled}
+      color="error"
       sx={{
         width: '100%',
-        borderColor: '#dc2626',
-        color: '#dc2626',
         textTransform: 'none',
         fontSize: '0.875rem',
         fontWeight: 600,
         padding: '8px 16px',
         '&:hover': {
-          borderColor: '#b91c1c',
-          backgroundColor: '#fef2f2',
-        },
-        '&:disabled': {
-          borderColor: '#cccccc',
-          color: '#666666',
+          backgroundColor: 'error.lighter',
         },
       }}
     >

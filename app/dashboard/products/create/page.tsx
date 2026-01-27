@@ -1,33 +1,47 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/navigation';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
-  Container,
-  Typography,
-  TextField,
-  FormControlLabel,
-  Switch,
   Button,
-  Alert,
+  TextField,
+  Select,
+  MenuItem,
+  FormControlLabel,
+  Checkbox,
   Card,
   CardContent,
-  Grid,
+  Typography,
+  Alert,
+  FormHelperText,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
-import ClearIcon from '@mui/icons-material/Clear';
 import type { AppDispatch } from '@/app/dashboard/lib/store';
 import { createProduct } from '@/app/dashboard/lib/slices/productSlice';
-import { CreateProductRequest } from '@/app/dashboard/lib/types/product';
-import { productService } from '@/app/dashboard/lib/services/productService';
-import LinearProgress from '@mui/material/LinearProgress';
+import { CreateProductRequest, CategoryConfig, ProductVariantCreate } from '@/app/dashboard/lib/types/product';
+import { fetchCategories, fetchCategoryConfig } from '@/app/dashboard/lib/services/productService';
+import { DynamicAttributeFields } from '../(components)/DynamicAttributeFields';
+import VariantBuilder from '../(components)/VariantBuilder';
+
+const categoryIcons: Record<string, string> = {
+  clothing: 'Clothing',
+  footwear: 'Footwear',
+  electronics: 'Electronics',
+  food: 'Food',
+  beauty: 'Beauty',
+  home: 'Home',
+  books: 'Books',
+  general: 'Product',
+};
 
 export default function CreateProductPage() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const theme = useTheme();
 
   const [formData, setFormData] = useState<CreateProductRequest>({
     name: '',
@@ -37,19 +51,55 @@ export default function CreateProductPage() {
     sku: '',
     stock: 0,
     is_active: true,
+    attributes: {},
+    variants: [],
   });
 
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryConfig, setCategoryConfig] = useState<CategoryConfig | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [useVariants, setUseVariants] = useState(false);
 
-  // Image upload states
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
-  const [uploadingImages, setUploadingImages] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Fetch available categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await fetchCategories();
+        setCategories(cats);
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+        setError('Failed to load categories');
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    void loadCategories();
+  }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement & HTMLTextAreaElement;
+  // Fetch category config when category changes
+  useEffect(() => {
+    const loadCategoryConfig = async () => {
+      if (!formData.category) {
+        setCategoryConfig(null);
+        return;
+      }
+
+      try {
+        const config = await fetchCategoryConfig(formData.category);
+        setCategoryConfig(config);
+        // Reset attributes when category changes
+        setFormData((prev) => ({ ...prev, attributes: {} }));
+      } catch (err) {
+        console.error('Failed to load category config:', err);
+      }
+    };
+    void loadCategoryConfig();
+  }, [formData.category]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
 
     if (type === 'checkbox') {
       setFormData({
@@ -69,51 +119,62 @@ export default function CreateProductPage() {
     }
   };
 
+  const handleAttributesChange = (attributes: Record<string, any>) => {
+    setFormData({ ...formData, attributes });
+  };
+
+  const handleVariantsChange = (variants: ProductVariantCreate[]) => {
+    setFormData({ ...formData, variants });
+  };
+
+  const handleUseVariantsToggle = (checked: boolean) => {
+    setUseVariants(checked);
+    if (checked) {
+      // Clear stock and attributes when switching to variant mode
+      setFormData({ ...formData, stock: 0, attributes: {}, variants: [] });
+    } else {
+      // Clear variants when switching to simple mode
+      setFormData({ ...formData, variants: [] });
+    }
+  };
+
   const validateForm = (): boolean => {
     if (!formData.name?.trim()) {
       setError('Product name is required');
       return false;
     }
-    return true;
-  };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles: File[] = [];
-
-    files.forEach((file) => {
-      if (!file.type.startsWith('image/')) {
-        setError('Please select valid image files');
-        return;
+    // Validate variants if using variant mode
+    if (useVariants) {
+      if (!formData.variants || formData.variants.length === 0) {
+        setError('At least one variant is required when using variant mode');
+        return false;
       }
-      if (file.size > 5 * 1024 * 1024) {
-        setError('File size must be less than 5MB');
-        return;
+
+      // Check for duplicate variants
+      const seen = new Set<string>();
+      for (const variant of formData.variants) {
+        const key = JSON.stringify(variant.attributes);
+        if (seen.has(key)) {
+          setError('Duplicate variants detected. Each variant must have unique attributes.');
+          return false;
+        }
+        seen.add(key);
       }
-      validFiles.push(file);
-    });
-
-    if (validFiles.length > 0) {
-      setSelectedImages((prev) => [...prev, ...validFiles]);
-      setError(null);
-
-      // Create preview URLs
-      validFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreviewUrls((prev) => [...prev, reader.result as string]);
-        };
-        reader.readAsDataURL(file);
-      });
+    } else {
+      // Validate required attributes for single-variant products
+      if (categoryConfig?.attributes) {
+        for (const attr of categoryConfig.attributes) {
+          const value = formData.attributes?.[attr.name];
+          if (attr.required && (value === undefined || value === null || value === '')) {
+            setError(`${attr.label} is required`);
+            return false;
+          }
+        }
+      }
     }
 
-    // Clear input
-    e.target.value = '';
-  };
-
-  const removeImage = (index: number) => {
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,291 +187,295 @@ export default function CreateProductPage() {
 
     try {
       setLoading(true);
-      const createdProduct = await dispatch(createProduct(formData)).unwrap();
-
-      // Upload images if any were selected
-      if (selectedImages.length > 0) {
-        setUploadingImages(true);
-        const uploadErrors: string[] = [];
-
-        for (let i = 0; i < selectedImages.length; i++) {
-          try {
-            const file = selectedImages[i];
-            const presignedData = await productService.getPresignedUrl(createdProduct.id);
-            
-            if (!presignedData?.presigned_url) {
-              throw new Error('Failed to get presigned URL from server');
-            }
-
-            await productService.uploadToS3(
-              presignedData.presigned_url,
-              file,
-              (progress) => {
-                setUploadProgress(Math.round((progress * (i + 1)) / selectedImages.length));
-              }
-            );
-          } catch (err) {
-            const errorMsg = (err as Error).message || `Failed to upload image ${i + 1}`;
-            console.error('Image upload failed:', err);
-            uploadErrors.push(errorMsg);
-          }
-        }
-
-        setUploadingImages(false);
-        setUploadProgress(0);
-
-        // If there were upload errors, show them but don't block product creation
-        if (uploadErrors.length > 0) {
-          setError(`Product created but some images failed to upload: ${uploadErrors.join(', ')}`);
-          setTimeout(() => {
-            router.push('/dashboard/products');
-          }, 2000);
-          return;
-        }
-      }
-
+      
+      // Prepare payload based on variant mode
+      const payload = useVariants
+        ? { ...formData, variants: formData.variants, stock: undefined, attributes: undefined }
+        : { ...formData, variants: undefined };
+      
+      await dispatch(createProduct(payload)).unwrap();
       router.push('/dashboard/products');
     } catch (err) {
-      const errorMsg = (err as Error).message || 'Failed to create product';
-      setError(errorMsg);
-      console.error('Product creation failed:', err);
+      setError((err as Error).message || 'Failed to create product');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Card>
-        <CardContent>
-          <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
-            Create New Product
-          </Typography>
+    <Box sx={{ p: 3, maxHeight: '100vh', overflowY: 'auto', backgroundColor: 'background.default' }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'text.primary', mb: 0.5 }}>
+          Create New Product
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Add a new product to your inventory
+        </Typography>
+      </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-              {error}
-            </Alert>
-          )}
+      {/* Error Message */}
+      {error && (
+        <Alert
+          severity="error"
+          onClose={() => setError(null)}
+          sx={{ mb: 3 }}
+        >
+          {error}
+        </Alert>
+      )}
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-              {/* Product Name */}
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Product Name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  placeholder="Enter product name"
-                />
-              </Grid>
-
-              {/* Price */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Price"
-                  name="price"
-                  type="number"
-                  inputProps={{ step: '0.01', min: '0' }}
-                  value={formData.price ?? ''}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="0.00"
-                />
-              </Grid>
-
-              {/* Category */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Category"
-                  name="category"
-                  value={formData.category || ''}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="Enter category"
-                />
-              </Grid>
-
-              {/* SKU */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="SKU"
-                  name="sku"
-                  value={formData.sku || ''}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="Enter product SKU"
-                />
-              </Grid>
-
-              {/* Stock */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Stock"
-                  name="stock"
-                  type="number"
-                  inputProps={{ min: '0' }}
-                  value={formData.stock ?? 0}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="0"
-                />
-              </Grid>
-
-              {/* Description */}
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  name="description"
-                  multiline
-                  rows={4}
-                  value={formData.description || ''}
-                  onChange={handleChange}
-                  disabled={loading}
-                  placeholder="Enter product description"
-                />
-              </Grid>
-
-              {/* Image Upload */}
-              <Grid size={{ xs: 12 }}>
-                <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-                    Product Images
+      <Box component="form" onSubmit={handleSubmit}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
+          {/* Main Details */}
+          <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Basic Information Card */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                    Basic Information
                   </Typography>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    fullWidth
-                    disabled={loading || uploadingImages}
-                    sx={{ py: 2, mb: 2 }}
-                  >
-                    Upload Images
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      hidden
-                      onChange={handleImageSelect}
-                      disabled={loading || uploadingImages}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* Product Name */}
+                    <TextField
+                      fullWidth
+                      label="Product Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                      placeholder="Enter product name"
+                      variant="outlined"
+                      size="small"
                     />
-                  </Button>
 
-                  {uploadingImages && (
-                    <Box sx={{ mb: 2 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={uploadProgress}
-                        sx={{ mb: 1 }}
-                      />
-                      <Typography variant="caption" color="textSecondary">
-                        Uploading... {uploadProgress}%
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {imagePreviewUrls.length > 0 && (
-                    <Box>
-                      <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                        Selected Images ({imagePreviewUrls.length})
-                      </Typography>
-                      <Grid container spacing={2}>
-                        {imagePreviewUrls.map((url, index) => (
-                          <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
-                            <Box
-                              sx={{
-                                position: 'relative',
-                                paddingBottom: '100%',
-                                borderRadius: 1,
-                                overflow: 'hidden',
-                                border: '1px solid #ddd',
-                              }}
-                            >
-                              <Box
-                                component="img"
-                                src={url}
-                                alt={`Preview ${index}`}
-                                sx={{
-                                  position: 'absolute',
-                                  top: 0,
-                                  left: 0,
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                }}
-                              />
-                              <Box
-                                sx={{
-                                  position: 'absolute',
-                                  top: 4,
-                                  right: 4,
-                                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                                  borderRadius: '50%',
-                                  p: 0.5,
-                                  cursor: 'pointer',
-                                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.9)' },
-                                }}
-                                onClick={() => removeImage(index)}
-                              >
-                                <ClearIcon sx={{ color: 'white', fontSize: 18 }} />
-                              </Box>
-                            </Box>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </Box>
-                  )}
-                </Box>
-              </Grid>
-
-              {/* Active Status */}
-              <Grid size={{ xs: 12 }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      name="is_active"
-                      checked={formData.is_active ?? true}
+                    {/* Description */}
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      name="description"
+                      value={formData.description || ''}
                       onChange={handleChange}
                       disabled={loading}
+                      multiline
+                      rows={4}
+                      placeholder="Enter product description"
+                      variant="outlined"
+                      size="small"
                     />
-                  }
-                  label="Active"
-                />
-              </Grid>
+
+                    {/* Category */}
+                    <Box>
+                      <Select
+                        fullWidth
+                        name="category"
+                        value={formData.category || ''}
+                        onChange={(e) => handleChange(e as any)}
+                        disabled={loading || loadingCategories}
+                        displayEmpty
+                        size="small"
+                      >
+                        <MenuItem value="">-- Select Category --</MenuItem>
+                        {categories.map((cat) => (
+                          <MenuItem key={cat} value={cat}>
+                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Dynamic Category Attributes - Only for single-variant mode */}
+              {categoryConfig && !useVariants && (
+                <Card sx={{ backgroundColor: 'background.paper' }}>
+                  <CardContent>
+                    <DynamicAttributeFields
+                      categoryConfig={categoryConfig}
+                      attributes={formData.attributes || {}}
+                      onChange={handleAttributesChange}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Variants Builder - Only for multi-variant mode */}
+              {useVariants && (
+                <Card sx={{ backgroundColor: 'background.paper' }}>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                      Product Variants
+                    </Typography>
+                    <VariantBuilder
+                      value={formData.variants || []}
+                      onChange={handleVariantsChange}
+                      category={formData.category}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
+          </Box>
+
+          {/* Sidebar */}
+          <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Pricing & Stock Card */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                    Pricing & Inventory
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* Price */}
+                    <Box>
+                      <TextField
+                        fullWidth
+                        label={useVariants ? 'Price (Rs.) - Base Price' : 'Price (Rs.)'}
+                        type="number"
+                        name="price"
+                        inputProps={{ step: '0.01', min: '0' }}
+                        value={formData.price ?? ''}
+                        onChange={handleChange}
+                        disabled={loading}
+                        placeholder="0.00"
+                        variant="outlined"
+                        size="small"
+                      />
+                      {useVariants && (
+                        <FormHelperText>
+                          Variants can have individual price adjustments
+                        </FormHelperText>
+                      )}
+                    </Box>
+
+                    {/* SKU */}
+                    <TextField
+                      fullWidth
+                      label="SKU"
+                      type="text"
+                      name="sku"
+                      value={formData.sku || ''}
+                      onChange={handleChange}
+                      disabled={loading}
+                      placeholder="Enter SKU"
+                      variant="outlined"
+                      size="small"
+                    />
+
+                    {/* Variant Mode Toggle */}
+                    <Box sx={{ pt: 1, borderTop: `1px solid ${theme.palette.divider}` }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={useVariants}
+                            onChange={(e) => handleUseVariantsToggle(e.target.checked)}
+                            disabled={loading}
+                            name="useVariants"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              Multiple Variants (Size/Color)
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+                              Enable to add variants with different sizes, colors, or other attributes
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </Box>
+
+                    {/* Stock - Only show for single-variant mode */}
+                    {!useVariants && (
+                      <TextField
+                        fullWidth
+                        label="Stock Quantity"
+                        type="number"
+                        name="stock"
+                        inputProps={{ min: '0' }}
+                        value={formData.stock ?? 0}
+                        onChange={handleChange}
+                        disabled={loading}
+                        placeholder="0"
+                        variant="outlined"
+                        size="small"
+                      />
+                    )}
+
+                    {/* Variant stock info */}
+                    {useVariants && formData.variants && formData.variants.length > 0 && (
+                      <Box sx={{ backgroundColor: 'info.lighter', border: `1px solid ${theme.palette.info.main}`, borderRadius: 1, p: 1.5 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'info.dark' }}>
+                          {formData.variants.length} variant{formData.variants.length !== 1 ? 's' : ''}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'info.main', display: 'block', mt: 0.5 }}>
+                          Total Stock: {formData.variants.reduce((sum, v) => sum + v.stock, 0)}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Status Card */}
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Typography variant="h6" sx={{ fontWeight: 'semibold', mb: 2, color: 'text.primary' }}>
+                    Status
+                  </Typography>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        name="is_active"
+                        checked={formData.is_active ?? true}
+                        onChange={handleChange}
+                        disabled={loading}
+                      />
+                    }
+                    label="Active (visible to customers)"
+                  />
+                </CardContent>
+              </Card>
 
               {/* Actions */}
-              <Grid size={{ xs: 12 }}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<CancelIcon />}
-                    onClick={() => router.push('/dashboard/products')}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    type="submit"
-                    startIcon={<SaveIcon />}
-                    disabled={loading}
-                  >
-                    {loading ? 'Creating...' : 'Create Product'}
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </form>
-        </CardContent>
-      </Card>
-    </Container>
+              <Card sx={{ backgroundColor: 'background.paper' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      disabled={loading}
+                      startIcon={<SaveIcon />}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {loading ? 'Creating...' : 'Create Product'}
+                    </Button>
+                    <Button
+                      type="button"
+                      fullWidth
+                      variant="outlined"
+                      color="inherit"
+                      onClick={() => router.push('/dashboard/products')}
+                      disabled={loading}
+                      startIcon={<CancelIcon />}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Cancel
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }

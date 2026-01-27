@@ -8,6 +8,11 @@ import {
   Container,
   Typography,
   Alert,
+  ButtonGroup,
+  Chip,
+  Card,
+  CardContent,
+  Stack,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -23,11 +28,15 @@ import {
   selectAllItems,
   clearSelection,
   clearError,
+  setItems,
 } from '@/app/dashboard/lib/slices/productSlice';
-import { ProductTable } from './(components)/ProductTable';
+import { ModernProductTable } from './(components)/ModernProductTable';
+import { QuickUploadModal } from './(components)/QuickUploadModal';
 import { ProductFilterComponent } from './(components)/ProductFilters';
 import { ProductPagination } from './(components)/ProductPagination';
 import { ConfirmDialog } from './(components)/ConfirmDialog';
+import { Product } from '@/app/dashboard/lib/types/product';
+import { productService } from '@/app/dashboard/lib/services/productService';
 
 export default function ProductPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -52,13 +61,45 @@ export default function ProductPage() {
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [quickUploadOpen, setQuickUploadOpen] = useState(false);
+  const [quickUploadProduct, setQuickUploadProduct] = useState<Product | null>(null);
+  const [viewMode, setViewMode] = useState<'all' | 'active' | 'low-stock'>('all');
 
-  // Fetch products on mount and when filters/page changes
+  // Fetch products on mount and when filters/page/viewMode changes
   useEffect(() => {
-    void dispatch(
-      fetchProducts({ page: currentPage, pageSize, filters })
-    );
-  }, [dispatch, currentPage, pageSize, filters]);
+    const fetchData = async () => {
+      if (viewMode === 'active') {
+        // Apply filters to active products
+        const activeFilters = { ...filters, is_active: true };
+        void dispatch(
+          fetchProducts({ page: currentPage, pageSize, filters: activeFilters })
+        );
+      } else if (viewMode === 'low-stock') {
+        try {
+          const products = await productService.getLowStockProducts(
+            (currentPage - 1) * pageSize,
+            pageSize
+          );
+          dispatch(setItems({ items: products, total: products.length }));
+        } catch (error) {
+          console.error('Failed to fetch low stock products:', error);
+        }
+      } else {
+        // Normal fetch with filters
+        void dispatch(
+          fetchProducts({ page: currentPage, pageSize, filters })
+        );
+      }
+    };
+
+    void fetchData();
+  }, [dispatch, currentPage, pageSize, filters, viewMode]);
+
+  // Reset page and clear selections when view mode changes
+  useEffect(() => {
+    dispatch(setCurrentPage(1));
+    dispatch(clearSelection());
+  }, [viewMode, dispatch]);
 
   const handleDeleteProduct = (id: string) => {
     setDeleteItemId(id);
@@ -110,127 +151,209 @@ export default function ProductPage() {
 
   const handleFilterChange = (newFilters: typeof filters) => {
     dispatch(setFilters(newFilters));
+    dispatch(clearSelection());
   };
 
   const handlePageChange = (page: number) => {
     dispatch(setCurrentPage(page));
   };
 
+  const handleQuickUpload = (id: string) => {
+    const product = items.find((p) => p.id === id);
+    if (product) {
+      setQuickUploadProduct(product);
+      setQuickUploadOpen(true);
+    }
+  };
+
+  const handleQuickUploadSuccess = async () => {
+    // Refetch based on current view mode
+    if (viewMode === 'active') {
+      const activeFilters = { ...filters, is_active: true };
+      await dispatch(fetchProducts({ page: currentPage, pageSize, filters: activeFilters }));
+    } else if (viewMode === 'low-stock') {
+      try {
+        const products = await productService.getLowStockProducts(
+          (currentPage - 1) * pageSize,
+          pageSize
+        );
+        dispatch(setItems({ items: products, total: products.length }));
+      } catch (error) {
+        console.error('Failed to fetch low stock products:', error);
+      }
+    } else {
+      await dispatch(fetchProducts({ page: currentPage, pageSize, filters }));
+    }
+    setShowNotification({
+      type: 'success',
+      message: 'Image uploaded successfully',
+    });
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Active User Display */}
-      {(email || business_name) && (
-        <Box sx={{ mb: 3, p: 2, backgroundColor: '#f0f4ff', borderRadius: 1, borderLeft: '4px solid #1976d2' }}>
-          <Typography variant="body2" color="textSecondary">
-            Logged in as:
-          </Typography>
-          <Typography variant="h6">
-            {business_name || email}
-          </Typography>
-          {business_name && email && (
-            <Typography variant="body2" color="textSecondary">
-              {email}
+    <Box sx={{ py: 4, px: 3, backgroundColor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="lg">
+        {/* Header Section */}
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+              Products
             </Typography>
-          )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body1" color="textSecondary">
+                Manage your product inventory
+              </Typography>
+              {totalCount > 0 && (
+                <Chip
+                  label={`${totalCount} ${totalCount === 1 ? 'product' : 'products'}`}
+                  color="primary"
+                  variant="outlined"
+                  size="small"
+                />
+              )}
+            </Box>
+          </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => router.push('/dashboard/products/create')}
+            size="large"
+          >
+            Add Product
+          </Button>
         </Box>
-      )}
 
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Products
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => router.push('/dashboard/products/create')}
-        >
-          Add Product
-        </Button>
-      </Box>
+        {/* Filter View Buttons */}
+        <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+          <Button
+            variant={viewMode === 'all' ? 'contained' : 'outlined'}
+            color={viewMode === 'all' ? 'primary' : 'inherit'}
+            onClick={() => setViewMode('all')}
+          >
+            All Products
+          </Button>
+          <Button
+            variant={viewMode === 'active' ? 'contained' : 'outlined'}
+            color={viewMode === 'active' ? 'success' : 'inherit'}
+            onClick={() => setViewMode('active')}
+          >
+            Active Only
+          </Button>
+          <Button
+            variant={viewMode === 'low-stock' ? 'contained' : 'outlined'}
+            color={viewMode === 'low-stock' ? 'warning' : 'inherit'}
+            onClick={() => setViewMode('low-stock')}
+          >
+            Low Stock
+          </Button>
+        </Stack>
 
-      {/* Error Message */}
-      {error && (
-        <Alert severity="error" onClose={() => dispatch(clearError())} sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+        {/* Error Alert */}
+        {error && (
+          <Alert
+            severity="error"
+            onClose={() => dispatch(clearError())}
+            sx={{ mb: 3 }}
+          >
+            {error}
+          </Alert>
+        )}
 
-      {/* Filters */}
-      <ProductFilterComponent filters={filters} onFilterChange={handleFilterChange} />
+        {/* Filters */}
+        <Box sx={{ mb: 3 }}>
+          <ProductFilterComponent filters={filters} onFilterChange={handleFilterChange} />
+        </Box>
 
-      {/* Bulk Actions */}
-      {selectedItems.length > 0 && (
-        <Alert
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              startIcon={<DeleteIcon />}
-              onClick={handleBulkDelete}
-            >
-              Delete ({selectedItems.length})
-            </Button>
+        {/* Bulk Actions Card */}
+        {selectedItems.length > 0 && (
+          <Card sx={{ mb: 3, backgroundColor: 'info.lighter' }}>
+            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                {selectedItems.length} item(s) selected
+              </Typography>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleBulkDelete}
+              >
+                Delete ({selectedItems.length})
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Product Table */}
+        <Box sx={{ mb: 3 }}>
+          <ModernProductTable
+            products={items}
+            selectedItems={selectedItems}
+            onSelectItem={(id) => dispatch(toggleSelectItem(id))}
+            onSelectAll={() => dispatch(selectAllItems())}
+            onEdit={(id) => router.push(`/dashboard/products/${id}`)}
+            onDelete={handleDeleteProduct}
+            onQuickUpload={handleQuickUpload}
+            loading={loading}
+          />
+        </Box>
+
+        {/* Pagination */}
+        <Box sx={{ mb: 3 }}>
+          <ProductPagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+          />
+        </Box>
+
+        {/* Confirm Delete Dialog */}
+        <ConfirmDialog
+          open={confirmDelete}
+          title="Confirm Delete"
+          message={
+            deleteItemId
+              ? 'Are you sure you want to delete this product?'
+              : `Are you sure you want to delete ${selectedItems.length} product(s)?`
           }
-          sx={{ mb: 2 }}
-        >
-          {selectedItems.length} item(s) selected
-        </Alert>
-      )}
-
-      {/* Product Table */}
-      <ProductTable
-        products={items}
-        selectedItems={selectedItems}
-        onSelectItem={(id) => dispatch(toggleSelectItem(id))}
-        onSelectAll={() => dispatch(selectAllItems())}
-        onEdit={(id) => router.push(`/dashboard/products/${id}`)}
-        onDelete={handleDeleteProduct}
-        onImages={(id) => router.push(`/dashboard/products/${id}/images`)}
-        loading={loading}
-      />
-
-      {/* Pagination */}
-      <ProductPagination
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-      />
-
-      {/* Confirm Delete Dialog */}
-      <ConfirmDialog
-        open={confirmDelete}
-        title="Confirm Delete"
-        message={
-          deleteItemId
-            ? 'Are you sure you want to delete this product?'
-            : `Are you sure you want to delete ${selectedItems.length} product(s)?`
-        }
-        confirmText="Delete"
-        onConfirm={deleteItemId ? handleConfirmDelete : handleConfirmBulkDelete}
-        onCancel={() => {
-          setConfirmDelete(false);
-          setDeleteItemId(null);
-        }}
-        loading={loading}
-      />
-
-      {/* Notification Toast */}
-      {showNotification && (
-        <Alert
-          severity={showNotification.type}
-          onClose={() => setShowNotification(null)}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            minWidth: 300,
+          confirmText="Delete"
+          onConfirm={deleteItemId ? handleConfirmDelete : handleConfirmBulkDelete}
+          onCancel={() => {
+            setConfirmDelete(false);
+            setDeleteItemId(null);
           }}
-        >
-          {showNotification.message}
-        </Alert>
-      )}
-    </Container>
+          loading={loading}
+        />
+
+        {/* Quick Upload Modal */}
+        <QuickUploadModal
+          open={quickUploadOpen}
+          onClose={() => {
+            setQuickUploadOpen(false);
+            setQuickUploadProduct(null);
+          }}
+          product={quickUploadProduct}
+          onSuccess={handleQuickUploadSuccess}
+        />
+
+        {/* Notification Toast */}
+        {showNotification && (
+          <Alert
+            severity={showNotification.type}
+            onClose={() => setShowNotification(null)}
+            sx={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              minWidth: 300,
+              zIndex: 1000,
+            }}
+          >
+            {showNotification.message}
+          </Alert>
+        )}
+      </Container>
+    </Box>
   );
 }
