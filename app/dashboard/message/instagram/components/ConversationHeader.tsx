@@ -61,15 +61,33 @@ export default function ConversationHeader({
       }}
     >
       <Box sx={{ p: 2 }}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <Stack 
+          direction="row" 
+          spacing={{ xs: 1, sm: 2 }} 
+          sx={{ 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+          }}
+        >
           {/* Left: Customer Info */}
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flex: 1, minWidth: 0 }}>
+          <Stack 
+            direction="row" 
+            spacing={{ xs: 1, sm: 1.5 }} 
+            sx={{ 
+              alignItems: 'center', 
+              flex: 1, 
+              minWidth: 0,
+              order: { xs: 1, sm: 1 },
+            }}
+          >
             <Avatar
               sx={{
-                width: 40,
-                height: 40,
+                width: { xs: 32, sm: 40 },
+                height: { xs: 32, sm: 40 },
                 backgroundColor: 'primary.main',
                 flexShrink: 0,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
               }}
             >
               {buyerUsername.charAt(0).toUpperCase()}
@@ -83,6 +101,7 @@ export default function ConversationHeader({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
                 }}
               >
                 {buyerUsername}
@@ -94,6 +113,7 @@ export default function ConversationHeader({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
                 }}
               >
                 Instagram Direct Message
@@ -111,6 +131,11 @@ export default function ConversationHeader({
                 flexShrink: 0,
                 textTransform: 'none',
                 fontWeight: 600,
+                order: { xs: 3, sm: 2 },
+                width: { xs: '100%', sm: 'auto' },
+                mt: { xs: 1, sm: 0 },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                padding: { xs: '6px 12px', sm: '6px 16px' },
               }}
             >
               Send QR

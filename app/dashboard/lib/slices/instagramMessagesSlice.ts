@@ -64,13 +64,35 @@ export const syncInstagramMessages = createAsyncThunk(
 // LAZY LOADING: Fetch only conversation overview (lightweight) for the left sidebar
 export const fetchConversations = createAsyncThunk(
   'instagramMessages/fetchConversations',
-  async (_, { rejectWithValue }) => {
+  async (forceRefresh: boolean = false, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get('/dashboard/conversations?limit=50&platform=instagram');
+      const response = await apiClient.get(`/dashboard/conversations?limit=100&platform=instagram&force_refresh=${forceRefresh}`);
       return response.data;
     } catch (error) {
       const axiosError = error as { response?: { data?: { detail?: string } } };
       return rejectWithValue(axiosError.response?.data?.detail || 'Failed to fetch conversations');
+    }
+  }
+);
+
+// Refresh all cached messages for all conversations
+export const refreshAllCachedMessages = createAsyncThunk(
+  'instagramMessages/refreshAllCachedMessages',
+  async (conversationIds: string[], { rejectWithValue }) => {
+    try {
+      const messagePromises = conversationIds.map(conversationId =>
+        apiClient.get(
+          `/dashboard/messages/${conversationId}?platform=instagram&force_refresh=true`
+        )
+      );
+      const responses = await Promise.all(messagePromises);
+      return responses.map((response, index) => ({
+        conversationId: conversationIds[index],
+        data: response.data,
+      }));
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to refresh messages');
     }
   }
 );
@@ -81,7 +103,7 @@ export const initialSyncConversationsWithMessages = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Fetch conversations with all messages for recent conversations
-      const response = await apiClient.get('/dashboard/conversations?limit=50&platform=instagram&include_messages=true');
+      const response = await apiClient.get('/dashboard/conversations?limit=100&platform=instagram&include_messages=true');
       return response.data;
     } catch (error) {
       const axiosError = error as { response?: { data?: { detail?: string } } };
@@ -120,15 +142,17 @@ export const sendQRCode = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      // The qrCodeUrl is already a public URL from Settings (S3 bucket)
+      // Send it directly via reply endpoint with attachment
       const response = await apiClient.post(
-        `/dashboard/send-message`,
+        `/dashboard/reply`,
         {
           conversation_id: conversationId,
           recipient_user_id: recipientUserId,
-          message_type: 'image',
-          message_content: qrCodeUrl,
-          caption: 'Payment QR Code - Please scan to complete your payment',
-          platform: 'instagram'
+          message: 'Payment QR Code - Please scan to complete your payment',
+          platform: 'instagram',
+          attachment_url: qrCodeUrl,
+          attachment_type: 'image'
         }
       );
       return response.data;
@@ -270,6 +294,39 @@ const instagramMessagesSlice = createSlice({
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.messageLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Refresh all cached messages
+    builder
+      .addCase(refreshAllCachedMessages.pending, (state) => {
+        state.syncing = true;
+        state.error = null;
+      })
+      .addCase(refreshAllCachedMessages.fulfilled, (state, action) => {
+        state.syncing = false;
+        state.lastSyncedAt = new Date().toISOString();
+        
+        // Update message cache with fresh data
+        action.payload.forEach((item: { conversationId: string; data: ConversationDetailResponse }) => {
+          const messages = item.data.messages || [];
+          const businessUsername = item.data.instagram_username || null;
+          
+          state.messageCache[item.conversationId] = {
+            messages,
+            businessUsername,
+            fetchedAt: Date.now(),
+          };
+          
+          // If this is the current conversation, update it too
+          if (state.currentConversationId === item.conversationId) {
+            state.messages = messages;
+            state.businessUsername = businessUsername;
+          }
+        });
+      })
+      .addCase(refreshAllCachedMessages.rejected, (state, action) => {
+        state.syncing = false;
         state.error = action.payload as string;
       });
 
