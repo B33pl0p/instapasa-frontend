@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTheme } from '@mui/material/styles';
 import {
   Box,
   Button,
@@ -13,7 +12,6 @@ import {
   Stack,
   Typography,
   Chip,
-  Divider,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -21,12 +19,15 @@ import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import CloseIcon from '@mui/icons-material/Close';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
-import { fetchMessages, setCurrentConversation } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
+import { fetchMessages, setCurrentConversation, sendQRCode } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import { fetchOrders } from '@/app/dashboard/lib/slices/orderSlice';
+import { fetchBusinessConfig } from '@/app/dashboard/lib/slices/businessConfigSlice';
 import apiClient from '@/app/dashboard/lib/apiClient';
 import MessageBox from '@/app/dashboard/message/components/MessageBox';
 import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
 import { useState } from 'react';
+import ConversationHeader from './ConversationHeader';
+import QRCodeModal from './QRCodeModal';
 
 interface ConversationViewProps {
   conversationId: string | null;
@@ -35,16 +36,17 @@ interface ConversationViewProps {
 export default function ConversationView({ conversationId }: ConversationViewProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const theme = useTheme();
   const { showToast } = useToast();
-  const { messages, businessUsername, messageLoading, error, currentConversationId, messageCache, conversations } = useAppSelector(
+  const { messages, businessUsername, messageLoading, error, messageCache, conversations } = useAppSelector(
     (state) => state.instagramMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
+  const businessConfig = useAppSelector((state) => state.businessConfig);
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; type: string; file: File } | null>(null);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
 
   // Find all orders related to this conversation
   const relatedOrders = useMemo(() => {
@@ -100,6 +102,13 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       dispatch(fetchOrders());
     }
   }, [dispatch, orders.length]);
+
+  // Fetch business config on mount to get QR codes
+  useEffect(() => {
+    if (businessConfig.payment_qr_codes.length === 0) {
+      dispatch(fetchBusinessConfig());
+    }
+  }, [dispatch, businessConfig.payment_qr_codes.length]);
 
   useEffect(() => {
     dispatch(setCurrentConversation(conversationId));
@@ -189,9 +198,10 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       setTimeout(() => {
         dispatch(fetchMessages({ conversationId, forceRefresh: true }));
       }, 1000);
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
       console.error('Failed to send attachment:', error);
-      showToast(error.response?.data?.detail || 'Failed to send attachment. Please try again.', 'error');
+      showToast(axiosError.response?.data?.detail || 'Failed to send attachment. Please try again.', 'error');
     } finally {
       setIsUploadingAttachment(false);
       setIsSending(false);
@@ -244,9 +254,10 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       setTimeout(() => {
         dispatch(fetchMessages({ conversationId, forceRefresh: true }));
       }, 1000);
-    } catch (error: any) {
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
       console.error('Failed to send message:', error);
-      showToast(error.response?.data?.detail || 'Failed to send message. Please try again.', 'error');
+      showToast(axiosError.response?.data?.detail || 'Failed to send message. Please try again.', 'error');
     } finally {
       setIsSending(false);
     }
@@ -282,6 +293,52 @@ export default function ConversationView({ conversationId }: ConversationViewPro
         maxHeight: '100vh',
       }}
     >
+      {/* Conversation Header with Customer Info & QR Button */}
+      <ConversationHeader
+        conversation={conversations.find(c => c.conversation_id === conversationId)}
+        messages={messages}
+        businessUsername={businessUsername}
+        onSendQRClick={() => setQrModalOpen(true)}
+        qrCodesAvailable={businessConfig.payment_qr_codes.length > 0}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        open={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        qrCodes={businessConfig.payment_qr_codes}
+        onSelectQR={async (qrUrl: string) => {
+          const conversation = conversations.find(c => c.conversation_id === conversationId);
+          if (!conversation) {
+            showToast('Conversation not found', 'error');
+            return;
+          }
+
+          let recipientUserId = conversation.buyer_id;
+          if (!recipientUserId && conversation.participants && conversation.participants.length > 0) {
+            const buyerParticipant = conversation.participants.find(p => p.username !== businessUsername);
+            recipientUserId = buyerParticipant?.id;
+          }
+
+          if (!recipientUserId) {
+            showToast('Recipient user ID not found', 'error');
+            return;
+          }
+
+          if (!conversationId) {
+            showToast('Conversation ID not found', 'error');
+            return;
+          }
+
+          try {
+            await dispatch(sendQRCode({ conversationId, qrCodeUrl: qrUrl, recipientUserId })).unwrap();
+            showToast('QR code sent successfully!', 'success');
+          } catch {
+            showToast('Failed to send QR code. Please try again.', 'error');
+          }
+        }}
+      />
+
       {/* Order Backlink Banner */}
       {relatedOrders.length > 0 && (
         <Paper sx={{ bgcolor: 'info.lighter', borderRadius: 0, boxShadow: 'none', borderBottom: '1px solid', borderColor: 'divider' }}>

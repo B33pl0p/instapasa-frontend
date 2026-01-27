@@ -54,8 +54,9 @@ export const syncInstagramMessages = createAsyncThunk(
         `/dashboard/sync?platform=instagram&limit=${limit}&messages_per_conversation=${messagesPerConversation}`
       );
       return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.detail || 'Failed to sync messages');
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to sync messages');
     }
   }
 );
@@ -67,8 +68,24 @@ export const fetchConversations = createAsyncThunk(
     try {
       const response = await apiClient.get('/dashboard/conversations?limit=50&platform=instagram');
       return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.detail || 'Failed to fetch conversations');
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to fetch conversations');
+    }
+  }
+);
+
+// INITIAL SYNC: Fetch recent conversations with all messages on login
+export const initialSyncConversationsWithMessages = createAsyncThunk(
+  'instagramMessages/initialSyncConversationsWithMessages',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Fetch conversations with all messages for recent conversations
+      const response = await apiClient.get('/dashboard/conversations?limit=50&platform=instagram&include_messages=true');
+      return response.data;
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to sync conversations with messages');
     }
   }
 );
@@ -78,7 +95,7 @@ export const fetchMessages = createAsyncThunk(
   'instagramMessages/fetchMessages',
   async (
     { conversationId, forceRefresh = false }: { conversationId: string; forceRefresh?: boolean },
-    { rejectWithValue, getState }
+    { rejectWithValue }
   ) => {
     try {
       const response = await apiClient.get<ConversationDetailResponse>(
@@ -88,8 +105,36 @@ export const fetchMessages = createAsyncThunk(
         conversationId,
         data: response.data,
       };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.detail || 'Failed to fetch messages');
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to fetch messages');
+    }
+  }
+);
+
+// Send QR code to customer
+export const sendQRCode = createAsyncThunk(
+  'instagramMessages/sendQRCode',
+  async (
+    { conversationId, qrCodeUrl, recipientUserId }: { conversationId: string; qrCodeUrl: string; recipientUserId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post(
+        `/dashboard/send-message`,
+        {
+          conversation_id: conversationId,
+          recipient_user_id: recipientUserId,
+          message_type: 'image',
+          message_content: qrCodeUrl,
+          caption: 'Payment QR Code - Please scan to complete your payment',
+          platform: 'instagram'
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to send QR code');
     }
   }
 );
@@ -149,6 +194,37 @@ const instagramMessagesSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    // Initial sync: Fetch conversations with all messages on login
+    builder
+      .addCase(initialSyncConversationsWithMessages.pending, (state) => {
+        state.syncing = true;
+        state.error = null;
+      })
+      .addCase(initialSyncConversationsWithMessages.fulfilled, (state, action) => {
+        state.syncing = false;
+        state.lastSyncedAt = new Date().toISOString();
+        
+        // Update conversations and cache messages
+        const conversations = Array.isArray(action.payload) ? action.payload : [];
+        state.conversations = conversations;
+        state.conversationsLoaded = true;
+        
+        // Cache all messages from the initial sync
+        conversations.forEach((conversation: Conversation & { messages?: Message[]; instagram_username?: string }) => {
+          if (conversation.conversation_id && conversation.messages) {
+            state.messageCache[conversation.conversation_id] = {
+              messages: conversation.messages,
+              businessUsername: conversation.instagram_username || null,
+              fetchedAt: Date.now(),
+            };
+          }
+        });
+      })
+      .addCase(initialSyncConversationsWithMessages.rejected, (state, action) => {
+        state.syncing = false;
+        state.error = action.payload as string;
+      });
+
     // Fetch conversations (lightweight - just for sidebar)
     builder
       .addCase(fetchConversations.pending, (state) => {
@@ -194,6 +270,19 @@ const instagramMessagesSlice = createSlice({
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.messageLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Send QR code
+    builder
+      .addCase(sendQRCode.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(sendQRCode.fulfilled, (state) => {
+        state.error = null;
+        // Message will be added to conversation via WebSocket or polling
+      })
+      .addCase(sendQRCode.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },

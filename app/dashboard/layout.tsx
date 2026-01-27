@@ -29,8 +29,9 @@ import DialogActions from '@mui/material/DialogActions';
 import Image from 'next/image';
 import { useAppSelector, useAppDispatch } from '@/app/dashboard/lib/hooks';
 import { useEffect } from 'react';
-import { setCustomer } from '@/app/dashboard/lib/slices/customerSlice';
+import { setCustomer, setInitialSyncTriggered } from '@/app/dashboard/lib/slices/customerSlice';
 import { getCustomerFromToken } from '@/app/dashboard/lib/utils/jwt';
+import { initialSyncConversationsWithMessages } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import { ToastProvider } from '@/app/dashboard/lib/components/ToastContainer';
 import { ThemeProvider, useTheme } from '@/app/dashboard/lib/ThemeProvider';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
@@ -125,6 +126,8 @@ function DashboardLayoutContent({
   const dispatch = useAppDispatch();
   const businessName = useAppSelector((state) => state.customer.business_name);
   const customerLoaded = useAppSelector((state) => state.customer.isLoaded);
+  const instagramUsername = useAppSelector((state) => state.customer.instagram_username);
+  const initialSyncTriggered = useAppSelector((state) => state.customer.initialSyncTriggered);
 
   // Load customer data from JWT token
   useEffect(() => {
@@ -135,6 +138,15 @@ function DashboardLayoutContent({
       }
     }
   }, [customerLoaded, dispatch]);
+
+  // Trigger initial sync for Instagram messages on login
+  useEffect(() => {
+    if (customerLoaded && instagramUsername && !initialSyncTriggered) {
+      dispatch(setInitialSyncTriggered());
+      // Silently sync in background - no loading state needed
+      dispatch(initialSyncConversationsWithMessages());
+    }
+  }, [customerLoaded, instagramUsername, initialSyncTriggered, dispatch]);
 
   // Reset image error when profilePictureUrl changes
   React.useEffect(() => {
