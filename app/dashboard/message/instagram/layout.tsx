@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
-import { fetchConversations } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
+import { fetchConversations, refreshAllCachedMessages } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import { useTheme } from '@mui/material/styles';
-import { Box, Paper, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -24,7 +24,7 @@ export default function InstagramLayout({
   const theme = useTheme();
 
   const dispatch = useAppDispatch();
-  const { conversations, businessUsername, conversationLoading, error, conversationsLoaded } = useAppSelector(
+  const { conversations, businessUsername, conversationLoading, error, conversationsLoaded, messageCache } = useAppSelector(
     (state) => state.instagramMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
@@ -32,7 +32,10 @@ export default function InstagramLayout({
   // On mobile, hide list when conversation is selected
   useEffect(() => {
     if (selectedConversationId) {
-      setShowMobileList(false);
+      // Use a microtask to avoid setState in effect warning
+      queueMicrotask(() => {
+        setShowMobileList(false);
+      });
     }
   }, [selectedConversationId]);
 
@@ -40,15 +43,24 @@ export default function InstagramLayout({
   useEffect(() => {
     // Only fetch if not already loaded
     if (!conversationsLoaded && !conversationLoading) {
-      dispatch(fetchConversations());
+      dispatch(fetchConversations(false));
     }
   }, [dispatch, conversationsLoaded, conversationLoading]);
 
-  // Refresh conversations list (no sync, just refresh the list)
+  // Refresh conversations list and all cached messages
   const handleRefresh = async () => {
     try {
-      await dispatch(fetchConversations()).unwrap();
-    } catch (err) {
+      // Get IDs of conversations that have cached messages
+      const cachedConversationIds = Object.keys(messageCache || {});
+
+      // Refresh conversations list
+      await dispatch(fetchConversations(true)).unwrap();
+
+      // Refresh all cached messages
+      if (cachedConversationIds.length > 0) {
+        await dispatch(refreshAllCachedMessages(cachedConversationIds)).unwrap();
+      }
+    } catch {
       // Error already handled in Redux
     }
   };

@@ -5,6 +5,7 @@ interface CustomerState {
   email: string | null;
   instagram_username: string | null;
   isLoaded: boolean;
+  initialSyncTriggered: boolean;
 }
 
 const initialState: CustomerState = {
@@ -12,6 +13,7 @@ const initialState: CustomerState = {
   email: null,
   instagram_username: null,
   isLoaded: false,
+  initialSyncTriggered: false,
 };
 
 const customerSlice = createSlice({
@@ -34,10 +36,14 @@ const customerSlice = createSlice({
       state.business_name = null;
       state.email = null;
       state.instagram_username = null;
-      state.isLoaded = false;
+      state.isLoaded = false;2
+      state.initialSyncTriggered = false;
+    },
+    setInitialSyncTriggered: (state) => {
+      state.initialSyncTriggered = true;
     },
   },
 });
 
-export const { setCustomer, clearCustomer } = customerSlice.actions;
+export const { setCustomer, clearCustomer, setInitialSyncTriggered } = customerSlice.actions;
 export default customerSlice.reducer;

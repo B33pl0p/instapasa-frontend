@@ -4,6 +4,7 @@ import messengerMessagesReducer from './slices/messengerMessagesSlice';
 import customerReducer from './slices/customerSlice';
 import productReducer from './slices/productSlice';
 import orderReducer from './slices/orderSlice';
+import businessConfigReducer from './slices/businessConfigSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     customer: customerReducer,
     products: productReducer,
     orders: orderReducer,
+    businessConfig: businessConfigReducer,
   },
 });
 
