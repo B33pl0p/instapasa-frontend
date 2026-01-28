@@ -26,10 +26,13 @@ import ChatIcon from '@mui/icons-material/Chat';
 import InfoIcon from '@mui/icons-material/Info';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import UndoIcon from '@mui/icons-material/Undo';
+import Image from 'next/image';
 import { useAppDispatch, useAppSelector } from '../lib/hooks';
 import { fetchOrders, setStatusFilter, updateOrderStatus } from '../lib/slices/orderSlice';
 import { OrderStatus } from '../lib/types/order';
 import OrderDetailModal from './(components)/OrderDetailModal';
+import StatusConfirmationModal from './(components)/StatusConfirmationModal';
 import { useToast } from '../lib/components/ToastContainer';
 
 const statusTabs: { label: string; value: OrderStatus | 'all' }[] = [
@@ -60,6 +63,19 @@ export default function OrdersPage() {
   const messengerConversations = useAppSelector((state) => state.messengerMessages.conversations);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    open: boolean;
+    orderId: string;
+    orderNumber: string;
+    currentStatus: OrderStatus;
+    newStatus: OrderStatus;
+  }>({
+    open: false,
+    orderId: '',
+    orderNumber: '',
+    currentStatus: 'confirmed',
+    newStatus: 'processing',
+  });
 
   useEffect(() => {
     const status = statusFilter === 'all' ? undefined : statusFilter;
@@ -108,19 +124,39 @@ export default function OrdersPage() {
     setSelectedOrderId(null);
   };
 
-  const handleQuickStatusUpdate = async (orderId: string, newStatus: OrderStatus) => {
+  const handleQuickStatusUpdate = (orderId: string, newStatus: OrderStatus) => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return;
+
+    setConfirmationModal({
+      open: true,
+      orderId,
+      orderNumber: order.order_number,
+      currentStatus: order.status,
+      newStatus,
+    });
+  };
+
+  const handleConfirmStatusUpdate = async () => {
+    const { orderId, newStatus } = confirmationModal;
     setUpdatingOrderId(orderId);
+    setConfirmationModal({ ...confirmationModal, open: false });
+
     try {
       await dispatch(updateOrderStatus({ orderId, status: newStatus })).unwrap();
-      // Refetch orders to update the list based on current filter
       const status = statusFilter === 'all' ? undefined : statusFilter;
       await dispatch(fetchOrders(status));
+      showToast('Order status updated successfully', 'success');
     } catch (error) {
       console.error('Failed to update status:', error);
       showToast('Failed to update order status. Please try again.', 'error');
     } finally {
       setUpdatingOrderId(null);
     }
+  };
+
+  const handleCancelStatusUpdate = () => {
+    setConfirmationModal({ ...confirmationModal, open: false });
   };
 
   const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
@@ -135,16 +171,16 @@ export default function OrdersPage() {
     return statusMap[currentStatus];
   };
 
-  const getNextStatusLabel = (currentStatus: OrderStatus): string | null => {
-    const labelMap: Record<OrderStatus, string | null> = {
+  const getPreviousStatus = (currentStatus: OrderStatus): OrderStatus | null => {
+    const statusMap: Record<OrderStatus, OrderStatus | null> = {
       pending_details: null,
-      confirmed: 'Mark Processing',
-      processing: 'Mark Shipped',
-      shipped: 'Mark Delivered',
-      delivered: null,
+      confirmed: null,
+      processing: 'confirmed',
+      shipped: 'processing',
+      delivered: 'shipped',
       cancelled: null,
     };
-    return labelMap[currentStatus];
+    return statusMap[currentStatus];
   };
 
   const filteredOrders = orders;
@@ -225,7 +261,14 @@ export default function OrdersPage() {
             </TableHead>
             <TableBody>
               {filteredOrders.map((order) => (
-                <TableRow key={order.id} sx={{ '&:hover': { backgroundColor: 'action.hover' } }}>
+                <TableRow
+                  key={order.id}
+                  onClick={() => handleViewOrder(order.id)}
+                  sx={{
+                    '&:hover': { backgroundColor: 'action.hover', cursor: 'pointer' },
+                    transition: 'background-color 0.2s ease',
+                  }}
+                >
                   <TableCell sx={{ fontWeight: 600 }}>
                     {order.order_number}
                   </TableCell>
@@ -237,7 +280,41 @@ export default function OrdersPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+                    <Stack direction="column" spacing={1}>
+                      {order.items.map((item, index) => (
+                        <Stack key={index} direction="row" spacing={1.5} alignItems="center">
+                          {item.image_url && (
+                            <Box
+                              sx={{
+                                position: 'relative',
+                                width: 50,
+                                height: 50,
+                                flexShrink: 0,
+                                borderRadius: 1,
+                                overflow: 'hidden',
+                                backgroundColor: 'action.hover',
+                              }}
+                            >
+                              <Image
+                                src={item.image_url}
+                                alt={item.product_name}
+                                fill
+                                sizes="50px"
+                                style={{ objectFit: 'cover' }}
+                              />
+                            </Box>
+                          )}
+                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.25 }}>
+                              {item.product_name}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              Qty: {item.quantity}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      ))}
+                    </Stack>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>
                     Rs. {order.total.toFixed(2)}
@@ -275,21 +352,41 @@ export default function OrdersPage() {
                           <InfoIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+                      {getPreviousStatus(order.status) && (
+                        <Tooltip title="Revert to previous status">
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="warning"
+                            disabled={updatingOrderId === order.id}
+                            onClick={() => handleQuickStatusUpdate(order.id, getPreviousStatus(order.status)!)}
+                            sx={{ minWidth: 'auto', p: 0.5 }}
+                          >
+                            {updatingOrderId === order.id ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <UndoIcon fontSize="small" />
+                            )}
+                          </Button>
+                        </Tooltip>
+                      )}
                       {getNextStatus(order.status) && (
-                        <Button
-                          size="small"
-                          variant="contained"
-                          color="success"
-                          disabled={updatingOrderId === order.id}
-                          onClick={() => handleQuickStatusUpdate(order.id, getNextStatus(order.status)!)}
-                          sx={{ minWidth: 'auto' }}
-                        >
-                          {updatingOrderId === order.id ? (
-                            <CircularProgress size={16} />
-                          ) : (
-                            <CheckCircleIcon fontSize="small" />
-                          )}
-                        </Button>
+                        <Tooltip title="Move to next status">
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
+                            disabled={updatingOrderId === order.id}
+                            onClick={() => handleQuickStatusUpdate(order.id, getNextStatus(order.status)!)}
+                            sx={{ minWidth: 'auto' }}
+                          >
+                            {updatingOrderId === order.id ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <CheckCircleIcon fontSize="small" />
+                            )}
+                          </Button>
+                        </Tooltip>
                       )}
                     </Stack>
                   </TableCell>
@@ -304,6 +401,17 @@ export default function OrdersPage() {
       {selectedOrderId && (
         <OrderDetailModal orderId={selectedOrderId} onClose={handleCloseModal} />
       )}
+
+      {/* Status Confirmation Modal */}
+      <StatusConfirmationModal
+        open={confirmationModal.open}
+        currentStatus={confirmationModal.currentStatus}
+        newStatus={confirmationModal.newStatus}
+        orderNumber={confirmationModal.orderNumber}
+        onConfirm={handleConfirmStatusUpdate}
+        onCancel={handleCancelStatusUpdate}
+        isLoading={updatingOrderId === confirmationModal.orderId}
+      />
     </Container>
   );
 }

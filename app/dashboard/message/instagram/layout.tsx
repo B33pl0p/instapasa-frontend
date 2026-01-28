@@ -114,6 +114,7 @@ export default function InstagramLayout({
           position: { xs: 'absolute', md: 'relative' },
           inset: { xs: 0, md: 'auto' },
           width: { xs: '100%', sm: '320px', md: '320px' },
+          maxWidth: { xs: '100%', sm: '320px', md: '320px' },
           zIndex: { xs: 10, md: 'auto' },
           flexShrink: 0,
           borderRight: `1px solid ${theme.palette.divider}`,
@@ -121,6 +122,7 @@ export default function InstagramLayout({
           flexDirection: 'column',
           height: '100vh',
           maxHeight: '100vh',
+          overflow: 'hidden',
         }}
       >
         <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column', backgroundColor: theme.palette.background.paper }}>
@@ -194,15 +196,16 @@ export default function InstagramLayout({
                       py: 0.75,
                       transition: 'all 0.2s ease',
                       backgroundColor: isSelected ? theme.palette.action.selected : 'transparent',
+                      minWidth: 0,
                       ...(!(isSelected) && {
                         '&:hover': { backgroundColor: theme.palette.action.hover },
                       }),
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, minWidth: 0 }}>
                       <AccountCircleIcon sx={{ width: 40, height: 40, color: 'text.secondary', flexShrink: 0 }} />
-                      <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, minWidth: 0 }}>
                           <Typography
                             variant="body2"
                             sx={{
@@ -211,11 +214,20 @@ export default function InstagramLayout({
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
+                              minWidth: 0,
+                              flex: 1,
                             }}
                           >
                             {participantName}
                           </Typography>
-                          <Typography variant="caption" sx={{ ml: 0.5, flexShrink: 0, color: 'text.secondary' }}>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              flexShrink: 0, 
+                              color: 'text.secondary',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
                             {formatTime(conversation.updated_time)}
                           </Typography>
                         </Box>
@@ -233,7 +245,7 @@ export default function InstagramLayout({
                           {conversation.last_message?.text || 'No messages'}
                         </Typography>
                         {relatedOrder && (
-                          <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                          <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.25, flexWrap: 'wrap', minWidth: 0 }}>
                             <Box
                               component="svg"
                               xmlns="http://www.w3.org/2000/svg"
@@ -244,13 +256,30 @@ export default function InstagramLayout({
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </Box>
-                            <Typography variant="caption" sx={{ fontWeight: 500, color: 'success.main' }}>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                fontWeight: 500, 
+                                color: 'success.main',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                minWidth: 0,
+                              }}
+                            >
                               {relatedOrder.order_number}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                            <Typography variant="caption" sx={{ color: 'text.disabled', flexShrink: 0 }}>
                               •
                             </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: 'text.secondary',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                minWidth: 0,
+                              }}
+                            >
                               Rs. {relatedOrder.total.toFixed(0)}
                             </Typography>
                           </Box>
