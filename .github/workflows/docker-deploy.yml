@@ -28,7 +28,7 @@ jobs:
       with:
         images: bhusalsaurav0/landing-page-frontend
         tags: |
-          type=sha,prefix={{branch}}-
+          type=sha,prefix=sha-
           type=raw,value=latest, enable={{is_default_branch}}
           type=ref,event=branch
           type=ref,event=pr
