@@ -4,14 +4,17 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../lib/auth';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showError, setShowError] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -45,13 +48,33 @@ export default function LoginPage() {
     try {
       await login({ email, password });
       router.push('/dashboard/message');
-    } catch (error: any) {
+    } catch (error: unknown) {
       setIsLoading(false);
-      if (error.response?.status === 401) {
-        setErrors({ general: 'Invalid email or password' });
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status: number; data?: { detail?: string } } };
+        if (axiosError.response?.status === 401) {
+          setErrors({ 
+            general: 'Unable to sign in. Please check your email and password are correct.' 
+          });
+        } else if (axiosError.response?.status === 400) {
+          setErrors({ 
+            general: 'Invalid email format. Please check and try again.' 
+          });
+        } else if (axiosError.response?.status === 429) {
+          setErrors({ 
+            general: 'Too many login attempts. Please try again later.' 
+          });
+        } else {
+          setErrors({ 
+            general: 'Something went wrong. Please try again later.' 
+          });
+        }
       } else {
-        setErrors({ general: 'An error occurred. Please try again.' });
+        setErrors({ 
+          general: 'Network error. Please check your connection and try again.' 
+        });
       }
+      setShowError(true);
     }
   };
 
@@ -65,9 +88,34 @@ export default function LoginPage() {
             Sign in with your account to continue
           </p>
 
-          {errors.general && (
-            <div className="mb-4 rounded-md bg-red-500/20 border border-red-500/50 p-3 text-xs sm:text-sm text-red-300">
-              {errors.general}
+          {errors.general && showError && (
+            <div className="mb-4 rounded-lg bg-linear-to-r from-red-500/10 to-red-600/10 border border-red-400/30 backdrop-blur-sm p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="h-5 w-5 text-red-400 shrink-0 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-300 mb-0.5">Authentication Failed</p>
+                  <p className="text-xs sm:text-sm text-red-200/80">{errors.general}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowError(false)}
+                  className="text-red-400 hover:text-red-300 transition-colors shrink-0"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
 
@@ -100,7 +148,13 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // Clear error when user starts typing again
+                    if (showError && errors.general) {
+                      setShowError(false);
+                    }
+                  }}
                   placeholder="Enter your email"
                   className={`w-full rounded-md bg-[#1A1A1A] py-2 sm:py-2.5 pl-10 pr-4 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
                     errors.email
@@ -141,17 +195,35 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                   onChange={(e) => {
+                    setPassword(e.target.value);
+                    // Clear error when user starts typing again
+                    if (showError && errors.general) {
+                      setShowError(false);
+                    }
+                  }}
                   placeholder="Enter your password"
-                  className={`w-full rounded-md bg-[#1A1A1A] py-2 sm:py-2.5 pl-10 pr-4 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
+                  className={`w-full rounded-md bg-[#1A1A1A] py-2 sm:py-2.5 pl-10 pr-10 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 ${
                     errors.password
                       ? 'border border-red-500 focus:ring-red-500'
                       : 'border border-gray-700 focus:ring-[#8A38F5]'
                   }`}
                   disabled={isLoading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-200 transition-colors"
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <VisibilityOff className="h-4 sm:h-5 w-4 sm:w-5" />
+                  ) : (
+                    <Visibility className="h-4 sm:h-5 w-4 sm:w-5" />
+                  )}
+                </button>
               </div>
               {errors.password && (
                 <p className="mt-1 text-xs sm:text-sm text-red-400">{errors.password}</p>

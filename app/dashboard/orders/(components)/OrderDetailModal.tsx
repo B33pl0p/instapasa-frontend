@@ -64,6 +64,45 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
   const [phone, setPhone] = useState('');
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
+
+  // Validate phone number
+  const validatePhone = (phoneValue: string): boolean => {
+    const phoneDigits = phoneValue.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      setPhoneError('Phone number must be at least 10 digits');
+      return false;
+    }
+    setPhoneError('');
+    return true;
+  };
+
+  const isPhoneValid = (): boolean => {
+    if (!phone.trim()) return true; // Phone is optional
+    const phoneDigits = phone.replace(/\D/g, '');
+    return phoneDigits.length >= 10;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setPhone(value);
+    if (value.trim()) {
+      validatePhone(value);
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    // Reset form to current order data
+    if (currentOrder) {
+      setCustomerName(currentOrder.customer_name || '');
+      setShippingAddress(currentOrder.shipping_address || '');
+      setPhone(currentOrder.phone || '');
+      setPhoneError('');
+    }
+    setIsEditingDetails(false);
+  };
 
   const handleChatWithCustomer = () => {
     if (!currentOrder) return;
@@ -112,11 +151,18 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
       setCustomerName(currentOrder.customer_name || '');
       setShippingAddress(currentOrder.shipping_address || '');
       setPhone(currentOrder.phone || '');
+      setPhoneError('');
     }
   }, [currentOrder]);
 
   const handleSaveDetails = async () => {
     if (!currentOrder) return;
+
+    // Validate phone number if provided
+    if (phone.trim() && !validatePhone(phone)) {
+      showToast('Please enter a valid phone number with at least 10 digits', 'error');
+      return;
+    }
 
     setIsSavingDetails(true);
     try {
@@ -133,6 +179,9 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
       // Refetch orders to update the list
       const status = statusFilter === 'all' ? undefined : statusFilter;
       await dispatch(fetchOrders(status));
+      showToast('Order details saved successfully', 'success');
+      // Exit edit mode instead of closing modal
+      setIsEditingDetails(false);
     } catch (error) {
       console.error('Failed to update order details:', error);
       showToast('Failed to update order details. Please try again.', 'error');
@@ -304,13 +353,22 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
                     label="Phone Number"
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="Enter phone number"
                     size="small"
+                    error={!!phoneError}
+                    helperText={phoneError || '(Minimum 10 digits required)'}
+                    inputProps={{
+                      maxLength: 20,
+                    }}
                   />
                   <Button
                     onClick={handleSaveDetails}
-                    disabled={isSavingDetails || (!customerName && !shippingAddress && !phone)}
+                    disabled={
+                      isSavingDetails ||
+                      (!customerName && !shippingAddress && !phone) ||
+                      !isPhoneValid()
+                    }
                     variant="contained"
                     color="success"
                     fullWidth
@@ -322,31 +380,101 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
                   </Typography>
                 </Box>
               ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
-                      Name:
-                    </Typography>
-                    <Typography variant="body2" color="text.primary">
-                      {currentOrder.customer_name || 'Not provided'}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
-                      Address:
-                    </Typography>
-                    <Typography variant="body2" color="text.primary">
-                      {currentOrder.shipping_address || 'Not provided'}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
-                      Phone:
-                    </Typography>
-                    <Typography variant="body2" color="text.primary">
-                      {currentOrder.phone || 'Not provided'}
-                    </Typography>
-                  </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {!isEditingDetails ? (
+                    <>
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                          Name:
+                        </Typography>
+                        <Typography variant="body2" color="text.primary">
+                          {currentOrder.customer_name || 'Not provided'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                          Address:
+                        </Typography>
+                        <Typography variant="body2" color="text.primary">
+                          {currentOrder.shipping_address || 'Not provided'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+                          Phone:
+                        </Typography>
+                        <Typography variant="body2" color="text.primary">
+                          {currentOrder.phone || 'Not provided'}
+                        </Typography>
+                      </Box>
+                      <Button
+                        onClick={() => setIsEditingDetails(true)}
+                        variant="outlined"
+                        size="small"
+                        sx={{ mt: 1 }}
+                      >
+                        Edit Details
+                      </Button>
+                    </>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Customer Name"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Enter customer name"
+                        size="small"
+                      />
+                      <TextField
+                        fullWidth
+                        label="Shipping Address"
+                        value={shippingAddress}
+                        onChange={(e) => setShippingAddress(e.target.value)}
+                        placeholder="Enter shipping address"
+                        multiline
+                        rows={3}
+                        size="small"
+                      />
+                      <TextField
+                        fullWidth
+                        label="Phone Number"
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder="Enter phone number"
+                        size="small"
+                        error={!!phoneError}
+                        helperText={phoneError || '(Minimum 10 digits required)'}
+                        inputProps={{
+                          maxLength: 20,
+                        }}
+                      />
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                          onClick={handleSaveDetails}
+                          disabled={
+                            isSavingDetails ||
+                            (!customerName && !shippingAddress && !phone) ||
+                            !isPhoneValid()
+                          }
+                          variant="contained"
+                          color="success"
+                          fullWidth
+                        >
+                          {isSavingDetails ? 'Saving...' : 'Save Details'}
+                        </Button>
+                        <Button
+                          onClick={handleCancelEdit}
+                          disabled={isSavingDetails}
+                          variant="outlined"
+                          fullWidth
+                        >
+                          Cancel
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
                 </Box>
               )}
             </CardContent>

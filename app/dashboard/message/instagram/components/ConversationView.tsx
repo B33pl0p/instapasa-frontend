@@ -489,7 +489,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
                   handleSendMessage();
                 }
               }}
-              placeholder={attachmentPreview ? "Add a caption (optional)" : "Type your message..."}
+              placeholder={attachmentPreview ? "Add a caption (optional)" : "message..."}
               variant="outlined"
             />
             <input

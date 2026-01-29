@@ -7,6 +7,9 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SettingsIcon from '@mui/icons-material/Settings';
+import MessengerIcon from '@/public/messenger.png'
+import Image from 'next/image';
+
 type SidebarSection = 'General' | 'Messages' | 'Services' | 'Prodcuts';
 
 export type SidebarItem = {
@@ -31,7 +34,7 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     label: 'Messenger',
-    icon: <MapsUgcIcon />,
+    icon: <MapsUgcIcon/>,
     href: '/dashboard/message/messenger',
     section: 'Messages',
   },

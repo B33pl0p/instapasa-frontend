@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchConversations, refreshAllCachedMessages } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
@@ -20,7 +20,6 @@ export default function InstagramLayout({
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedConversationId = searchParams.get('conversation') || undefined;
-  const [showMobileList, setShowMobileList] = useState(!selectedConversationId);
   const theme = useTheme();
 
   const dispatch = useAppDispatch();
@@ -28,16 +27,6 @@ export default function InstagramLayout({
     (state) => state.instagramMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
-
-  // On mobile, hide list when conversation is selected
-  useEffect(() => {
-    if (selectedConversationId) {
-      // Use a microtask to avoid setState in effect warning
-      queueMicrotask(() => {
-        setShowMobileList(false);
-      });
-    }
-  }, [selectedConversationId]);
 
   // LAZY LOADING: Only fetch conversations list on mount (lightweight overview)
   useEffect(() => {
@@ -69,15 +58,10 @@ export default function InstagramLayout({
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
     router.push(`/dashboard/message/instagram?${params.toString()}`);
-    // On mobile, hide list after selection
-    if (window.innerWidth < 768) {
-      setShowMobileList(false);
-    }
   };
 
   const handleBackToList = () => {
     router.push('/dashboard/message/instagram');
-    setShowMobileList(true);
   };
 
   const getParticipantName = (conversation: typeof conversations[0]): string => {
@@ -88,7 +72,15 @@ export default function InstagramLayout({
       (p) => p.username !== businessUsername
     );
     return otherParticipant?.username || 'Unknown User';
-  };;
+  };
+
+  // Get selected conversation data for mobile header
+  const selectedConversation = selectedConversationId 
+    ? conversations.find(c => c.conversation_id === selectedConversationId)
+    : null;
+  const selectedParticipantName = selectedConversation 
+    ? getParticipantName(selectedConversation)
+    : 'Instagram Chats';
 
   const formatTime = (timeString: string): string => {
     const date = new Date(timeString);
@@ -106,22 +98,20 @@ export default function InstagramLayout({
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
-      {/* Left Panel - Conversation List (Always visible on desktop, toggle on mobile) */}
+    <Box sx={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
+      {/* Left Panel - Conversation List (Hidden on mobile when conversation selected) */}
       <Box
         sx={{
-          display: { xs: showMobileList ? 'flex' : 'none', md: 'flex' },
-          position: { xs: 'absolute', md: 'relative' },
-          inset: { xs: 0, md: 'auto' },
+          display: { xs: selectedConversationId ? 'none' : 'flex', sm: 'flex' },
+          position: 'relative',
           width: { xs: '100%', sm: '320px', md: '320px' },
           maxWidth: { xs: '100%', sm: '320px', md: '320px' },
-          zIndex: { xs: 10, md: 'auto' },
           flexShrink: 0,
           borderRight: `1px solid ${theme.palette.divider}`,
           backgroundColor: theme.palette.background.paper,
           flexDirection: 'column',
-          height: '100vh',
-          maxHeight: '100vh',
+          height: '100%',
+          maxHeight: '100%',
           overflow: 'hidden',
         }}
       >
@@ -297,15 +287,15 @@ export default function InstagramLayout({
       {/* Right Panel - Page Content (Flexible, Fixed) */}
       <Box
         sx={{
-          display: { xs: showMobileList ? 'none' : 'flex', md: 'flex' },
+          display: 'flex',
           minWidth: 0,
           flex: 1,
           minHeight: 0,
           overflow: 'hidden',
           backgroundColor: 'background.default',
           position: 'relative',
-          height: '100vh',
-          maxHeight: '100vh',
+          height: '100%',
+          maxHeight: '100%',
           flexDirection: 'column',
         }}
       >
@@ -331,7 +321,7 @@ export default function InstagramLayout({
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Instagram Chats
+              {selectedParticipantName}
             </Typography>
           </Box>
         )}
@@ -347,7 +337,7 @@ export default function InstagramLayout({
             sx={{
               width: '100%',
               height: '100%',
-              maxHeight: '100vh',
+              maxHeight: '100%',
             }}
           >
             {children}
