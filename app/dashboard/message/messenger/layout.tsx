@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchMessengerConversations } from '@/app/dashboard/lib/slices/messengerMessagesSlice';
 import { useTheme } from '@mui/material/styles';
-import { Box, Paper, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -20,7 +20,6 @@ export default function MessengerLayout({
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedConversationId = searchParams.get('conversation') || undefined;
-  const [showMobileList, setShowMobileList] = useState(!selectedConversationId);
   const theme = useTheme();
 
   const dispatch = useAppDispatch();
@@ -28,13 +27,6 @@ export default function MessengerLayout({
     (state) => state.messengerMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
-
-  // On mobile, hide list when conversation is selected
-  useEffect(() => {
-    if (selectedConversationId) {
-      setShowMobileList(false);
-    }
-  }, [selectedConversationId]);
 
   // LAZY LOADING: Only fetch conversations list on mount (lightweight overview)
   useEffect(() => {
@@ -48,7 +40,7 @@ export default function MessengerLayout({
   const handleRefresh = async () => {
     try {
       await dispatch(fetchMessengerConversations()).unwrap();
-    } catch (err) {
+    } catch {
       // Error already handled in Redux
     }
   };
@@ -57,15 +49,10 @@ export default function MessengerLayout({
     const params = new URLSearchParams(searchParams.toString());
     params.set('conversation', conversationId);
     router.push(`/dashboard/message/messenger?${params.toString()}`);
-    // On mobile, hide list after selection
-    if (window.innerWidth < 768) {
-      setShowMobileList(false);
-    }
   };
 
   const handleBackToList = () => {
     router.push('/dashboard/message/messenger');
-    setShowMobileList(true);
   };
 
   const getParticipantName = (conversation: typeof conversations[0]): string => {
@@ -73,6 +60,14 @@ export default function MessengerLayout({
     // For Messenger, we typically show the first participant that's not the business
     return conversation.participants[0]?.username || conversation.participants[0]?.id || 'Unknown User';
   };
+
+  // Get selected conversation data for mobile header
+  const selectedConversation = selectedConversationId 
+    ? conversations.find(c => c.conversation_id === selectedConversationId)
+    : null;
+  const selectedParticipantName = selectedConversation 
+    ? getParticipantName(selectedConversation)
+    : 'Messenger Chats';
 
   const formatTime = (timeString: string): string => {
     const date = new Date(timeString);
@@ -91,20 +86,19 @@ export default function MessengerLayout({
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
-      {/* Left Panel - Conversation List (Always visible on desktop, toggle on mobile) */}
+      {/* Left Panel - Conversation List (Hidden on mobile when conversation selected) */}
       <Box
         sx={{
-          display: { xs: showMobileList ? 'flex' : 'none', md: 'flex' },
-          position: { xs: 'absolute', md: 'relative' },
-          inset: { xs: 0, md: 'auto' },
+          display: { xs: selectedConversationId ? 'none' : 'flex', sm: 'flex' },
+          position: 'relative',
           width: { xs: '100%', sm: '320px', md: '320px' },
-          zIndex: { xs: 10, md: 'auto' },
           flexShrink: 0,
           borderRight: `1px solid ${theme.palette.divider}`,
           backgroundColor: theme.palette.background.paper,
           flexDirection: 'column',
           height: '100vh',
           maxHeight: '100vh',
+          overflow: 'hidden',
         }}
       >
         <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column', backgroundColor: theme.palette.background.paper }}>
@@ -249,13 +243,16 @@ export default function MessengerLayout({
       {/* Right Panel - Chat Content (Always visible on desktop, hide on mobile when list shown) */}
       <Box
         sx={{
-          display: { xs: showMobileList ? 'none' : 'flex', md: 'flex' },
+          display: 'flex',
           minWidth: 0,
           flex: 1,
           minHeight: 0,
           overflow: 'hidden',
           backgroundColor: 'background.default',
           position: 'relative',
+          height: '100vh',
+          maxHeight: '100vh',
+          flexDirection: 'column',
         }}
       >
         {/* Mobile Back Header */}
@@ -281,7 +278,7 @@ export default function MessengerLayout({
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-              Messenger Chats
+              {selectedParticipantName}
             </Typography>
           </Box>
         )}

@@ -169,7 +169,7 @@ function DashboardLayoutContent({
   return (
     <RouteGuard>
       <ToastProvider>
-      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', boxSizing: 'border-box', width: '100%' }}>
         <CssBaseline />
         <Drawer
           variant="permanent"
@@ -180,6 +180,7 @@ function DashboardLayoutContent({
               flexDirection: 'column',
               height: '100vh',
               position: 'relative',
+              boxSizing: 'border-box',
             },
           }}
         >
@@ -444,10 +445,13 @@ function DashboardLayoutContent({
             flexDirection: 'column', 
             minHeight: 0,
             height: '100vh',
-            overflow: 'auto'
+            overflow: 'auto',
+            minWidth: 0,
+            margin: 0,
+            padding: 0,
           }}
         >
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', height: '100%' }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', height: '100%', minWidth: 0, margin: 0, padding: 0 }}>
             {children}
           </Box>
         </Box>

@@ -41,13 +41,18 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Handle 401 Unauthorized - redirect to login
+    // Handle 401 Unauthorized - redirect to login only if not already on login page and not a login request
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        // Clear token if it exists
-        localStorage.removeItem('auth_token');
-        // Redirect to login
-        window.location.href = '/login';
+        // Don't redirect if this is a login request (the component will handle it)
+        const isLoginRequest = (error.config?.url?.includes('/auth/login') || 
+                                error.config?.url?.includes('/auth/signup'));
+        
+        if (!isLoginRequest) {
+          // Clear token and redirect for other endpoints
+          localStorage.removeItem('auth_token');
+          window.location.href = '/login';
+        }
       }
     }
 
