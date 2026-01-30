@@ -114,13 +114,10 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     dispatch(setCurrentConversation(conversationId));
     
     if (conversationId) {
-      // LAZY LOADING: Only fetch if not already cached
-      if (!messageCache[conversationId]) {
-        // Fetch from API (lazy loading on demand)
-        dispatch(fetchMessages({ conversationId, forceRefresh: false }));
-      }
+      // Always fetch fresh messages when opening a conversation
+      dispatch(fetchMessages({ conversationId, forceRefresh: true }));
     }
-  }, [conversationId, dispatch, messageCache]);
+  }, [conversationId, dispatch]);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
