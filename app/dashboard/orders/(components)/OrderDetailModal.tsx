@@ -42,6 +42,7 @@ const getStatusColor = (status: OrderStatus): 'warning' | 'info' | 'success' | '
   const statusMap: Record<OrderStatus, 'warning' | 'info' | 'success' | 'error'> = {
     pending_details: 'warning',
     confirmed: 'info',
+    cancellation_requested: 'error',
     processing: 'info',
     shipped: 'info',
     delivered: 'success',
@@ -245,6 +246,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
     const statusMap: Record<OrderStatus, { next: OrderStatus; label: string } | null> = {
       pending_details: null,
       confirmed: { next: 'processing', label: 'Mark as Processing' },
+      cancellation_requested: null,
       processing: { next: 'shipped', label: 'Mark as Shipped' },
       shipped: { next: 'delivered', label: 'Mark as Delivered' },
       delivered: null,

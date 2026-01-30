@@ -26,6 +26,7 @@ interface StatusConfirmationModalProps {
 const statusDisplayMap: Record<OrderStatus, string> = {
   pending_details: 'Pending Details',
   confirmed: 'Confirmed',
+  cancellation_requested: 'Cancellation Requested',
   processing: 'Processing',
   shipped: 'Shipped',
   delivered: 'Delivered',
