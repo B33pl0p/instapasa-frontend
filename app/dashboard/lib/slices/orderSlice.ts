@@ -8,6 +8,7 @@ interface OrderState {
   loading: boolean;
   error: string | null;
   statusFilter: OrderStatus | 'all';
+  buyerFilter: string | null;
 }
 
 const initialState: OrderState = {
@@ -16,6 +17,7 @@ const initialState: OrderState = {
   loading: false,
   error: null,
   statusFilter: 'all',
+  buyerFilter: null,
 };
 
 // Async thunks
@@ -66,6 +68,9 @@ const orderSlice = createSlice({
   reducers: {
     setStatusFilter: (state, action: PayloadAction<OrderStatus | 'all'>) => {
       state.statusFilter = action.payload;
+    },
+    setBuyerFilter: (state, action: PayloadAction<string | null>) => {
+      state.buyerFilter = action.payload;
     },
     clearCurrentOrder: (state) => {
       state.currentOrder = null;
@@ -129,5 +134,5 @@ const orderSlice = createSlice({
   },
 });
 
-export const { setStatusFilter, clearCurrentOrder, clearError } = orderSlice.actions;
+export const { setStatusFilter, setBuyerFilter, clearCurrentOrder, clearError } = orderSlice.actions;
 export default orderSlice.reducer;

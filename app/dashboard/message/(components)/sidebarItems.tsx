@@ -6,6 +6,7 @@ import MapsUgcIcon from '@mui/icons-material/MapsUgc';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
 import MessengerIcon from '@/public/messenger.png'
 import Image from 'next/image';
@@ -55,6 +56,12 @@ export const sidebarItems: SidebarItem[] = [
     icon: <ReceiptLongIcon />,
     href: '/dashboard/orders',
     section: 'Prodcuts',
+  },
+  {
+    label: 'Buyers',
+    icon: <PeopleIcon />,
+    href: '/dashboard/buyers',
+    section: 'Services',
   },
   {
     label: 'Settings',

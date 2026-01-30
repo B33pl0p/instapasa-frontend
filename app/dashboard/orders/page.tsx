@@ -36,11 +36,15 @@ import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Image from 'next/image';
 import { useAppDispatch, useAppSelector } from '../lib/hooks';
-import { fetchOrders, setStatusFilter, updateOrderStatus } from '../lib/slices/orderSlice';
+import { fetchOrders, setStatusFilter, setBuyerFilter, updateOrderStatus } from '../lib/slices/orderSlice';
 import { OrderStatus } from '../lib/types/order';
 import OrderDetailModal from './(components)/OrderDetailModal';
 import StatusConfirmationModal from './(components)/StatusConfirmationModal';
 import { useToast } from '../lib/components/ToastContainer';
+import { fetchBuyers } from '../lib/slices/buyerSlice';
+import type { Buyer } from '../lib/types/buyer';
+import Autocomplete from '@mui/material/Autocomplete';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const statusTabs: { label: string; value: OrderStatus | 'all' }[] = [
   { label: 'Pending Details', value: 'pending_details' },
@@ -67,7 +71,8 @@ export default function OrdersPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { showToast } = useToast();
-  const { orders, loading, statusFilter } = useAppSelector((state) => state.orders);
+  const { orders, loading, statusFilter, buyerFilter } = useAppSelector((state) => state.orders);
+  const { buyers, loading: buyersLoading } = useAppSelector((state) => state.buyers);
   const instagramConversations = useAppSelector((state) => state.instagramMessages.conversations);
   const messengerConversations = useAppSelector((state) => state.messengerMessages.conversations);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -90,8 +95,19 @@ export default function OrdersPage() {
     newStatus: 'processing',
   });
 
+  // Check URL params for buyer filter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const buyerId = params.get('buyer');
+    if (buyerId) {
+      dispatch(setBuyerFilter(buyerId));
+    }
+  }, [dispatch]);
+
   useEffect(() => {
     // Fetch all orders initially
+    // Fetch buyers for the filter dropdown
+    dispatch(fetchBuyers({ limit: 1000 }));
     dispatch(fetchOrders(undefined));
   }, [dispatch]);
 
@@ -294,6 +310,16 @@ export default function OrdersPage() {
       return false;
     }
     
+    // Filter by buyer Instagram username
+    if (buyerFilter) {
+      // Try to match by instagram username first, fallback to buyer_id
+      const matchByUsername = order.buyer_instagram_username === buyerFilter;
+      const matchById = order.buyer_id === buyerFilter;
+      if (!matchByUsername && !matchById) {
+        return false;
+      }
+    }
+    
     // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -332,22 +358,62 @@ export default function OrdersPage() {
           Filters
         </Typography>
 
-        {/* Search */}
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search orders..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
-        />
+        {/* Buyer Filter */}
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Autocomplete
+            fullWidth
+            size="small"
+            options={buyers}
+            loading={buyersLoading}
+            noOptionsText={buyersLoading ? "Loading buyers..." : "No buyers found"}
+            getOptionLabel={(option) => 
+              `${option.buyer_username || 'Unknown'} - ${option.customer_name || 'No name'} (${option.total_orders} orders)`
+            }
+            value={buyers.find(b => b.buyer_username === buyerFilter) || null}
+            onChange={(_, newValue) => {
+              dispatch(setBuyerFilter(newValue?.buyer_username || null));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Filter by buyer..."
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        👤
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props} key={option.buyer_username || option.buyer_id}>
+                <Box>
+                  <Typography variant="body2" fontWeight="medium">
+                    {option.buyer_username || 'Unknown'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {option.customer_name || 'No name'} • {option.total_orders} orders • Rs. {option.total_spent.toFixed(0)}
+                  </Typography>
+                </Box>
+              </li>
+            )}
+          />
+          {buyerFilter && (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<ClearIcon />}
+              onClick={() => dispatch(setBuyerFilter(null))}
+            >
+              Clear
+            </Button>
+          )}
+        </Box>
 
         <Divider sx={{ mb: 2 }} />
 
@@ -681,8 +747,8 @@ export default function OrdersPage() {
         )}
 
         {/* Order Detail Modal */}
-        {selectedOrderId && (
-          <OrderDetailModal orderId={selectedOrderId} onClose={handleCloseModal} />
+        {selectedOrderId !== null && (
+          <OrderDetailModal orderId={selectedOrderId!} onClose={handleCloseModal} />
         )}
 
         {/* Status Confirmation Modal */}
