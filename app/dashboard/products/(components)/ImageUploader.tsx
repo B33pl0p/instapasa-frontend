@@ -27,7 +27,78 @@ interface UploadStatus {
   status: 'pending' | 'uploading' | 'success' | 'error';
   progress: number;
   error?: string;
+  originalSize?: number;
+  compressedSize?: number;
 }
+
+// Image compression utility
+const compressImage = async (file: File, maxWidth = 1080, maxHeight = 1080, quality = 0.8): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            
+            const compressedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now(),
+            });
+            
+            resolve(compressedFile);
+          },
+          file.type,
+          quality
+        );
+      };
+      
+      img.onerror = () => {
+        reject(new Error('Failed to load image'));
+      };
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+  });
+};
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
   productId,
@@ -73,6 +144,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         file,
         status: 'pending',
         progress: 0,
+        originalSize: file.size,
       }))
     );
   };
@@ -85,27 +157,31 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       )
     );
 
-    // Update status to uploading
-    setUploadStatuses((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, status: 'uploading', progress: 0 } : item
-      )
-    );
-
     try {
-      console.log('Starting upload for file:', file.name);
+      console.log('Starting upload for file:', file.name, 'Original size:', (file.size / 1024).toFixed(2), 'KB');
+
+      // Compress image before upload (Instagram optimization)
+      const compressedFile = await compressImage(file, 1080, 1080, 0.85);
+      console.log('Compressed to:', (compressedFile.size / 1024).toFixed(2), 'KB');
+      
+      // Update with compressed size
+      setUploadStatuses((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, compressedSize: compressedFile.size } : item
+        )
+      );
 
       // Step 1: Get presigned URL with content type
       const presignedData = await productService.getPresignedUrl(
         productId,
-        file.type
+        compressedFile.type
       );
 
-      // Step 2: Upload to S3 with matching content type
+      // Step 2: Upload compressed file to S3
       await productService.uploadToS3(
         presignedData.presigned_url,
-        file,
-        file.type,
+        compressedFile,
+        compressedFile.type,
         (p) => {
           setUploadStatuses((prev) =>
             prev.map((item, i) =>
@@ -158,16 +234,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         await uploadSingleFile(selectedFiles[i], i);
       }
 
-      // Check if all uploads succeeded
-      const allSuccess = uploadStatuses.every((s) => s.status === 'success');
-      if (allSuccess) {
-        onUploadComplete();
-        // Reset after showing success
-        setTimeout(() => {
-          setSelectedFiles([]);
-          setUploadStatuses([]);
-        }, 2000);
-      }
+      // Call onUploadComplete after all uploads are attempted
+      // The parent component will refetch to see which images were successfully uploaded
+      onUploadComplete();
     } catch (err) {
       console.error('Batch upload error:', err);
       setError('Some uploads failed. Please try again.');
@@ -175,6 +244,16 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       setUploading(false);
     }
   };
+
+  const handleComplete = () => {
+    // Reset the uploader
+    setSelectedFiles([]);
+    setUploadStatuses([]);
+    setError(null);
+  };
+
+  const allUploadsComplete = uploadStatuses.length > 0 && uploadStatuses.every((s) => s.status === 'success' || s.status === 'error');
+  const anySuccess = uploadStatuses.some((s) => s.status === 'success');
 
   const getStatusIcon = (status: UploadStatus['status']) => {
     if (status === 'success') return <CheckCircleIcon color="success" />;
@@ -243,6 +322,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                     primary={status.file.name}
                     secondary={
                       <>
+                        {status.originalSize && status.compressedSize && (
+                          <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                            {(status.originalSize / 1024).toFixed(1)}KB → {(status.compressedSize / 1024).toFixed(1)}KB 
+                            ({Math.round((1 - status.compressedSize / status.originalSize) * 100)}% smaller)
+                          </Typography>
+                        )}
                         {status.status === 'uploading' && (
                           <LinearProgress
                             variant="determinate"
@@ -283,15 +368,29 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               ))}
             </List>
 
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleUploadAll}
-              disabled={uploading}
-              fullWidth
-            >
-              {uploading ? 'Uploading...' : `Upload ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`}
-            </Button>
+            {!allUploadsComplete && (
+              <Button
+                variant="contained"
+                color="success"
+                onClick={handleUploadAll}
+                disabled={uploading}
+                fullWidth
+              >
+                {uploading ? 'Uploading...' : `Upload ${selectedFiles.length} Image${selectedFiles.length !== 1 ? 's' : ''}`}
+              </Button>
+            )}
+
+            {allUploadsComplete && anySuccess && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleComplete}
+                fullWidth
+                sx={{ mt: 1 }}
+              >
+                Done
+              </Button>
+            )}
           </>
         )}
       </Box>

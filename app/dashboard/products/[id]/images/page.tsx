@@ -71,23 +71,24 @@ export default function ProductImagesPage() {
   };
 
   const confirmDelete = async () => {
-    if (!deletingImageUrl) return;
+    if (!deletingImageUrl || !product?.images) return;
+
+    // Find the index of the image to delete
+    const imageIndex = product.images.indexOf(deletingImageUrl);
+    if (imageIndex === -1) {
+      setError('Image not found');
+      return;
+    }
 
     try {
-      // TODO: Implement delete image endpoint
-      // For now, just show a placeholder
-      setProduct((prev) =>
-        prev
-          ? {
-              ...prev,
-              images: prev.images?.filter((img) => img !== deletingImageUrl),
-            }
-          : null
-      );
+      // Call the delete API endpoint
+      const updatedProduct = await productService.deleteImage(productId, imageIndex);
+      setProduct(updatedProduct);
       setDeleteConfirm(false);
       setDeletingImageUrl(null);
     } catch (err) {
       setError((err as Error).message || 'Failed to delete image');
+      setDeleteConfirm(false);
     }
   };
 

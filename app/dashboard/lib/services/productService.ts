@@ -90,6 +90,42 @@ export const productService = {
     await Promise.all(productIds.map((id) => productService.deleteProduct(id)));
   },
 
+  // Delete product image by index
+  deleteImage: async (productId: string, imageIndex: number): Promise<Product> => {
+    const response = await apiClient.delete<Product>(
+      `${DASHBOARD_BASE}/products/${productId}/images/${imageIndex}`
+    );
+    return response.data;
+  },
+
+  // Variant-specific image management
+  // Get presigned URL for variant image upload
+  getVariantPresignedUrl: async (productId: string, variantId: string, contentType: string): Promise<PresignedUrlResponse> => {
+    const response = await apiClient.post<PresignedUrlResponse>(
+      `${DASHBOARD_BASE}/products/${productId}/variants/${variantId}/get-upload-url?content_type=${encodeURIComponent(contentType)}`,
+      {}
+    );
+    return response.data;
+  },
+
+  // Confirm variant image upload
+  confirmVariantImageUpload: async (productId: string, variantId: string, imageUrl: string, s3Key: string): Promise<Product> => {
+    const encodedUrl = encodeURIComponent(imageUrl);
+    const response = await apiClient.post<Product>(
+      `${DASHBOARD_BASE}/products/${productId}/variants/${variantId}/confirm-upload?image_url=${encodedUrl}`,
+      {}
+    );
+    return response.data;
+  },
+
+  // Delete variant image by index
+  deleteVariantImage: async (productId: string, variantId: string, imageIndex: number): Promise<Product> => {
+    const response = await apiClient.delete<Product>(
+      `${DASHBOARD_BASE}/products/${productId}/variants/${variantId}/images/${imageIndex}`
+    );
+    return response.data;
+  },
+
   // Get presigned URL for image upload
   getPresignedUrl: async (productId: string, contentType: string): Promise<PresignedUrlResponse> => {
     const response = await apiClient.post<PresignedUrlResponse>(

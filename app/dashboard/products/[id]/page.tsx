@@ -27,6 +27,10 @@ import {
   Paper,
   CircularProgress,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import type { AppDispatch } from '@/app/dashboard/lib/store';
 import { updateProduct } from '@/app/dashboard/lib/slices/productSlice';
@@ -38,6 +42,7 @@ import {
 import { UpdateProductRequest, Product, CategoryConfig, ProductVariantCreate } from '@/app/dashboard/lib/types/product';
 import { DynamicAttributeFields } from '../(components)/DynamicAttributeFields';
 import { ImageUploader } from '../(components)/ImageUploader';
+import { VariantImageManager } from '../(components)/VariantImageManager';
 import VariantBuilder from '../(components)/VariantBuilder';
 import Image from 'next/image';
 import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
@@ -76,12 +81,14 @@ export default function EditProductPage() {
 
   const [categories, setCategories] = useState<string[]>([]);
   const [categoryConfig, setCategoryConfig] = useState<CategoryConfig | null>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'images'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'images' | 'variant-images'>('details');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [useVariants, setUseVariants] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<number | null>(null);
 
   // Fetch product details on mount
   useEffect(() => {
@@ -267,8 +274,10 @@ export default function EditProductPage() {
     try {
       const updatedProduct = await productService.getProduct(productId);
       setProduct(updatedProduct);
+      showToast('Images uploaded successfully', 'success');
     } catch (err) {
       console.error('Failed to refresh product:', err);
+      showToast('Failed to refresh product images', 'error');
     }
   };
 
@@ -326,9 +335,23 @@ export default function EditProductPage() {
 
         {/* Tabs */}
         <Paper sx={{ mb: 3 }}>
-          <Tabs value={activeTab === 'details' ? 0 : 1} onChange={(e, val) => setActiveTab(val === 0 ? 'details' : 'images')}>
+          <Tabs 
+            value={
+              activeTab === 'details' ? 0 : 
+              activeTab === 'images' ? 1 : 
+              activeTab === 'variant-images' ? 2 : 0
+            } 
+            onChange={(e, val) => {
+              if (val === 0) setActiveTab('details');
+              else if (val === 1) setActiveTab('images');
+              else if (val === 2) setActiveTab('variant-images');
+            }}
+          >
             <Tab label="Product Details" />
-            <Tab label={`Images (${product.images?.length || 0})`} />
+            <Tab label={`Product Images (${product.images?.length || 0})`} />
+            {product.variants && product.variants.length > 0 && (
+              <Tab label={`Variant Images (${product.variants.reduce((sum, v) => sum + (v.images?.length || 0), 0)})`} />
+            )}
           </Tabs>
         </Paper>
 
@@ -572,8 +595,23 @@ export default function EditProductPage() {
               </Box>
             </Box>
           </Box>
+        ) : activeTab === 'variant-images' ? (
+          /* Variant Images Tab */
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Variant-Specific Images
+              </Typography>
+              <VariantImageManager 
+                product={product} 
+                onUpdate={handleImageUploadSuccess}
+                showToast={showToast}
+              />
+            </CardContent>
+          </Card>
         ) : (
-          /* Images Tab */
+          /* Product Images Tab */
+          /* Product Images Tab */
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
@@ -594,6 +632,7 @@ export default function EditProductPage() {
                             src={image}
                             alt={`Product image ${index + 1}`}
                             fill
+                            sizes="(max-width: 600px) 50vw, (max-width: 960px) 33vw, 25vw"
                             style={{ objectFit: 'cover' }}
                           />
                           <Box
@@ -611,6 +650,10 @@ export default function EditProductPage() {
                               variant="contained"
                               color="error"
                               startIcon={<DeleteIcon fontSize="small" />}
+                              onClick={() => {
+                                setImageToDelete(index);
+                                setDeleteDialogOpen(true);
+                              }}
                             />
                           </Box>
                         </Box>
@@ -631,6 +674,39 @@ export default function EditProductPage() {
           </Card>
         )}
       </Box>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Image</DialogTitle>
+        <DialogContent>
+          <Typography>Are you sure you want to delete this image? This action cannot be undone.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={async () => {
+              if (imageToDelete === null) return;
+              
+              try {
+                await productService.deleteImage(productId, imageToDelete);
+                // Refetch the product to get updated images
+                const updatedProduct = await productService.getProduct(productId);
+                setProduct(updatedProduct);
+                showToast('Image deleted successfully', 'success');
+              } catch (err) {
+                showToast((err as Error).message || 'Failed to delete image', 'error');
+              } finally {
+                setDeleteDialogOpen(false);
+                setImageToDelete(null);
+              }
+            }}
+            color="error" 
+            variant="contained"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </RouteGuard>
   );
 }

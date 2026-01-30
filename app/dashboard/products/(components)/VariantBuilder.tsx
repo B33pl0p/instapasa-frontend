@@ -818,84 +818,102 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                         </Box>
                       </TableCell>
                       <TableCell align="right">
-                        <TextField
-                          type="number"
-                          size="small"
-                          value={variant.stock}
-                          onChange={(e) =>
-                            updateVariantStock(index, parseInt(e.target.value) || 0)
-                          }
-                          inputProps={{ min: 0, style: { textAlign: 'center' } }}
-                          sx={{ width: 100 }}
-                          slotProps={{
-                            input: {
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateVariantStock(index, Math.max(0, variant.stock - 1))}
-                                    sx={{ p: 0 }}
-                                  >
-                                    <RemoveCircleIcon fontSize="small" />
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => updateVariantStock(index, variant.stock + 1)}
-                                    sx={{ p: 0 }}
-                                  >
-                                    <AddCircleIcon fontSize="small" />
-                                  </IconButton>
-                                </InputAdornment>
-                              ),
-                            },
-                          }}
-                        />
-                      </TableCell>
-                      {showPriceAdjustment && (
-                        <TableCell align="right">
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => updateVariantStock(index, Math.max(0, variant.stock - 1))}
+                            sx={{ p: 0.5 }}
+                          >
+                            <RemoveCircleIcon fontSize="small" />
+                          </IconButton>
                           <TextField
                             type="number"
                             size="small"
-                            value={variant.price_adjustment || 0}
-                            onChange={(e) =>
-                              updateVariantPriceAdjustment(
-                                index,
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            inputProps={{ step: 0.01, style: { textAlign: 'center' } }}
-                            sx={{ width: 120 }}
-                            slotProps={{
-                              input: {
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => updateVariantPriceAdjustment(index, (variant.price_adjustment || 0) - 1)}
-                                      sx={{ p: 0 }}
-                                    >
-                                      <RemoveCircleIcon fontSize="small" />
-                                    </IconButton>
-                                  </InputAdornment>
-                                ),
-                                endAdornment: (
-                                  <InputAdornment position="end">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => updateVariantPriceAdjustment(index, (variant.price_adjustment || 0) + 1)}
-                                      sx={{ p: 0 }}
-                                    >
-                                      <AddCircleIcon fontSize="small" />
-                                    </IconButton>
-                                  </InputAdornment>
-                                ),
-                              },
+                            value={variant.stock}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              updateVariantStock(index, value === '' ? 0 : parseInt(value) || 0);
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value === '') {
+                                updateVariantStock(index, 0);
+                              }
+                            }}
+                            inputProps={{ 
+                              min: 0, 
+                              style: { 
+                                textAlign: 'center',
+                                padding: '6px 8px'
+                              } 
+                            }}
+                            sx={{ 
+                              width: 80,
+                              '& .MuiOutlinedInput-root': {
+                                '& input': {
+                                  color: 'text.primary',
+                                }
+                              }
                             }}
                           />
+                          <IconButton
+                            size="small"
+                            onClick={() => updateVariantStock(index, variant.stock + 1)}
+                            sx={{ p: 0.5 }}
+                          >
+                            <AddCircleIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                      {showPriceAdjustment && (
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => updateVariantPriceAdjustment(index, (variant.price_adjustment || 0) - 1)}
+                              sx={{ p: 0.5 }}
+                            >
+                              <RemoveCircleIcon fontSize="small" />
+                            </IconButton>
+                            <TextField
+                              type="number"
+                              size="small"
+                              value={variant.price_adjustment || 0}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                updateVariantPriceAdjustment(
+                                  index,
+                                  value === '' ? 0 : parseFloat(value) || 0
+                                );
+                              }}
+                              onBlur={(e) => {
+                                if (e.target.value === '') {
+                                  updateVariantPriceAdjustment(index, 0);
+                                }
+                              }}
+                              inputProps={{ 
+                                step: 0.01, 
+                                style: { 
+                                  textAlign: 'center',
+                                  padding: '6px 8px'
+                                } 
+                              }}
+                              sx={{ 
+                                width: 100,
+                                '& .MuiOutlinedInput-root': {
+                                  '& input': {
+                                    color: 'text.primary',
+                                  }
+                                }
+                              }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => updateVariantPriceAdjustment(index, (variant.price_adjustment || 0) + 1)}
+                              sx={{ p: 0.5 }}
+                            >
+                              <AddCircleIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         </TableCell>
                       )}
                       <TableCell align="center">

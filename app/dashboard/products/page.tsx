@@ -192,7 +192,7 @@ export default function ProductPage() {
 
   return (
     <Box sx={{ py: 4, px: 3, backgroundColor: 'background.default', minHeight: '100vh' }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         {/* Header Section */}
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>

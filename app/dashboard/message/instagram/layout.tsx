@@ -104,25 +104,35 @@ export default function InstagramLayout({
         sx={{
           display: { xs: selectedConversationId ? 'none' : 'flex', sm: 'flex' },
           position: 'relative',
-          width: { xs: '100%', sm: '320px', md: '320px' },
-          maxWidth: { xs: '100%', sm: '320px', md: '320px' },
+          width: { xs: '100%', sm: '360px', md: '360px' },
+          maxWidth: { xs: '100%', sm: '360px', md: '360px' },
           flexShrink: 0,
-          borderRight: `1px solid ${theme.palette.divider}`,
-          backgroundColor: theme.palette.background.paper,
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
           flexDirection: 'column',
           height: '100%',
           maxHeight: '100%',
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column', backgroundColor: theme.palette.background.paper }}>
-          <Box sx={{ borderBottom: `1px solid ${theme.palette.divider}`, px: { xs: 0.75, sm: 1 }, py: 0.75, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0 }}>
+        <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column', bgcolor: 'background.paper' }}>
+          <Box sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider', 
+            px: 2.5, 
+            py: 2, 
+            flexShrink: 0, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+          }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.15rem' }}>
               Instagram Chats
             </Typography>
             <Tooltip title="Refresh conversations">
               <IconButton
-                size="small"
+                size="medium"
                 onClick={handleRefresh}
                 disabled={conversationLoading}
                 sx={{
@@ -164,7 +174,7 @@ export default function InstagramLayout({
               </Typography>
             </Box>
           ) : (
-            <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0, p: 1.5 }}>
               {conversations.map((conversation, index) => {
                 const participantName = getParticipantName(conversation);
                 const isSelected = selectedConversationId === conversation.conversation_id;
@@ -181,25 +191,26 @@ export default function InstagramLayout({
                     onClick={() => handleSelectConversation(conversation.conversation_id)}
                     sx={{
                       cursor: 'pointer',
-                      borderBottom: `1px solid ${theme.palette.divider}`,
-                      px: { xs: 0.75, sm: 1 },
-                      py: 0.75,
+                      borderRadius: 2,
+                      p: 1.5,
+                      mb: 1,
                       transition: 'all 0.2s ease',
-                      backgroundColor: isSelected ? theme.palette.action.selected : 'transparent',
+                      bgcolor: isSelected ? 'action.selected' : 'transparent',
                       minWidth: 0,
-                      ...(!(isSelected) && {
-                        '&:hover': { backgroundColor: theme.palette.action.hover },
-                      }),
+                      '&:hover': { 
+                        bgcolor: isSelected ? 'action.selected' : 'action.hover',
+                        boxShadow: 1,
+                      },
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, minWidth: 0 }}>
-                      <AccountCircleIcon sx={{ width: 40, height: 40, color: 'text.secondary', flexShrink: 0 }} />
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, minWidth: 0 }}>
+                      <AccountCircleIcon sx={{ width: 48, height: 48, color: 'text.secondary', flexShrink: 0 }} />
                       <Box sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, minWidth: 0 }}>
                           <Typography
-                            variant="body2"
+                            variant="body1"
                             sx={{
-                              fontWeight: 500,
+                              fontWeight: 600,
                               color: 'text.primary',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -216,58 +227,62 @@ export default function InstagramLayout({
                               flexShrink: 0, 
                               color: 'text.secondary',
                               whiteSpace: 'nowrap',
+                              fontSize: '0.8rem',
                             }}
                           >
                             {formatTime(conversation.updated_time)}
                           </Typography>
                         </Box>
                         <Typography
-                          variant="caption"
+                          variant="body2"
                           sx={{
-                            mt: 0.25,
+                            mt: 0.5,
                             color: 'text.secondary',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
                             display: 'block',
+                            fontSize: '0.9rem',
                           }}
                         >
                           {conversation.last_message?.text || 'No messages'}
                         </Typography>
                         {relatedOrder && (
-                          <Box sx={{ mt: 0.25, display: 'flex', alignItems: 'center', gap: 0.25, flexWrap: 'wrap', minWidth: 0 }}>
+                          <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', minWidth: 0 }}>
                             <Box
                               component="svg"
                               xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 24 24"
                               fill="none"
                               stroke="currentColor"
-                              sx={{ width: '0.75rem', height: '0.75rem', color: 'success.main', flexShrink: 0 }}
+                              sx={{ width: '0.85rem', height: '0.85rem', color: 'success.main', flexShrink: 0 }}
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </Box>
                             <Typography 
-                              variant="caption" 
+                              variant="body2" 
                               sx={{ 
-                                fontWeight: 500, 
+                                fontWeight: 600, 
                                 color: 'success.main',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 minWidth: 0,
+                                fontSize: '0.85rem',
                               }}
                             >
                               {relatedOrder.order_number}
                             </Typography>
-                            <Typography variant="caption" sx={{ color: 'text.disabled', flexShrink: 0 }}>
+                            <Typography variant="body2" sx={{ color: 'text.disabled', flexShrink: 0 }}>
                               •
                             </Typography>
                             <Typography 
-                              variant="caption" 
+                              variant="body2" 
                               sx={{ 
                                 color: 'text.secondary',
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 minWidth: 0,
+                                fontSize: '0.85rem',
                               }}
                             >
                               Rs. {relatedOrder.total.toFixed(0)}

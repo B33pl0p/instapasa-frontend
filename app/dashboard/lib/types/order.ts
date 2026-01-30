@@ -4,7 +4,8 @@ export type OrderStatus =
   | 'processing'
   | 'shipped'
   | 'delivered'
-  | 'cancelled';
+  | 'cancelled'
+  | 'cancellation_requested';
 
 export interface OrderItem {
   product_id: string;
@@ -12,6 +13,7 @@ export interface OrderItem {
   quantity: number;
   price: number;
   image_url?: string;
+  attributes?: Record<string, string>;
 }
 
 export interface Order {
@@ -45,4 +47,5 @@ export interface OrderStatistics {
   shipped: number;
   delivered: number;
   cancelled: number;
+  cancellation_requested: number;
 }

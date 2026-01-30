@@ -165,6 +165,7 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                           src={thumbnail}
                           alt={product.name}
                           fill
+                          sizes="48px"
                           style={{ objectFit: 'cover' }}
                         />
                       ) : (
@@ -325,6 +326,7 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                           src={thumbnail}
                           alt={product.name}
                           fill
+                          sizes="(max-width: 900px) 48px, 64px"
                           style={{ objectFit: 'cover' }}
                         />
                       ) : (

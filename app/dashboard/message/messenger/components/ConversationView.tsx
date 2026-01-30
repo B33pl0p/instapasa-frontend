@@ -302,49 +302,108 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       </Box>
 
       {/* Message Input Area - Fixed at bottom */}
-      <Paper sx={{ flexShrink: 0, borderRadius: 0, boxShadow: 'none', borderTop: '1px solid', borderColor: 'divider' }}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          flexShrink: 0, 
+          borderRadius: 0, 
+          borderTop: 1, 
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
         {attachmentPreview && (
-          <Paper sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Paper 
+            elevation={2}
+            sx={{ 
+              m: 2, 
+              mb: 0,
+              p: 2, 
+              bgcolor: 'background.paper', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              borderRadius: 2,
+            }}
+          >
             {attachmentPreview.type === 'image' && (
-              <Box component="img" src={attachmentPreview.url} alt="Preview" sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
+              <Box 
+                component="img" 
+                src={attachmentPreview.url} 
+                alt="Preview" 
+                sx={{ 
+                  width: 72, 
+                  height: 72, 
+                  objectFit: 'cover', 
+                  borderRadius: 1.5,
+                  boxShadow: 1,
+                }} 
+              />
             )}
             {attachmentPreview.type === 'video' && (
-              <Box component="video" src={attachmentPreview.url} sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }} />
+              <Box 
+                component="video" 
+                src={attachmentPreview.url} 
+                sx={{ 
+                  width: 72, 
+                  height: 72, 
+                  objectFit: 'cover', 
+                  borderRadius: 1.5,
+                  boxShadow: 1,
+                }} 
+              />
             )}
             {(attachmentPreview.type === 'audio' || attachmentPreview.type === 'file') && (
-              <Box sx={{ width: 60, height: 60, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography variant="h6">
+              <Box sx={{ 
+                width: 72, 
+                height: 72, 
+                bgcolor: 'action.hover', 
+                borderRadius: 1.5, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                boxShadow: 1,
+              }}>
+                <Typography sx={{ fontSize: '2rem' }}>
                   {attachmentPreview.type === 'audio' ? '🎵' : '📄'}
                 </Typography>
               </Box>
             )}
-            <Stack spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  fontWeight: 600, 
+                  color: 'text.primary', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis', 
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {attachmentPreview.file.name}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {(attachmentPreview.file.size / 1024).toFixed(1)} KB
               </Typography>
             </Stack>
             <IconButton
-              size="small"
+              size="medium"
+              color="error"
               onClick={() => {
                 URL.revokeObjectURL(attachmentPreview.url);
                 setAttachmentPreview(null);
               }}
-              sx={{ color: 'error.main' }}
             >
-              <CloseIcon sx={{ width: 20, height: 20 }} />
+              <CloseIcon />
             </IconButton>
           </Paper>
         )}
 
-        <Stack direction="row" spacing={1} sx={{ p: 1.5, alignItems: 'flex-end' }}>
+        <Stack direction="row" spacing={1.5} sx={{ p: 3, alignItems: 'flex-end' }}>
           <TextField
             fullWidth
             multiline
             maxRows={3}
-            size="small"
             variant="outlined"
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
@@ -355,26 +414,56 @@ export default function ConversationView({ conversationId }: ConversationViewPro
               }
             }}
             placeholder={attachmentPreview ? "Add a caption (optional)" : "Type your message..."}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                fontSize: '1rem',
+              },
+              '& .MuiInputBase-input': {
+                py: 1.5,
+              },
+            }}
           />
-          <IconButton component="label" size="small">
+          <IconButton 
+            component="label" 
+            size="medium"
+            sx={{ 
+              borderRadius: 2,
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
             <input
               type="file"
               hidden
               onChange={handleFileSelect}
               accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
             />
-            <AttachFileIcon sx={{ width: 20, height: 20 }} />
+            <AttachFileIcon />
           </IconButton>
-          <IconButton size="small" color="default">
-            <EmojiEmotionsIcon sx={{ width: 20, height: 20 }} />
+          <IconButton 
+            size="medium" 
+            color="default"
+            sx={{ 
+              borderRadius: 2,
+              '&:hover': { bgcolor: 'action.hover' },
+            }}
+          >
+            <EmojiEmotionsIcon />
           </IconButton>
           <Button
             variant="contained"
             color="primary"
-            size="small"
+            size="large"
             onClick={handleSendMessage}
             disabled={(!messageInput.trim() && !attachmentPreview) || isSending}
-            endIcon={isUploadingAttachment || isSending ? <CircularProgress size={16} /> : <SendIcon />}
+            endIcon={isUploadingAttachment || isSending ? <CircularProgress size={20} /> : <SendIcon />}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 3,
+              boxShadow: 2,
+            }}
           >
             Send
           </Button>

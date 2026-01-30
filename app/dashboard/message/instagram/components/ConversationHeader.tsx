@@ -51,72 +51,72 @@ export default function ConversationHeader({
 
   return (
     <Paper
+      elevation={0}
       sx={{
         flexShrink: 0,
         borderRadius: 0,
-        boxShadow: 'none',
-        borderBottom: '1px solid',
+        borderBottom: 1,
         borderColor: 'divider',
-        backgroundColor: 'background.paper',
+        bgcolor: 'background.paper',
       }}
     >
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2.5 }}>
         <Stack 
           direction="row" 
-          spacing={{ xs: 1, sm: 2 }} 
+          spacing={2} 
           sx={{ 
             alignItems: 'center', 
             justifyContent: 'space-between',
-            flexWrap: { xs: 'wrap', sm: 'nowrap' },
           }}
         >
           {/* Left: Customer Info */}
           <Stack 
             direction="row" 
-            spacing={{ xs: 1, sm: 1.5 }} 
+            spacing={2} 
             sx={{ 
               alignItems: 'center', 
               flex: 1, 
               minWidth: 0,
-              order: { xs: 1, sm: 1 },
             }}
           >
             <Avatar
               sx={{
-                width: { xs: 32, sm: 40 },
-                height: { xs: 32, sm: 40 },
-                backgroundColor: 'primary.main',
+                width: 52,
+                height: 52,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
                 flexShrink: 0,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                boxShadow: 2,
               }}
             >
               {buyerUsername.charAt(0).toUpperCase()}
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography
-                variant="subtitle2"
+                variant="h6"
                 sx={{
                   fontWeight: 700,
                   color: 'text.primary',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontSize: '1.1rem',
                 }}
               >
                 {buyerUsername}
               </Typography>
               <Typography
-                variant="caption"
+                variant="body2"
                 sx={{
                   color: 'text.secondary',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
-                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
                 }}
               >
-                Instagram Direct Message
+                Instagram Direct
               </Typography>
             </Box>
           </Stack>
@@ -126,16 +126,14 @@ export default function ConversationHeader({
             <Button
               onClick={onSendQRClick}
               variant="contained"
-              size="small"
+              size="medium"
               sx={{
                 flexShrink: 0,
                 textTransform: 'none',
                 fontWeight: 600,
-                order: { xs: 3, sm: 2 },
-                width: { xs: '100%', sm: 'auto' },
-                mt: { xs: 1, sm: 0 },
-                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                padding: { xs: '6px 12px', sm: '6px 16px' },
+                borderRadius: 2,
+                px: 3,
+                boxShadow: 2,
               }}
             >
               Send QR

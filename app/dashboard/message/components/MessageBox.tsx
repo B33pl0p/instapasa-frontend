@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { useTheme } from '@mui/material/styles';
-import { Box, CircularProgress, Typography } from '@mui/material';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { Box, CircularProgress, Typography, Avatar, Paper, Stack } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
 
 interface Postback {
   title: string;
@@ -38,7 +40,6 @@ export default function MessageBox({ messages, businessUsername, loading }: Mess
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const wasAtBottomRef = useRef(true);
-  const theme = useTheme();
 
   // Check if user is at bottom before scroll
   const handleScroll = () => {
@@ -76,79 +77,67 @@ export default function MessageBox({ messages, businessUsername, loading }: Mess
 
   if (loading) {
     return (
-      <div style={{
-        display: 'flex',
-        height: '100%',
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.palette.background.default,
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            marginBottom: '0.5rem',
-            height: '2rem',
-            width: '2rem',
-            animation: 'spin 1s linear infinite',
-            borderRadius: '50%',
-            border: `4px solid ${theme.palette.divider}`,
-            borderTopColor: theme.palette.primary.main,
-            margin: '0 auto 0.5rem',
-          }}></div>
-          <p style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>Loading messages...</p>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          height: '100%', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+        }}
+      >
+        <Stack spacing={2} alignItems="center">
+          <CircularProgress size={40} />
+          <Typography variant="body1" color="text.secondary">
+            Loading messages...
+          </Typography>
+        </Stack>
+      </Box>
     );
   }
 
   if (messages.length === 0) {
     return (
-      <div style={{
-        display: 'flex',
-        height: '100%',
-        width: '100%',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: theme.palette.background.default,
-      }}>
-        <div style={{ textAlign: 'center', maxWidth: '28rem', padding: '1rem' }}>
-          <AccountCircleIcon
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          height: '100%', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+        }}
+      >
+        <Stack spacing={2} alignItems="center" sx={{ maxWidth: 400, textAlign: 'center', px: 3 }}>
+          <Avatar
             sx={{
-              width: 64,
-              height: 64,
+              width: 80,
+              height: 80,
+              bgcolor: 'action.hover',
               color: 'text.secondary',
-              margin: '0 auto 1rem',
-              display: 'block',
             }}
-          />
-          <p style={{ fontSize: '1rem', fontWeight: 500, color: theme.palette.text.primary, marginBottom: '0.25rem' }}>
+          >
+            <PersonIcon sx={{ fontSize: 40 }} />
+          </Avatar>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
             No messages yet
-          </p>
-          <p style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
             Start a conversation to see messages here
-          </p>
-        </div>
-      </div>
+          </Typography>
+        </Stack>
+      </Box>
     );
   }
 
   return (
-    <div
+    <Box
       ref={containerRef}
       onScroll={handleScroll}
-      style={{
+      sx={{
         height: '100%',
-        width: '100%',
         overflowY: 'auto',
         overflowX: 'hidden',
-        backgroundColor: theme.palette.background.default,
-        scrollBehavior: 'smooth',
+        bgcolor: 'background.default',
         position: 'absolute',
         top: 0,
         left: 0,
@@ -156,226 +145,251 @@ export default function MessageBox({ messages, businessUsername, loading }: Mess
         bottom: 0,
       }}
     >
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100%',
-        justifyContent: 'flex-end',
-        paddingLeft: '0.75rem',
-        paddingRight: '0.75rem',
-        paddingTop: '0.75rem',
-        paddingBottom: '0.75rem',
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100%',
+          justifyContent: 'flex-end',
+          px: 2,
+          py: 3,
+        }}
+      >
+        <Stack spacing={2.5}>
           {messages.map((message, index) => {
             const isFromBusiness = isMessageFromBusiness(message);
             const messageText = message.text?.trim() || '';
-            // Ensure unique key - combine id with index and timestamp to prevent duplicates
             const uniqueKey = message.id 
               ? `${message.id}-${message.created_time}` 
               : `msg-${index}-${message.created_time}`;
             
             return (
-              <div
+              <Box
                 key={uniqueKey}
-                style={{
+                sx={{
                   display: 'flex',
                   alignItems: 'flex-end',
-                  gap: '0.5rem',
-                  width: '100%',
+                  gap: 1.5,
                   justifyContent: isFromBusiness ? 'flex-end' : 'flex-start',
                 }}
               >
-                {/* Avatar - only show for customer messages */}
+                {/* Avatar - Customer side */}
                 {!isFromBusiness && (
-                  <div style={{ flexShrink: 0, marginBottom: '0.25rem' }}>
-                    <AccountCircleIcon
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        color: 'text.secondary',
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* Message Bubble */}
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  maxWidth: '75%',
-                  minWidth: 0,
-                  alignItems: isFromBusiness ? 'flex-end' : 'flex-start',
-                }}>
-                  <div
-                    style={{
-                      borderRadius: '1rem',
-                      paddingLeft: '1rem',
-                      paddingRight: '1rem',
-                      paddingTop: '0.5rem',
-                      paddingBottom: '0.5rem',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                      wordBreak: 'break-word',
-                      overflowWrap: 'break-word',
-                      hyphens: 'auto',
-                      backgroundColor: isFromBusiness ? theme.palette.primary.main : theme.palette.background.paper,
-                      color: isFromBusiness ? theme.palette.primary.contrastText : theme.palette.text.primary,
-                      border: isFromBusiness ? 'none' : `1px solid ${theme.palette.divider}`,
+                  <Avatar
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      bgcolor: 'primary.main',
+                      color: 'primary.contrastText',
+                      flexShrink: 0,
+                      boxShadow: 1,
                     }}
                   >
-                  {/* Postback (Button Click) */}
-                  {message.postback && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.5rem',
-                      paddingBottom: '0.5rem',
-                      borderBottom: `1px solid ${isFromBusiness ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
-                    }}>
-                      <svg style={{ width: '1rem', height: '1rem', flexShrink: 0 }} fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 11H9v-2h2v2zm0-4H9V5h2v4z"/>
-                      </svg>
-                      <span style={{ fontSize: '0.75rem', opacity: 0.8, fontWeight: 500 }}>
-                        Clicked: {message.postback.title}
-                      </span>
-                    </div>
-                  )}
+                    <PersonIcon />
+                  </Avatar>
+                )}
 
-                  {/* Sticker */}
-                  {message.sticker && (
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      <img 
-                        src={message.sticker} 
-                        alt="Sticker" 
-                        style={{ maxWidth: '120px', maxHeight: '120px', objectFit: 'contain' }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {/* Attachments (Images, Videos, Files) */}
-                  {message.attachments && message.attachments.length > 0 && (
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      {message.attachments.map((attachment, idx) => {
-                        if (attachment.type === 'image') {
-                          return (
-                            <div key={idx} style={{ borderRadius: '0.375rem', overflow: 'hidden' }}>
-                              <img 
-                                src={attachment.url} 
-                                alt="Attachment" 
-                                style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '0.375rem' }}
-                                onError={(e) => {
-                                  e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect fill="%23ddd" width="200" height="150"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage unavailable%3C/text%3E%3C/svg%3E';
-                                }}
-                              />
-                            </div>
-                          );
-                        } else if (attachment.type === 'video') {
-                          return (
-                            <div key={idx} style={{ borderRadius: '0.375rem', overflow: 'hidden' }}>
-                              <video 
-                                src={attachment.url} 
-                                controls 
-                                style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '0.375rem' }}
-                              >
-                                Your browser does not support the video tag.
-                              </video>
-                            </div>
-                          );
-                        } else if (attachment.type === 'audio') {
-                          return (
-                            <div key={idx} style={{ borderRadius: '0.375rem' }}>
-                              <audio src={attachment.url} controls style={{ width: '100%' }}>
-                                Your browser does not support the audio tag.
-                              </audio>
-                            </div>
-                          );
-                        } else {
-                          return (
-                            <a 
-                              key={idx}
-                              href={attachment.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.5rem',
-                                borderRadius: '0.375rem',
-                                backgroundColor: isFromBusiness ? 'rgba(255, 255, 255, 0.1)' : theme.palette.action.hover,
-                                cursor: 'pointer',
-                                textDecoration: 'none',
-                                color: 'inherit',
-                              }}
-                            >
-                              <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-                              </svg>
-                              <span style={{ fontSize: '0.875rem' }}>📎 {attachment.type} file</span>
-                            </a>
-                          );
-                        }
-                      })}
-                    </div>
-                  )}
-
-                  {/* Text Message */}
-                  {messageText ? (
-                    <p style={{
-                      fontSize: '0.875rem',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      lineHeight: 1.5,
-                      margin: 0,
-                    }}>
-                      {messageText}
-                    </p>
-                  ) : (
-                    <p style={{
-                      fontSize: '0.875rem',
-                      fontStyle: 'italic',
-                      opacity: 0.7,
-                      margin: 0,
-                    }}>
-                      Empty message
-                    </p>
-                  )}
-                </div>
-                <p
-                  style={{
-                    marginTop: '0.25rem',
-                    paddingLeft: '0.25rem',
-                    paddingRight: '0.25rem',
-                    fontSize: '0.75rem',
-                    color: isFromBusiness ? theme.palette.text.secondary : theme.palette.text.secondary,
+                {/* Message Content */}
+                <Stack
+                  spacing={0.5}
+                  sx={{
+                    maxWidth: '70%',
+                    minWidth: 0,
+                    alignItems: isFromBusiness ? 'flex-end' : 'flex-start',
                   }}
                 >
-                  {formatMessageTime(message.created_time)}
-                </p>
-                </div>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      borderRadius: isFromBusiness ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                      px: 2.5,
+                      py: 1.5,
+                      bgcolor: isFromBusiness ? 'primary.main' : 'background.paper',
+                      color: isFromBusiness ? 'primary.contrastText' : 'text.primary',
+                      border: isFromBusiness ? 'none' : 1,
+                      borderColor: 'divider',
+                      boxShadow: isFromBusiness ? 2 : 1,
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {/* Postback (Button Click) */}
+                    {message.postback && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 1,
+                          pb: 1,
+                          borderBottom: 1,
+                          borderColor: isFromBusiness ? 'rgba(255,255,255,0.2)' : 'divider',
+                        }}
+                      >
+                        <CheckCircleIcon sx={{ fontSize: 16, opacity: 0.8 }} />
+                        <Typography variant="caption" sx={{ fontWeight: 600, opacity: 0.9 }}>
+                          Clicked: {message.postback.title}
+                        </Typography>
+                      </Box>
+                    )}
 
-                {/* Avatar - only show for business messages */}
+                    {/* Sticker */}
+                    {message.sticker && (
+                      <Box sx={{ mb: 1 }}>
+                        <img 
+                          src={message.sticker} 
+                          alt="Sticker" 
+                          style={{ maxWidth: '140px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px' }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </Box>
+                    )}
+
+                    {/* Attachments */}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <Stack spacing={1} sx={{ mb: messageText ? 1 : 0 }}>
+                        {message.attachments.map((attachment, idx) => {
+                          if (attachment.type === 'image') {
+                            return (
+                              <Box 
+                                key={idx} 
+                                sx={{ 
+                                  borderRadius: 2, 
+                                  overflow: 'hidden',
+                                  boxShadow: 1,
+                                }}
+                              >
+                                <img 
+                                  src={attachment.url} 
+                                  alt="Attachment" 
+                                  style={{ 
+                                    maxWidth: '100%', 
+                                    maxHeight: '350px', 
+                                    objectFit: 'contain', 
+                                    display: 'block',
+                                    borderRadius: '8px',
+                                  }}
+                                  onError={(e) => {
+                                    e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="150" viewBox="0 0 200 150"%3E%3Crect fill="%23ddd" width="200" height="150"/%3E%3Ctext fill="%23999" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EImage unavailable%3C/text%3E%3C/svg%3E';
+                                  }}
+                                />
+                              </Box>
+                            );
+                          } else if (attachment.type === 'video') {
+                            return (
+                              <Box key={idx} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                                <video 
+                                  src={attachment.url} 
+                                  controls 
+                                  style={{ maxWidth: '100%', maxHeight: '350px', borderRadius: '8px', display: 'block' }}
+                                >
+                                  Your browser does not support the video tag.
+                                </video>
+                              </Box>
+                            );
+                          } else if (attachment.type === 'audio') {
+                            return (
+                              <Box key={idx} sx={{ borderRadius: 2 }}>
+                                <audio src={attachment.url} controls style={{ width: '100%' }}>
+                                  Your browser does not support the audio tag.
+                                </audio>
+                              </Box>
+                            );
+                          } else {
+                            return (
+                              <Box
+                                key={idx}
+                                component="a"
+                                href={attachment.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1.5,
+                                  p: 1.5,
+                                  borderRadius: 2,
+                                  bgcolor: isFromBusiness ? 'rgba(255,255,255,0.15)' : 'action.hover',
+                                  textDecoration: 'none',
+                                  color: 'inherit',
+                                  '&:hover': {
+                                    bgcolor: isFromBusiness ? 'rgba(255,255,255,0.25)' : 'action.selected',
+                                  },
+                                  transition: 'background-color 0.2s',
+                                }}
+                              >
+                                <AttachFileIcon sx={{ fontSize: 20 }} />
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {attachment.type} file
+                                </Typography>
+                              </Box>
+                            );
+                          }
+                        })}
+                      </Stack>
+                    )}
+
+                    {/* Text Message */}
+                    {messageText ? (
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          lineHeight: 1.6,
+                          fontSize: '1rem',
+                        }}
+                      >
+                        {messageText}
+                      </Typography>
+                    ) : !message.attachments && !message.sticker ? (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontStyle: 'italic',
+                          opacity: 0.7,
+                        }}
+                      >
+                        Empty message
+                      </Typography>
+                    ) : null}
+                  </Paper>
+
+                  {/* Timestamp */}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      px: 1,
+                      color: 'text.secondary',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    {formatMessageTime(message.created_time)}
+                  </Typography>
+                </Stack>
+
+                {/* Avatar - Business side */}
                 {isFromBusiness && (
-                  <div style={{ flexShrink: 0, marginBottom: '0.25rem' }}>
-                    <AccountCircleIcon
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        color: 'text.secondary',
-                      }}
-                    />
-                  </div>
+                  <Avatar
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      bgcolor: 'secondary.main',
+                      color: 'secondary.contrastText',
+                      flexShrink: 0,
+                      boxShadow: 1,
+                    }}
+                  >
+                    <StorefrontIcon />
+                  </Avatar>
                 )}
-              </div>
+              </Box>
             );
           })}
-          <div ref={messagesEndRef} style={{ height: '0.25rem' }} />
-        </div>
-      </div>
-    </div>
+          <div ref={messagesEndRef} />
+        </Stack>
+      </Box>
+    </Box>
   );
 }

@@ -16,6 +16,13 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import { ProductFilters } from '@/app/dashboard/lib/types/product';
 import { fetchCategories } from '@/app/dashboard/lib/services/productService';
+import apiClient from '@/app/dashboard/lib/apiClient';
+
+interface CategoriesResponse {
+  standard: string[];
+  custom: string[];
+  all: string[];
+}
 
 interface ProductFiltersProps {
   filters: ProductFilters;
@@ -34,10 +41,18 @@ export const ProductFilterComponent: React.FC<ProductFiltersProps> = ({
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const cats = await fetchCategories();
-        setCategories(cats);
+        const response = await apiClient.get<CategoriesResponse>('/dashboard/business-config/categories');
+        // Use 'all' array which contains custom categories first, then standard categories
+        setCategories(response.data.all);
       } catch (err) {
         console.error('Failed to load categories:', err);
+        // Fallback to old endpoint if new one fails
+        try {
+          const cats = await fetchCategories();
+          setCategories(cats);
+        } catch (fallbackErr) {
+          console.error('Fallback fetch also failed:', fallbackErr);
+        }
       } finally {
         setLoadingCategories(false);
       }

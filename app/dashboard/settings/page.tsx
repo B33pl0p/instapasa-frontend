@@ -19,6 +19,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
+import AddIcon from '@mui/icons-material/Add';
 import apiClient from '../lib/apiClient';
 import { useAppSelector } from '../lib/hooks';
 import { useToast } from '../lib/components/ToastContainer';
@@ -43,11 +44,20 @@ interface BusinessConfig {
   updated_at?: string;
 }
 
+interface CategoriesResponse {
+  standard: string[];
+  custom: string[];
+  all: string[];
+}
+
 export default function SettingsPage() {
   const [config, setConfig] = useState<BusinessConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [categories, setCategories] = useState<CategoriesResponse | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
   
   const { showToast } = useToast();
   
@@ -102,8 +112,55 @@ export default function SettingsPage() {
       }
     };
 
+    const fetchCategories = async () => {
+      try {
+        const response = await apiClient.get<CategoriesResponse>('/dashboard/business-config/categories');
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+
     fetchConfig();
+    fetchCategories();
   }, []);
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      showToast('Please enter a category name', 'warning');
+      return;
+    }
+
+    setAddingCategory(true);
+    try {
+      await apiClient.post('/dashboard/business-config/categories', {
+        category_name: newCategoryName.trim()
+      });
+      
+      // Refetch categories
+      const response = await apiClient.get<CategoriesResponse>('/dashboard/business-config/categories');
+      setCategories(response.data);
+      setNewCategoryName('');
+      showToast('Category added successfully', 'success');
+    } catch (error: any) {
+      showToast(error.response?.data?.detail || 'Failed to add category', 'error');
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryName: string) => {
+    try {
+      await apiClient.delete(`/dashboard/business-config/categories/${encodeURIComponent(categoryName)}`);
+      
+      // Refetch categories
+      const response = await apiClient.get<CategoriesResponse>('/dashboard/business-config/categories');
+      setCategories(response.data);
+      showToast('Category removed successfully', 'success');
+    } catch (error: any) {
+      showToast(error.response?.data?.detail || 'Failed to delete category', 'error');
+    }
+  };
 
   const uploadQRCode = async (file: File): Promise<string> => {
     try {
@@ -215,7 +272,7 @@ export default function SettingsPage() {
 
   return (
     <Box sx={{ py: 6, backgroundColor: 'background.default', minHeight: '100vh' }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         {/* Header Section */}
         <Box sx={{ mb: 6 }}>
           <Box sx={{ mb: 2 }}>
@@ -460,6 +517,119 @@ export default function SettingsPage() {
                     )}
                   </Card>
                 </Box>
+              </Box>
+
+              {/* Custom Categories */}
+              <Box sx={{ pt: 2 }}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, color: 'text.primary' }}>
+                    Custom Product Categories
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Create your own categories for unique products (e.g., "Nepali Handicrafts", "Homemade Pickles")
+                  </Typography>
+                </Box>
+
+                {/* Add New Category */}
+                <Box sx={{ mb: 3 }}>
+                  <Stack direction="row" spacing={2}>
+                    <TextField
+                      fullWidth
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="e.g., Traditional Dhaka Fabric"
+                      variant="outlined"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCategory();
+                        }
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          backgroundColor: 'action.hover',
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={handleAddCategory}
+                      disabled={addingCategory || !newCategoryName.trim()}
+                      startIcon={<AddIcon />}
+                      sx={{ minWidth: 150 }}
+                    >
+                      {addingCategory ? 'Adding...' : 'Add Category'}
+                    </Button>
+                  </Stack>
+                </Box>
+
+                {/* Custom Categories List */}
+                {categories && categories.custom.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.secondary' }}>
+                      Your Custom Categories ({categories.custom.length})
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {categories.custom.map((category) => (
+                        <Card
+                          key={category}
+                          variant="outlined"
+                          sx={{
+                            px: 2,
+                            py: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            backgroundColor: 'primary.lighter',
+                            borderColor: 'primary.light',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              backgroundColor: 'primary.light',
+                              '& .delete-icon': {
+                                opacity: 1,
+                              },
+                            },
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.dark' }}>
+                            {category}
+                          </Typography>
+                          <IconButton
+                            className="delete-icon"
+                            size="small"
+                            onClick={() => handleDeleteCategory(category)}
+                            sx={{
+                              opacity: 0.6,
+                              transition: 'opacity 0.2s',
+                              '&:hover': {
+                                color: 'error.main',
+                              },
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Card>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+
+                {categories && categories.custom.length === 0 && (
+                  <Alert severity="info" sx={{ backgroundColor: 'info.lighter' }}>
+                    <Typography variant="body2">
+                      No custom categories yet. Add categories specific to your products to help organize your inventory.
+                    </Typography>
+                  </Alert>
+                )}
+
+                {/* Standard Categories Info */}
+                {categories && categories.standard.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 1 }}>
+                      Standard categories available: {categories.standard.join(', ')}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
 
               {/* Divider */}

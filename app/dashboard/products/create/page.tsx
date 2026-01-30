@@ -26,6 +26,13 @@ import { CreateProductRequest, CategoryConfig, ProductVariantCreate } from '@/ap
 import { fetchCategories, fetchCategoryConfig } from '@/app/dashboard/lib/services/productService';
 import { DynamicAttributeFields } from '../(components)/DynamicAttributeFields';
 import VariantBuilder from '../(components)/VariantBuilder';
+import apiClient from '@/app/dashboard/lib/apiClient';
+
+interface CategoriesResponse {
+  standard: string[];
+  custom: string[];
+  all: string[];
+}
 
 const categoryIcons: Record<string, string> = {
   clothing: 'Clothing',
@@ -66,11 +73,18 @@ export default function CreateProductPage() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const cats = await fetchCategories();
-        setCategories(cats);
+        const response = await apiClient.get<CategoriesResponse>('/dashboard/business-config/categories');
+        // Use 'all' array which contains custom categories first, then standard categories
+        setCategories(response.data.all);
       } catch (err) {
         console.error('Failed to load categories:', err);
-        setError('Failed to load categories');
+        // Fallback to old endpoint if new one fails
+        try {
+          const cats = await fetchCategories();
+          setCategories(cats);
+        } catch (fallbackErr) {
+          setError('Failed to load categories');
+        }
       } finally {
         setLoadingCategories(false);
       }

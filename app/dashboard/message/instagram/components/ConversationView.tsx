@@ -427,60 +427,108 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       </Box>
 
       {/* Message Input Area - Fixed at bottom */}
-      <Paper sx={{ flexShrink: 0, borderRadius: 0, boxShadow: 'none', borderTop: '1px solid', borderColor: 'divider' }}>
-        <Box sx={{ p: 2 }}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          flexShrink: 0, 
+          borderRadius: 0, 
+          borderTop: 1, 
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
+        <Box sx={{ p: 3 }}>
           {/* Attachment Preview */}
           {attachmentPreview && (
-            <Paper sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Paper 
+              elevation={2}
+              sx={{ 
+                mb: 2, 
+                p: 2, 
+                bgcolor: 'background.paper', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2,
+                borderRadius: 2,
+              }}
+            >
               {attachmentPreview.type === 'image' && (
                 <Box
                   component="img"
                   src={attachmentPreview.url}
                   alt="Preview"
-                  sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }}
+                  sx={{ 
+                    width: 72, 
+                    height: 72, 
+                    objectFit: 'cover', 
+                    borderRadius: 1.5,
+                    boxShadow: 1,
+                  }}
                 />
               )}
               {attachmentPreview.type === 'video' && (
                 <Box
                   component="video"
                   src={attachmentPreview.url}
-                  sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 1 }}
+                  sx={{ 
+                    width: 72, 
+                    height: 72, 
+                    objectFit: 'cover', 
+                    borderRadius: 1.5,
+                    boxShadow: 1,
+                  }}
                 />
               )}
               {(attachmentPreview.type === 'audio' || attachmentPreview.type === 'file') && (
-                <Box sx={{ width: 60, height: 60, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography sx={{ fontSize: '1.5rem' }}>
+                <Box sx={{ 
+                  width: 72, 
+                  height: 72, 
+                  bgcolor: 'action.hover', 
+                  borderRadius: 1.5, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  boxShadow: 1,
+                }}>
+                  <Typography sx={{ fontSize: '2rem' }}>
                     {attachmentPreview.type === 'audio' ? '🎵' : '📄'}
                   </Typography>
                 </Box>
               )}
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontWeight: 600, 
+                    whiteSpace: 'nowrap', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   {attachmentPreview.file.name}
                 </Typography>
-                <Typography variant="caption" color="textSecondary">
+                <Typography variant="body2" color="textSecondary">
                   {(attachmentPreview.file.size / 1024).toFixed(1)} KB
                 </Typography>
               </Box>
               <IconButton
-                size="small"
+                size="medium"
                 color="error"
                 onClick={() => {
                   URL.revokeObjectURL(attachmentPreview.url);
                   setAttachmentPreview(null);
                 }}
               >
-                <CloseIcon fontSize="small" />
+                <CloseIcon />
               </IconButton>
             </Paper>
           )}
 
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-end' }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-end' }}>
             <TextField
               fullWidth
               multiline
               maxRows={3}
-              size="small"
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={(e) => {
@@ -491,6 +539,15 @@ export default function ConversationView({ conversationId }: ConversationViewPro
               }}
               placeholder={attachmentPreview ? "Add a caption (optional)" : "message..."}
               variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  fontSize: '1rem',
+                },
+                '& .MuiInputBase-input': {
+                  py: 1.5,
+                },
+              }}
             />
             <input
               type="file"
@@ -500,14 +557,26 @@ export default function ConversationView({ conversationId }: ConversationViewPro
               style={{ display: 'none' }}
             />
             <label htmlFor="attachment-input" style={{ cursor: 'pointer' }}>
-              <IconButton component="span" size="small" color="default">
+              <IconButton 
+                component="span" 
+                size="medium" 
+                color="default"
+                sx={{ 
+                  borderRadius: 2,
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+              >
                 <AttachFileIcon />
               </IconButton>
             </label>
             <IconButton
-              size="small"
+              size="medium"
               color="default"
               title="Emoji"
+              sx={{ 
+                borderRadius: 2,
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
             >
               <EmojiEmotionsIcon />
             </IconButton>
@@ -516,8 +585,15 @@ export default function ConversationView({ conversationId }: ConversationViewPro
               disabled={(!messageInput.trim() && !attachmentPreview) || isSending}
               variant="contained"
               color="primary"
-              size="small"
-              endIcon={isUploadingAttachment ? <CircularProgress size={16} /> : <SendIcon />}
+              size="large"
+              endIcon={isUploadingAttachment ? <CircularProgress size={20} /> : <SendIcon />}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 3,
+                boxShadow: 2,
+              }}
             >
               {isSending ? 'Sending' : 'Send'}
             </Button>
