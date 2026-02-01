@@ -273,7 +273,7 @@ function MessageContent() {
                 borderRadius: 1,
               }}>
                 <Avatar 
-                  src={profile.profile_picture_url || ''} 
+                  src={profile.instagram_profile_picture_url || ''} 
                   sx={{ width: 56, height: 56 }}
                 >
                   <InstagramIcon sx={{ fontSize: 28 }} />
@@ -282,9 +282,9 @@ function MessageContent() {
                   <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.25 }}>
                     @{profile.instagram_username}
                   </Typography>
-                  {profile.name && (
+                  {profile.instagram_name && (
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {profile.name}
+                      {profile.instagram_name}
                     </Typography>
                   )}
                   <Chip 
@@ -298,32 +298,32 @@ function MessageContent() {
                   </Typography>
                   
                   {/* Instagram Stats */}
-                  {(profile.followers != null || profile.following != null || profile.posts != null) && (
+                  {(profile.instagram_followers != null || profile.instagram_following != null || profile.instagram_posts != null) && (
                     <Box sx={{ display: 'flex', gap: 3, mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                      {profile.followers != null && (
+                      {profile.instagram_followers != null && (
                         <Box>
                           <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {profile.followers.toLocaleString()}
+                            {profile.instagram_followers.toLocaleString()}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11px' }}>
                             Followers
                           </Typography>
                         </Box>
                       )}
-                      {profile.following != null && (
+                      {profile.instagram_following != null && (
                         <Box>
                           <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {profile.following.toLocaleString()}
+                            {profile.instagram_following.toLocaleString()}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11px' }}>
                             Following
                           </Typography>
                         </Box>
                       )}
-                      {profile.posts != null && (
+                      {profile.instagram_posts != null && (
                         <Box>
                           <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {profile.posts.toLocaleString()}
+                            {profile.instagram_posts.toLocaleString()}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11px' }}>
                             Posts
@@ -342,7 +342,7 @@ function MessageContent() {
                   >
                     Disconnect
                   </Button>
-                  {profile.webhooks_subscribed ? (
+                  {profile.webhook_subscribed ? (
                     <Button
                       variant="text"
                       color="warning"
