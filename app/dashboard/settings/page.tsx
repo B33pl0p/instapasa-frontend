@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Container,
@@ -15,14 +16,32 @@ import {
   IconButton,
   Tooltip,
   Stack,
+  Tabs,
+  Tab,
+  Divider,
+  Avatar,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
+import LockIcon from '@mui/icons-material/Lock';
+import WarningIcon from '@mui/icons-material/Warning';
+import InstagramIcon from '@mui/icons-material/Instagram';
 import apiClient from '../lib/apiClient';
 import { useAppSelector } from '../lib/hooks';
 import { useToast } from '../lib/components/ToastContainer';
+import { profileService } from '../lib/services/profileService';
+import type { SellerProfile, UpdateProfileRequest } from '../lib/types/profile';
 
 interface BusinessConfig {
   id?: string;
@@ -51,13 +70,18 @@ interface CategoriesResponse {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const [tabValue, setTabValue] = useState(0);
   const [config, setConfig] = useState<BusinessConfig | null>(null);
+  const [profile, setProfile] = useState<SellerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState<CategoriesResponse | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [addingCategory, setAddingCategory] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   
   const { showToast } = useToast();
   
@@ -77,10 +101,44 @@ export default function SettingsPage() {
     hours_of_operation: ''
   });
 
+  const [profileData, setProfileData] = useState({
+    business_name: '',
+    brand_description: '',
+    tone: 'friendly',
+    phone: '',
+    website: '',
+    company_contact_person: '',
+    contact_person_role: '',
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
+
   const { email, business_name } = useAppSelector((state) => state.customer);
 
   // Fetch existing config on mount
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await profileService.getProfile();
+        setProfile(data);
+        setProfileData({
+          business_name: data.business_name || '',
+          brand_description: data.brand_description || '',
+          tone: data.tone || 'friendly',
+          phone: data.phone || '',
+          website: data.website || '',
+          company_contact_person: data.company_contact_person || '',
+          contact_person_role: data.contact_person_role || '',
+        });
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      }
+    };
+
     const fetchConfig = async () => {
       try {
         const response = await apiClient.get<BusinessConfig>('/dashboard/business-config');
@@ -121,9 +179,76 @@ export default function SettingsPage() {
       }
     };
 
+    fetchProfile();
     fetchConfig();
     fetchCategories();
   }, []);
+
+  const handleUpdateProfile = async () => {
+    setSaving(true);
+    try {
+      const updateData: UpdateProfileRequest = {};
+      
+      if (profileData.business_name !== profile?.business_name) updateData.business_name = profileData.business_name;
+      if (profileData.brand_description !== profile?.brand_description) updateData.brand_description = profileData.brand_description;
+      if (profileData.tone !== profile?.tone) updateData.tone = profileData.tone;
+      if (profileData.phone !== profile?.phone) updateData.phone = profileData.phone;
+      if (profileData.website !== profile?.website) updateData.website = profileData.website;
+      if (profileData.company_contact_person !== profile?.company_contact_person) updateData.company_contact_person = profileData.company_contact_person;
+      if (profileData.contact_person_role !== profile?.contact_person_role) updateData.contact_person_role = profileData.contact_person_role;
+
+      if (Object.keys(updateData).length === 0) {
+        showToast('No changes to save', 'info');
+        return;
+      }
+
+      const result = await profileService.updateProfile(updateData);
+      showToast(result.message, 'success');
+      
+      // Reload profile
+      const data = await profileService.getProfile();
+      setProfile(data);
+    } catch (error: any) {
+      showToast(error.response?.data?.detail || 'Failed to update profile', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      showToast('Passwords do not match', 'error');
+      return;
+    }
+
+    if (passwordData.new_password.length < 8) {
+      showToast('Password must be at least 8 characters', 'error');
+      return;
+    }
+
+    try {
+      const result = await profileService.changePassword({
+        current_password: passwordData.current_password,
+        new_password: passwordData.new_password,
+      });
+      showToast(result.message, 'success');
+      setPasswordModalOpen(false);
+      setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (error: any) {
+      showToast(error.response?.data?.detail || 'Failed to change password', 'error');
+    }
+  };
+
+  const handleDeactivateAccount = async () => {
+    try {
+      const result = await profileService.deactivateAccount();
+      showToast(result.message, 'success');
+      localStorage.removeItem('token');
+      router.push('/login');
+    } catch (error: any) {
+      showToast(error.response?.data?.detail || 'Failed to deactivate account', 'error');
+    }
+  };
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
@@ -274,24 +399,205 @@ export default function SettingsPage() {
     <Box sx={{ py: 6, backgroundColor: 'background.default', minHeight: '100vh' }}>
       <Container maxWidth="xl">
         {/* Header Section */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            Settings
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your account and business configuration
+          </Typography>
+        </Box>
+
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+          <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
+            <Tab label="Profile & Account" />
+            <Tab label="Business Config" />
+          </Tabs>
+        </Box>
+
+        {/* Profile Tab */}
+        {tabValue === 0 && (
+          <Stack spacing={3}>
+            {/* Account Info */}
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Account Information
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Email
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {profile?.email}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Status
+                </Typography>
+                <Chip
+                  label={profile?.status || 'Active'}
+                  color={profile?.status === 'verified' ? 'success' : 'default'}
+                  size="small"
+                />
+              </Box>
+            </Paper>
+
+            {/* Business Info */}
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                Business Information
+              </Typography>
+              <Stack spacing={2.5}>
+                <TextField
+                  fullWidth
+                  label="Business Name"
+                  value={profileData.business_name}
+                  onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
+                  placeholder="My Store"
+                />
+                <TextField
+                  fullWidth
+                  label="Brand Description"
+                  value={profileData.brand_description}
+                  onChange={(e) => setProfileData({ ...profileData, brand_description: e.target.value })}
+                  placeholder="What does your business do?"
+                  multiline
+                  rows={3}
+                  helperText="This helps our AI assistant understand your business"
+                />
+                <FormControl fullWidth>
+                  <InputLabel>Brand Tone</InputLabel>
+                  <Select
+                    value={profileData.tone}
+                    label="Brand Tone"
+                    onChange={(e) => setProfileData({ ...profileData, tone: e.target.value })}
+                  >
+                    <MenuItem value="friendly">Friendly</MenuItem>
+                    <MenuItem value="professional">Professional</MenuItem>
+                    <MenuItem value="casual">Casual</MenuItem>
+                    <MenuItem value="luxury">Luxury</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  placeholder="+91..."
+                />
+                <TextField
+                  fullWidth
+                  label="Website"
+                  value={profileData.website}
+                  onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                  placeholder="https://..."
+                />
+              </Stack>
+            </Paper>
+
+            {/* Contact Person */}
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                Contact Person
+              </Typography>
+              <Stack spacing={2.5}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  value={profileData.company_contact_person}
+                  onChange={(e) => setProfileData({ ...profileData, company_contact_person: e.target.value })}
+                />
+                <TextField
+                  fullWidth
+                  label="Role"
+                  value={profileData.contact_person_role}
+                  onChange={(e) => setProfileData({ ...profileData, contact_person_role: e.target.value })}
+                  placeholder="Owner, Manager, etc."
+                />
+              </Stack>
+            </Paper>
+
+            <Box>
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                onClick={handleUpdateProfile}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </Box>
+
+            {/* Instagram */}
+            {profile?.instagram_connected && (
+              <Paper sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                  Instagram Connection
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar src={profile.instagram_profile_picture_url || ''} sx={{ width: 56, height: 56 }}>
+                    <InstagramIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      @{profile.instagram_username}
+                    </Typography>
+                    <Chip label="Connected" color="success" size="small" />
+                  </Box>
+                </Box>
+              </Paper>
+            )}
+
+            <Divider />
+
+            {/* Security */}
+            <Paper sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Security
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<LockIcon />}
+                onClick={() => setPasswordModalOpen(true)}
+              >
+                Change Password
+              </Button>
+            </Paper>
+
+            {/* Danger Zone */}
+            <Paper sx={{ p: 3, borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: 'error.main' }}>
+                Danger Zone
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Deactivating your account will disconnect Instagram and prevent login.
+              </Typography>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<WarningIcon />}
+                onClick={() => setDeactivateModalOpen(true)}
+              >
+                Deactivate Account
+              </Button>
+            </Paper>
+          </Stack>
+        )}
+
+        {/* Business Config Tab */}
+        {tabValue === 1 && (
+          <>
         <Box sx={{ mb: 6 }}>
-          <Box sx={{ mb: 2 }}>
-            <Typography 
-              variant="h3" 
-              component="h1" 
-              sx={{ 
-                fontWeight: 800, 
-                mb: 1,
-                background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Business Settings
-            </Typography>
-          </Box>
-          <Typography variant="body1" color="textSecondary" sx={{ fontSize: '1.1rem' }}>
+          <Typography 
+            variant="h5" 
+            sx={{ fontWeight: 700, mb: 1 }}
+          >
+            Business Configuration
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
             {config ? 'Manage your business configuration and Instagram menu' : 'Set up your business to start selling'}
           </Typography>
         </Box>
@@ -921,6 +1227,64 @@ export default function SettingsPage() {
             </Box>
           </CardContent>
         </Card>
+          </>
+        )}
+
+        {/* Change Password Modal */}
+        <Dialog open={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Change Password</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                type="password"
+                label="Current Password"
+                value={passwordData.current_password}
+                onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+              />
+              <TextField
+                fullWidth
+                type="password"
+                label="New Password"
+                value={passwordData.new_password}
+                onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                helperText="Minimum 8 characters"
+              />
+              <TextField
+                fullWidth
+                type="password"
+                label="Confirm New Password"
+                value={passwordData.confirm_password}
+                onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setPasswordModalOpen(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleChangePassword}>
+              Change Password
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Deactivate Account Modal */}
+        <Dialog open={deactivateModalOpen} onClose={() => setDeactivateModalOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ color: 'error.main' }}>Deactivate Account</DialogTitle>
+          <DialogContent>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              This action cannot be undone easily. Your Instagram connection will be removed.
+            </Alert>
+            <Typography variant="body2" color="text.secondary">
+              Are you sure you want to deactivate your account?
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setDeactivateModalOpen(false)}>Cancel</Button>
+            <Button variant="contained" color="error" onClick={handleDeactivateAccount}>
+              Yes, Deactivate
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );

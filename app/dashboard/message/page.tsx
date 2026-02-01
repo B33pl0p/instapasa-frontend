@@ -57,38 +57,13 @@ function MessageContent() {
     const accessToken = params.get('access_token');
     const errorReason = params.get('error_reason');
 
-    const completeLogin = async () => {
-      try {
-        if (errorReason) {
-          return;
-        }
-
-        if (!accessToken) {
-          return;
-        }
-
-        // Try Instagram first, then Messenger
-        // The backend should handle which platform based on token/scopes
-        try {
-          await processInstagramCallback(accessToken);
-        } catch {
-          // If Instagram fails, try Messenger
-          await processMessengerCallback(accessToken);
-        }
-
-        // Clear the hash from the URL after processing
-        window.history.replaceState(
-          null,
-          '',
-          window.location.pathname + window.location.search,
-        );
-      } catch {
-        // Error already handled in processOAuthCallback
-      }
-    };
-
-    void completeLogin();
-  }, [processInstagramCallback, processMessengerCallback]);
+    // Redirect to the new onboarding flow for Instagram
+    // Note: This is for backward compatibility if someone uses old callback URL
+    if (accessToken && !errorReason) {
+      // Redirect to new Instagram onboarding page with the hash
+      window.location.href = '/dashboard/message/instagram-onboarding' + window.location.hash;
+    }
+  }, []);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4, backgroundColor: 'background.default', minHeight: '100vh' }}>
