@@ -23,9 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     
-    <html lang="en">
+    <html lang="en" className="w-full">
       <body
-        className={`${inter.variable} `}
+        className={`${inter.variable} w-full m-0 p-0`}
       >
         <StoreProvider>
           {children}

@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-[#161616] to-black border-t border-gray-800">
-      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+    <footer className="w-full bg-gradient-to-b from-[#161616] to-black border-t border-gray-800 m-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Top Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-8 sm:mb-12">
           {/* Company Info */}

@@ -4,12 +4,12 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section
-      className="min-h-[90vh] bg-cover bg-center relative flex items-center"
+      className="min-h-[90vh] w-full bg-cover bg-center relative flex items-center m-0 p-0"
       style={{ backgroundImage: "url('/lakhey.png')" }}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/60 to-purple-900/40" />
       
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 py-16 sm:py-20">
+      <div className="relative z-10 w-full px-4 sm:px-6 py-16 sm:py-20">
         <div className="max-w-5xl mx-auto text-center space-y-6 sm:space-y-8">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-purple-500/20 border border-purple-400/30 backdrop-blur-sm">

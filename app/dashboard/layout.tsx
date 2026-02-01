@@ -13,6 +13,10 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { usePathname } from 'next/navigation';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme as useMuiTheme } from '@mui/material/styles';
 
 import { sidebarItems, type SidebarItem } from './message/(components)/sidebarItems';
 import { useRouter } from 'next/navigation';
@@ -110,10 +114,24 @@ function DashboardLayoutContent({
 }:{
     children: React.ReactNode;
 }) {
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [open, setOpen] = React.useState(true);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const pathname = usePathname();
+  
   const handleDrawerToggle = () => {
-    setOpen(!open);
+    if (isMobile) {
+      setMobileOpen(!mobileOpen);
+    } else {
+      setOpen(!open);
+    }
+  };
+
+  const handleMobileDrawerClose = () => {
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
   const router = useRouter();
@@ -171,19 +189,46 @@ function DashboardLayoutContent({
       <ToastProvider>
       <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden', boxSizing: 'border-box', width: '100%' }}>
         <CssBaseline />
-        <Drawer
-          variant="permanent"
-          open={open}
-          sx={{
-            '& .MuiDrawer-paper': {
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100vh',
-              position: 'relative',
-              boxSizing: 'border-box',
-            },
-          }}
-        >
+        
+        {/* Mobile Menu Button */}
+        {isMobile && (
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{
+              position: 'fixed',
+              top: 16,
+              left: 16,
+              zIndex: (theme) => theme.zIndex.drawer + 2,
+              bgcolor: 'background.paper',
+              boxShadow: 2,
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <MenuIcon />
+          </IconButton>
+        )}
+
+        {/* Desktop Permanent Drawer */}
+        {!isMobile && (
+          <Drawer
+            variant="permanent"
+            open={open}
+            sx={{
+              '& .MuiDrawer-paper': {
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100vh',
+                position: 'fixed',
+                left: 0,
+                boxSizing: 'border-box',
+              },
+            }}
+          >
           <DrawerHeader>
             <Button
               onClick={handleDrawerToggle}
@@ -437,6 +482,201 @@ function DashboardLayoutContent({
             </ListItem>
           </Box>
         </Drawer>
+        )}
+
+        {/* Mobile Temporary Drawer */}
+        {isMobile && (
+          <MuiDrawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={handleMobileDrawerClose}
+            ModalProps={{
+              keepMounted: true, // Better open performance on mobile
+            }}
+            sx={{
+              '& .MuiDrawer-paper': {
+                width: '85%',
+                maxWidth: 320,
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100vh',
+              },
+            }}
+          >
+          <DrawerHeader>
+            <Button
+              onClick={handleMobileDrawerClose}
+              sx={{
+                width: '100%',
+                height: '100%',
+                justifyContent: 'flex-start',
+                textTransform: 'none',
+                color: 'text.primary',
+                bgcolor: 'background.paper',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+                padding: 2,
+              }}
+            >
+              {profilePictureUrl && !imageError ? (
+                <Image
+                  src={profilePictureUrl}
+                  alt="Instagram Profile"
+                  width={28}
+                  height={28}
+                  className="rounded-full object-cover"
+                  onError={() => {
+                    setImageError(true);
+                  }}
+                />
+              ) : (
+                <AccountCircleIcon
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    color: 'text.secondary',
+                  }}
+                />
+              )}
+              <Typography variant="subtitle1" noWrap sx={{ ml: 1 }}>
+                {businessName || 'Company'}
+              </Typography>
+            </Button>
+          </DrawerHeader>
+
+          <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+            <List sx={{ overflowY: 'auto', height: '100%' }}>
+            {(['General', 'Messages', 'Services','Prodcuts'] as SidebarItem['section'][]).map(
+              (section) => {
+                const itemsForSection = sidebarItems.filter(
+                  (item) => item.section === section,
+                );
+
+                if (!itemsForSection.length) return null;
+
+                return (
+                  <Box key={section} sx={{ mb: 1 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ px: 2.5, py: 1, color: 'text.secondary' }}
+                    >
+                      {section}
+                    </Typography>
+                    {itemsForSection.map((item) => {
+                      const isActive = pathname === item.href;
+
+                      return (
+                        <ListItem
+                          key={item.label}
+                          disablePadding
+                          sx={{ display: 'block' }}
+                        >
+                          <ListItemButton
+                            onClick={() => {
+                              router.push(item.href);
+                              handleMobileDrawerClose();
+                            }}
+                            sx={{
+                              minHeight: 48,
+                              px: 2.5,
+                              bgcolor: isActive ? 'primary.main' : 'transparent',
+                              color: isActive ? 'primary.contrastText' : 'text.primary',
+                              '&:hover': {
+                                bgcolor: isActive ? 'primary.dark' : 'action.hover',
+                                color: isActive ? 'primary.contrastText' : 'text.primary',
+                              },
+                              justifyContent: 'initial',
+                            }}
+                          >
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 0,
+                                justifyContent: 'center',
+                                color: isActive ? 'primary.contrastText' : 'inherit',
+                                mr: 3,
+                              }}
+                            >
+                              {item.icon}
+                            </ListItemIcon>
+                            <ListItemText primary={item.label} />
+                          </ListItemButton>
+                        </ListItem>
+                      );
+                    })}
+                  </Box>
+                );
+              },
+            )}
+            </List>
+          </Box>
+          
+          {/* Theme Toggle Button */}
+          <ListItem disablePadding sx={{ display: 'block' }}>
+            <ListItemButton
+              onClick={toggleTheme}
+              sx={{
+                minHeight: 48,
+                px: 2.5,
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                },
+                justifyContent: 'initial',
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 0,
+                  justifyContent: 'center',
+                  mr: 3,
+                }}
+              >
+                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+              </ListItemIcon>
+              <ListItemText primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'} />
+            </ListItemButton>
+          </ListItem>
+
+          {/* Logout Button at Bottom */}
+          <Box
+            sx={{
+              mt: 'auto',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <ListItem disablePadding sx={{ display: 'block' }}>
+              <ListItemButton
+                onClick={handleLogoutClick}
+                sx={{
+                  minHeight: 48,
+                  px: 2.5,
+                  color: 'error.main',
+                  '&:hover': {
+                    bgcolor: 'error.light',
+                    color: 'error.contrastText',
+                  },
+                  justifyContent: 'initial',
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    justifyContent: 'center',
+                    color: 'inherit',
+                    mr: 3,
+                  }}
+                >
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText primary="Logout" />
+              </ListItemButton>
+            </ListItem>
+          </Box>
+        </MuiDrawer>
+        )}
+
         <Box 
           component="main" 
           sx={{ 
@@ -449,6 +689,11 @@ function DashboardLayoutContent({
             minWidth: 0,
             margin: 0,
             padding: 0,
+            marginLeft: isMobile ? 0 : (open ? `${drawerWidth}px` : `calc(${muiTheme.spacing(8)} + 1px)`),
+            transition: muiTheme.transitions.create('margin', {
+              easing: muiTheme.transitions.easing.sharp,
+              duration: muiTheme.transitions.duration.enteringScreen,
+            }),
           }}
         >
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto', height: '100%', minWidth: 0, margin: 0, padding: 0 }}>

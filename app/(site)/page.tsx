@@ -7,7 +7,7 @@ import Pricing from "./components/Pricing";
 
 export default function Home() {
   return (
-    <div>
+    <div className="w-full min-w-full m-0 p-0 overflow-x-hidden">
       {/* <Navbar/> */}
       <Hero />
       <Clients />

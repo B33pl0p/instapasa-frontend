@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-[#161616]">
-      <div className="container mx-auto max-w-7xl">
+    <section id="pricing" className="w-full py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-[#161616] m-0">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-block px-3 sm:px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-4 sm:mb-6">

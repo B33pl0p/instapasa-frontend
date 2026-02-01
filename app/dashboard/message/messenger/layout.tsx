@@ -85,7 +85,7 @@ export default function MessengerLayout({
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
+    <Box sx={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
       {/* Left Panel - Conversation List (Hidden on mobile when conversation selected) */}
       <Box
         sx={{
@@ -98,8 +98,8 @@ export default function MessengerLayout({
           borderColor: 'divider',
           bgcolor: 'background.paper',
           flexDirection: 'column',
-          height: '100vh',
-          maxHeight: '100vh',
+          height: '100%',
+          maxHeight: '100%',
           overflow: 'hidden',
         }}
       >

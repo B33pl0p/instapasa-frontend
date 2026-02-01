@@ -4,8 +4,8 @@ import mobile from "@/public/mobile.png";
 
 export default function FeatureSection() {
   return (
-    <section className="py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-gradient-to-b from-[#161616] to-[#1a1a1a]">
-      <div className="container mx-auto">
+    <section className="w-full py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-gradient-to-b from-[#161616] to-[#1a1a1a] m-0">
+      <div className="max-w-7xl mx-auto">
         {/* TOP SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center mb-16 sm:mb-20">
           {/* TEXT */}

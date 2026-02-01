@@ -7,8 +7,8 @@ export default function Clients() {
   ];
 
   return (
-    <section className="py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-[#161616]">
-      <div className="container mx-auto text-center">
+    <section className="w-full py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-[#161616] m-0">
+      <div className="max-w-7xl mx-auto text-center">
         <div className="inline-block px-3 sm:px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-3 sm:mb-4">
           <span className="text-purple-400 text-xs sm:text-sm font-semibold">Trusted By Growing Businesses</span>
         </div>

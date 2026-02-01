@@ -13,9 +13,11 @@ export default function SiteLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen flex-col justify-between bg-[#161616] font-sans text-[#E8E8E8] antialiased">
+    <div className="flex min-h-screen w-full flex-col justify-between bg-[#161616] font-sans text-[#E8E8E8] antialiased m-0 p-0">
       <Navbar />
-      {children}
+      <div className="w-full">
+        {children}
+      </div>
       <Footer />
     </div>
   );

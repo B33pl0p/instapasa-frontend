@@ -26,23 +26,26 @@ import {
   Divider,
   Menu,
   MenuItem,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+  Badge,
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import InfoIcon from '@mui/icons-material/Info';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import UndoIcon from '@mui/icons-material/Undo';
-import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import Image from 'next/image';
 import { useAppDispatch, useAppSelector } from '../lib/hooks';
-import { fetchOrders, setStatusFilter, setBuyerFilter, updateOrderStatus } from '../lib/slices/orderSlice';
+import { fetchOrders, setBuyerFilter, updateOrderStatus } from '../lib/slices/orderSlice';
 import { OrderStatus } from '../lib/types/order';
 import OrderDetailModal from './(components)/OrderDetailModal';
 import StatusConfirmationModal from './(components)/StatusConfirmationModal';
 import { useToast } from '../lib/components/ToastContainer';
 import { fetchBuyers } from '../lib/slices/buyerSlice';
-import type { Buyer } from '../lib/types/buyer';
 import Autocomplete from '@mui/material/Autocomplete';
 import ClearIcon from '@mui/icons-material/Clear';
 
@@ -70,6 +73,8 @@ const statusColorMap: Record<OrderStatus, 'default' | 'primary' | 'secondary' | 
 export default function OrdersPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { showToast } = useToast();
   const { orders, loading, statusFilter, buyerFilter } = useAppSelector((state) => state.orders);
   const { buyers, loading: buyersLoading } = useAppSelector((state) => state.buyers);
@@ -79,8 +84,9 @@ export default function OrdersPage() {
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<OrderStatus[]>(['pending_details']);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState(''); // Search functionality not yet implemented
   const [bulkActionAnchor, setBulkActionAnchor] = useState<null | HTMLElement>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState<{
     open: boolean;
     orderId: string;
@@ -337,138 +343,191 @@ export default function OrdersPage() {
   const allSelected = filteredOrders.length > 0 && selectedOrders.length === filteredOrders.length;
   const someSelected = selectedOrders.length > 0 && selectedOrders.length < filteredOrders.length;
 
-  return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
-      {/* Left Sidebar - Filters */}
-      <Paper
-        sx={{
-          width: 280,
-          flexShrink: 0,
-          p: 3,
-          borderRadius: 0,
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          overflowY: 'auto',
-        }}
-      >
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-          Filters
-        </Typography>
+  // Filter content component for reuse in both desktop sidebar and mobile drawer
+  const FilterContent = () => (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
+        Filters
+      </Typography>
 
-        {/* Buyer Filter */}
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Autocomplete
-            fullWidth
-            size="small"
-            options={buyers}
-            loading={buyersLoading}
-            noOptionsText={buyersLoading ? "Loading buyers..." : "No buyers found"}
-            getOptionLabel={(option) => 
-              `${option.buyer_username || 'Unknown'} - ${option.customer_name || 'No name'} (${option.total_orders} orders)`
-            }
-            value={buyers.find(b => b.buyer_username === buyerFilter) || null}
-            onChange={(_, newValue) => {
-              dispatch(setBuyerFilter(newValue?.buyer_username || null));
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Filter by buyer..."
-                InputProps={{
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <InputAdornment position="start">
-                        👤
-                      </InputAdornment>
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <li {...props} key={option.buyer_username || option.buyer_id}>
-                <Box>
-                  <Typography variant="body2" fontWeight="medium">
-                    {option.buyer_username || 'Unknown'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {option.customer_name || 'No name'} • {option.total_orders} orders • Rs. {option.total_spent.toFixed(0)}
-                  </Typography>
-                </Box>
-              </li>
-            )}
-          />
-          {buyerFilter && (
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<ClearIcon />}
-              onClick={() => dispatch(setBuyerFilter(null))}
-            >
-              Clear
-            </Button>
-          )}
-        </Box>
-
-        <Divider sx={{ mb: 2 }} />
-
-        {/* Status Filters */}
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 2 }}>
-          Order Status
-        </Typography>
-        <Stack spacing={1} sx={{ mb: 3 }}>
-          {statusTabs.filter(tab => tab.value !== 'all').map((tab) => (
-            <FormControlLabel
-              key={tab.value}
-              control={
-                <Checkbox
-                  size="small"
-                  checked={selectedStatuses.includes(tab.value as OrderStatus)}
-                  onChange={() => handleStatusFilterChange(tab.value as OrderStatus)}
-                />
-              }
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2">{tab.label}</Typography>
-                  <Chip
-                    size="small"
-                    label={orders.filter(o => o.status === tab.value).length}
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                </Box>
-              }
+      {/* Buyer Filter */}
+      <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Autocomplete
+          fullWidth
+          size="small"
+          options={buyers}
+          loading={buyersLoading}
+          noOptionsText={buyersLoading ? "Loading buyers..." : "No buyers found"}
+          getOptionLabel={(option) => 
+            `${option.buyer_username || 'Unknown'} - ${option.customer_name || 'No name'} (${option.total_orders} orders)`
+          }
+          value={buyers.find(b => b.buyer_username === buyerFilter) || null}
+          onChange={(_, newValue) => {
+            dispatch(setBuyerFilter(newValue?.buyer_username || null));
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Filter by buyer..."
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <>
+                    <InputAdornment position="start">
+                      👤
+                    </InputAdornment>
+                    {params.InputProps.startAdornment}
+                  </>
+                ),
+              }}
             />
-          ))}
-        </Stack>
-
-        {selectedStatuses.length > 0 && (
+          )}
+          renderOption={(props, option) => (
+            <li {...props} key={option.buyer_username || option.buyer_id}>
+              <Box>
+                <Typography variant="body2" fontWeight="medium">
+                  {option.buyer_username || 'Unknown'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {option.customer_name || 'No name'} • {option.total_orders} orders • Rs. {option.total_spent.toFixed(0)}
+                </Typography>
+              </Box>
+            </li>
+          )}
+        />
+        {buyerFilter && (
           <Button
             size="small"
             variant="outlined"
-            fullWidth
-            onClick={() => setSelectedStatuses([])}
+            startIcon={<ClearIcon />}
+            onClick={() => dispatch(setBuyerFilter(null))}
           >
-            Clear Filters
+            Clear
           </Button>
         )}
-      </Paper>
+      </Box>
+
+      <Divider sx={{ mb: 2 }} />
+
+      {/* Status Filters */}
+      <Typography variant="body2" sx={{ fontWeight: 600, mb: 2 }}>
+        Order Status
+      </Typography>
+      <Stack spacing={1} sx={{ mb: 3 }}>
+        {statusTabs.filter(tab => tab.value !== 'all').map((tab) => (
+          <FormControlLabel
+            key={tab.value}
+            control={
+              <Checkbox
+                size="small"
+                checked={selectedStatuses.includes(tab.value as OrderStatus)}
+                onChange={() => handleStatusFilterChange(tab.value as OrderStatus)}
+              />
+            }
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2">{tab.label}</Typography>
+                <Chip
+                  size="small"
+                  label={orders.filter(o => o.status === tab.value).length}
+                  sx={{ height: 20, fontSize: '0.7rem' }}
+                />
+              </Box>
+            }
+          />
+        ))}
+      </Stack>
+
+      {selectedStatuses.length > 0 && (
+        <Button
+          size="small"
+          variant="outlined"
+          fullWidth
+          onClick={() => setSelectedStatuses([])}
+        >
+          Clear Filters
+        </Button>
+      )}
+    </Box>
+  );
+
+  const activeFiltersCount = selectedStatuses.length + (buyerFilter ? 1 : 0);
+
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      minHeight: '100vh', 
+      backgroundColor: 'background.default',
+      margin: isMobile ? 0 : undefined,
+      width: '100%',
+    }}>
+      {/* Desktop Left Sidebar - Filters */}
+      {!isMobile && (
+        <Paper
+          sx={{
+            width: 280,
+            flexShrink: 0,
+            borderRadius: 0,
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
+            overflowY: 'auto',
+          }}
+        >
+          <FilterContent />
+        </Paper>
+      )}
+
+      {/* Mobile Filter Drawer */}
+      {isMobile && (
+        <Drawer
+          anchor="left"
+          open={mobileFiltersOpen}
+          onClose={() => setMobileFiltersOpen(false)}
+          ModalProps={{
+            keepMounted: true, // Better mobile performance
+          }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              width: '85%',
+              maxWidth: 320,
+            },
+          }}
+        >
+          <FilterContent />
+        </Drawer>
+      )}
 
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4, flex: 1 }}>
         {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Orders
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {filteredOrders.length} {selectedStatuses.length > 0 ? 'filtered' : 'total'} orders
-            </Typography>
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Mobile Filter Button */}
+            {isMobile && (
+              <IconButton
+                color="primary"
+                onClick={() => setMobileFiltersOpen(true)}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Badge badgeContent={activeFiltersCount} color="error">
+                  <FilterListIcon />
+                </Badge>
+              </IconButton>
+            )}
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                Orders
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                {filteredOrders.length} {selectedStatuses.length > 0 ? 'filtered' : 'total'} orders
+              </Typography>
+            </Box>
           </Box>
 
           {/* Bulk Actions */}
@@ -525,8 +584,8 @@ export default function OrdersPage() {
             </Typography>
           </Paper>
         ) : (
-          <TableContainer component={Paper}>
-            <Table stickyHeader>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table stickyHeader sx={{ minWidth: isMobile ? 800 : 'auto' }}>
               <TableHead>
                 <TableRow sx={{ backgroundColor: 'action.hover' }}>
                   <TableCell padding="checkbox">

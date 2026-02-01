@@ -20,12 +20,12 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
+    <nav className={`w-full sticky top-0 z-50 transition-all duration-300 ${
       scrolled 
         ? "bg-[#161616]/95 backdrop-blur-md shadow-lg border-b border-gray-800" 
         : "bg-transparent"
     }`}>
-      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between max-w-7xl mx-auto">
         {/* Logo */}
         <h1 className="text-xl sm:text-2xl md:text-3xl font-black leading-tight">
           <Link
