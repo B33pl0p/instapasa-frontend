@@ -338,20 +338,31 @@ export default function OrdersPage() {
   const someSelected = selectedOrders.length > 0 && selectedOrders.length < filteredOrders.length;
 
   return (
-    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-      <Container maxWidth="xl" sx={{ py: 3 }}>
-        {/* Header */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
-            Orders
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage customer orders and fulfillment
-          </Typography>
-        </Box>
+    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh', display: 'flex' }}>
+      {/* Left Sidebar - Filters */}
+      <Paper 
+        sx={{ 
+          width: 280, 
+          flexShrink: 0, 
+          p: 2.5, 
+          borderRadius: 0,
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          height: '100vh',
+          overflowY: 'auto',
+          position: 'sticky',
+          top: 0,
+        }}
+      >
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, fontSize: '1rem' }}>
+          Filters
+        </Typography>
 
         {/* Buyer Filter */}
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, fontSize: '0.85rem' }}>
+            Filter by Buyer
+          </Typography>
           <Autocomplete
             fullWidth
             size="small"
@@ -359,7 +370,7 @@ export default function OrdersPage() {
             loading={buyersLoading}
             noOptionsText={buyersLoading ? "Loading buyers..." : "No buyers found"}
             getOptionLabel={(option) => 
-              `${option.buyer_username || 'Unknown'} - ${option.customer_name || 'No name'} (${option.total_orders} orders)`
+              `${option.buyer_username || 'Unknown'}`
             }
             value={buyers.find(b => b.buyer_username === buyerFilter) || null}
             onChange={(_, newValue) => {
@@ -389,7 +400,7 @@ export default function OrdersPage() {
                     {option.buyer_username || 'Unknown'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {option.customer_name || 'No name'} • {option.total_orders} orders • Rs. {option.total_spent.toFixed(0)}
+                    {option.customer_name || 'No name'} • {option.total_orders} orders
                   </Typography>
                 </Box>
               </li>
@@ -398,22 +409,24 @@ export default function OrdersPage() {
           {buyerFilter && (
             <Button
               size="small"
-              variant="outlined"
+              variant="text"
+              fullWidth
               startIcon={<ClearIcon />}
               onClick={() => dispatch(setBuyerFilter(null))}
+              sx={{ mt: 1 }}
             >
-              Clear
+              Clear Buyer
             </Button>
           )}
         </Box>
 
-        <Divider sx={{ mb: 2 }} />
+        <Divider sx={{ my: 2 }} />
 
         {/* Status Filters */}
-        <Typography variant="body2" sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, fontSize: '0.85rem' }}>
           Order Status
         </Typography>
-        <Stack spacing={1} sx={{ mb: 3 }}>
+        <Stack spacing={0.5} sx={{ mb: 2 }}>
           {statusTabs.filter(tab => tab.value !== 'all').map((tab) => (
             <FormControlLabel
               key={tab.value}
@@ -425,15 +438,16 @@ export default function OrdersPage() {
                 />
               }
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2">{tab.label}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>{tab.label}</Typography>
                   <Chip
                     size="small"
                     label={orders.filter(o => o.status === tab.value).length}
-                    sx={{ height: 20, fontSize: '0.7rem' }}
+                    sx={{ height: 18, fontSize: '0.7rem', ml: 1 }}
                   />
                 </Box>
               }
+              sx={{ ml: 0, mr: 0 }}
             />
           ))}
         </Stack>
@@ -448,53 +462,67 @@ export default function OrdersPage() {
             Clear Filters
           </Button>
         )}
+      </Paper>
 
-        {/* Search */}
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Search orders..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
-        />
-
-        {/* Bulk Actions */}
-        {selectedOrders.length > 0 && (
-          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-              {selectedOrders.length} selected
+      {/* Main Content */}
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <Container maxWidth="xl" sx={{ py: 3 }}>
+          {/* Header */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
+              Orders
             </Typography>
-            <Button
-                variant="contained"
-                endIcon={<MoreVertIcon />}
-                onClick={(e) => setBulkActionAnchor(e.currentTarget)}
-              >
-                Bulk Actions
-              </Button>
-              <Menu
-                anchorEl={bulkActionAnchor}
-                open={Boolean(bulkActionAnchor)}
-                onClose={() => setBulkActionAnchor(null)}
-              >
-                <MenuItem onClick={() => handleBulkAction('confirm')}>Mark as Confirmed</MenuItem>
-                <MenuItem onClick={() => handleBulkAction('processing')}>Mark as Processing</MenuItem>
-                <MenuItem onClick={() => handleBulkAction('shipped')}>Mark as Shipped</MenuItem>
-                <MenuItem onClick={() => handleBulkAction('delivered')}>Mark as Delivered</MenuItem>
-                <Divider />
-                <MenuItem onClick={() => handleBulkAction('cancel')} sx={{ color: 'error.main' }}>
-                  Cancel Orders
-                </MenuItem>
-              </Menu>
-            </Box>
-          )}
+            <Typography variant="body2" color="text.secondary">
+              Manage customer orders and fulfillment
+            </Typography>
+          </Box>
+
+          {/* Search */}
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search orders..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 3 }}
+          />
+
+          {/* Bulk Actions */}
+          {selectedOrders.length > 0 && (
+            <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+                {selectedOrders.length} selected
+              </Typography>
+              <Button
+                  variant="contained"
+                  endIcon={<MoreVertIcon />}
+                  onClick={(e) => setBulkActionAnchor(e.currentTarget)}
+                >
+                  Bulk Actions
+                </Button>
+                <Menu
+                  anchorEl={bulkActionAnchor}
+                  open={Boolean(bulkActionAnchor)}
+                  onClose={() => setBulkActionAnchor(null)}
+                >
+                  <MenuItem onClick={() => handleBulkAction('confirm')}>Mark as Confirmed</MenuItem>
+                  <MenuItem onClick={() => handleBulkAction('processing')}>Mark as Processing</MenuItem>
+                  <MenuItem onClick={() => handleBulkAction('shipped')}>Mark as Shipped</MenuItem>
+                  <MenuItem onClick={() => handleBulkAction('delivered')}>Mark as Delivered</MenuItem>
+                  <Divider />
+                  <MenuItem onClick={() => handleBulkAction('cancel')} sx={{ color: 'error.main' }}>
+                    Cancel Orders
+                  </MenuItem>
+                </Menu>
+              </Box>
+            )}
 
         {/* Orders Content */}
         {loading ? (
@@ -755,7 +783,8 @@ export default function OrdersPage() {
           onCancel={handleCancelStatusUpdate}
           isLoading={updatingOrderId === confirmationModal.orderId}
         />
-      </Container>
+        </Container>
+      </Box>
     </Box>
   );
 }
