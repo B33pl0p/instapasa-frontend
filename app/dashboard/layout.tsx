@@ -37,7 +37,7 @@ import { ThemeProvider, useTheme } from '@/app/dashboard/lib/ThemeProvider';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 
-const drawerWidth = 240;
+const drawerWidth = 250;
 
 const openedMixin = (theme: Theme): CSSObject => ({
   width: drawerWidth,
@@ -46,6 +46,8 @@ const openedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.enteringScreen,
   }),
   overflowX: 'hidden',
+  border: 'none',
+  borderRight: `1px solid ${theme.palette.divider}`,
 });
 
 const closedMixin = (theme: Theme): CSSObject => ({
@@ -54,9 +56,11 @@ const closedMixin = (theme: Theme): CSSObject => ({
     duration: theme.transitions.duration.leavingScreen,
   }),
   overflowX: 'hidden',
-  width: `calc(${theme.spacing(7)} + 1px)`,
+  width: `72px`,
+  border: 'none',
+  borderRight: `1px solid ${theme.palette.divider}`,
   [theme.breakpoints.up('sm')]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
+    width: `72px`,
   },
 });
 
@@ -190,46 +194,83 @@ function DashboardLayoutContent({
               sx={{
                 width: '100%',
                 height: '100%',
-                justifyContent: 'flex-start',
+                justifyContent: open ? 'flex-start' : 'center',
                 textTransform: 'none',
                 color: 'text.primary',
                 bgcolor: 'background.paper',
                 '&:hover': {
                   backgroundColor: 'action.hover',
                 },
-                padding: 2,
+                padding: open ? 2 : 1,
+                gap: open ? 1.5 : 0,
+                minHeight: 64,
               }}
             >
               {profilePictureUrl && !imageError ? (
-                <Image
-                  src={profilePictureUrl}
-                  alt="Instagram Profile"
-                  width={28}
-                  height={28}
-                  className="rounded-full object-cover"
-                  onError={() => {
-                    setImageError(true);
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    border: '1px solid',
+                    borderColor: 'divider',
                   }}
-                />
+                >
+                  <Image
+                    src={profilePictureUrl}
+                    alt="Profile"
+                    width={32}
+                    height={32}
+                    style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                    onError={() => {
+                      setImageError(true);
+                    }}
+                  />
+                </Box>
               ) : (
                 <AccountCircleIcon
                   sx={{
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     color: 'text.secondary',
+                    flexShrink: 0,
                   }}
                 />
               )}
               {open && (
-                <Typography variant="subtitle1" noWrap sx={{ ml: 1 }}>
-                  {businessName || 'Company'}
-                </Typography>
+                <Box sx={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+                  <Typography 
+                    variant="body2" 
+                    noWrap 
+                    sx={{ 
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {businessName || 'Company'}
+                  </Typography>
+                  {instagramUsername && (
+                    <Typography 
+                      variant="caption" 
+                      noWrap 
+                      sx={{ 
+                        color: 'text.secondary',
+                        display: 'block',
+                        fontSize: '12px',
+                      }}
+                    >
+                      @{instagramUsername}
+                    </Typography>
+                  )}
+                </Box>
               )}
             </Button>
           </DrawerHeader>
 
           <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-            <List sx={{ overflowY: 'auto', height: '100%' }}>
+            <List sx={{ overflowY: 'auto', height: '100%', py: 1 }}>
             {(['General', 'Messages', 'Services','Prodcuts'] as SidebarItem['section'][]).map(
               (section) => {
                 const itemsForSection = sidebarItems.filter(
@@ -239,11 +280,20 @@ function DashboardLayoutContent({
                 if (!itemsForSection.length) return null;
 
                 return (
-                  <Box key={section} sx={{ mb: 1 }}>
+                  <Box key={section} sx={{ mb: 2 }}>
                     {open && (
                       <Typography
                         variant="caption"
-                        sx={{ px: 2.5, py: 1, color: 'text.secondary' }}
+                        sx={{ 
+                          px: 2.5, 
+                          py: 1, 
+                          color: 'text.secondary',
+                          fontWeight: 600,
+                          fontSize: '11px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          display: 'block',
+                        }}
                       >
                         {section}
                       </Typography>
@@ -255,24 +305,29 @@ function DashboardLayoutContent({
                         <ListItem
                           key={item.label}
                           disablePadding
-                          sx={{ display: 'block' }}
+                          sx={{ display: 'block', px: open ? 1 : 0.5 }}
                         >
                           <ListItemButton
                             onClick={() => router.push(item.href)}
                             sx={[
                               {
-                                minHeight: 48,
-                                px: 2.5,
-                                bgcolor: isActive ? 'primary.main' : 'transparent',
-                                color: isActive ? 'primary.contrastText' : 'text.primary',
+                                minHeight: 44,
+                                borderRadius: open ? 1.5 : 2,
+                                px: open ? 2 : 0,
+                                mx: open ? 0 : 0.5,
+                                bgcolor: isActive ? (theme) => (theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.12)') : 'transparent',
+                                color: 'text.primary',
+                                transition: 'all 0.2s ease',
                                 '&:hover': {
-                                  bgcolor: isActive ? 'primary.dark' : 'action.hover',
-                                  color: isActive ? 'primary.contrastText' : 'text.primary',
+                                  bgcolor: (theme) => theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
                                 },
+                                ...(isActive && {
+                                  fontWeight: 600,
+                                }),
                               },
                               open
                                 ? {
-                                    justifyContent: 'initial',
+                                    justifyContent: 'flex-start',
                                   }
                                 : {
                                     justifyContent: 'center',
@@ -284,11 +339,11 @@ function DashboardLayoutContent({
                                 {
                                   minWidth: 0,
                                   justifyContent: 'center',
-                                  color: isActive ? 'primary.contrastText' : 'inherit',
+                                  color: isActive ? 'text.primary' : 'text.secondary',
                                 },
                                 open
                                   ? {
-                                      mr: 3,
+                                      mr: 2,
                                     }
                                   : {
                                       mr: 'auto',
@@ -299,6 +354,10 @@ function DashboardLayoutContent({
                             </ListItemIcon>
                             <ListItemText
                               primary={item.label}
+                              primaryTypographyProps={{
+                                fontSize: '14px',
+                                fontWeight: isActive ? 600 : 400,
+                              }}
                               sx={[
                                 open
                                   ? {
@@ -321,57 +380,65 @@ function DashboardLayoutContent({
           </Box>
           
           {/* Theme Toggle Button */}
-          <ListItem disablePadding sx={{ display: 'block' }}>
-            <ListItemButton
-              onClick={toggleTheme}
-              sx={[
-                {
-                  minHeight: 48,
-                  px: 2.5,
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                },
-                open
-                  ? {
-                      justifyContent: 'initial',
-                    }
-                  : {
-                      justifyContent: 'center',
-                    },
-              ]}
-            >
-              <ListItemIcon
+          <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 1 }}>
+            <ListItem disablePadding sx={{ display: 'block', px: open ? 1 : 0.5 }}>
+              <ListItemButton
+                onClick={toggleTheme}
                 sx={[
                   {
-                    minWidth: 0,
-                    justifyContent: 'center',
+                    minHeight: 44,
+                    borderRadius: open ? 1.5 : 2,
+                    px: open ? 2 : 0,
+                    mx: open ? 0 : 0.5,
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    },
                   },
                   open
                     ? {
-                        mr: 3,
+                        justifyContent: 'flex-start',
                       }
                     : {
-                        mr: 'auto',
+                        justifyContent: 'center',
                       },
                 ]}
               >
-                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-              </ListItemIcon>
-              <ListItemText
-                primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                sx={[
-                  open
-                    ? {
-                        opacity: 1,
-                      }
-                    : {
-                        opacity: 0,
-                      },
-                ]}
-              />
-            </ListItemButton>
-          </ListItem>
+                <ListItemIcon
+                  sx={[
+                    {
+                      minWidth: 0,
+                      justifyContent: 'center',
+                      color: 'text.secondary',
+                    },
+                    open
+                      ? {
+                          mr: 2,
+                        }
+                      : {
+                          mr: 'auto',
+                        },
+                  ]}
+                >
+                  {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                </ListItemIcon>
+                <ListItemText
+                  primary={mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  primaryTypographyProps={{
+                    fontSize: '14px',
+                  }}
+                  sx={[
+                    open
+                      ? {
+                          opacity: 1,
+                        }
+                      : {
+                          opacity: 0,
+                        },
+                  ]}
+                />
+              </ListItemButton>
+            </ListItem>
+          </Box>
 
           {/* Logout Button at Bottom */}
           <Box
@@ -379,24 +446,27 @@ function DashboardLayoutContent({
               mt: 'auto',
               borderTop: '1px solid',
               borderColor: 'divider',
+              pt: 1,
+              pb: 1,
             }}
           >
-            <ListItem disablePadding sx={{ display: 'block' }}>
+            <ListItem disablePadding sx={{ display: 'block', px: open ? 1 : 0.5 }}>
               <ListItemButton
                 onClick={handleLogoutClick}
                 sx={[
                   {
-                    minHeight: 48,
-                    px: 2.5,
+                    minHeight: 44,
+                    borderRadius: open ? 1.5 : 2,
+                    px: open ? 2 : 0,
+                    mx: open ? 0 : 0.5,
                     color: 'error.main',
                     '&:hover': {
-                      bgcolor: 'error.light',
-                      color: 'error.contrastText',
+                      bgcolor: 'rgba(237, 73, 86, 0.08)',
                     },
                   },
                   open
                     ? {
-                        justifyContent: 'initial',
+                        justifyContent: 'flex-start',
                       }
                     : {
                         justifyContent: 'center',
@@ -412,7 +482,7 @@ function DashboardLayoutContent({
                     },
                     open
                       ? {
-                          mr: 3,
+                          mr: 2,
                         }
                       : {
                           mr: 'auto',
@@ -422,7 +492,10 @@ function DashboardLayoutContent({
                   <LogoutIcon />
                 </ListItemIcon>
                 <ListItemText
-                  primary="Logout"
+                  primary="Log out"
+                  primaryTypographyProps={{
+                    fontSize: '14px',
+                  }}
                   sx={[
                     open
                       ? {

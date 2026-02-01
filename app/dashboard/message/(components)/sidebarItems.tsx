@@ -8,8 +8,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
-import MessengerIcon from '@/public/messenger.png'
-import Image from 'next/image';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 type SidebarSection = 'General' | 'Messages' | 'Services' | 'Prodcuts';
 
@@ -22,8 +21,8 @@ export type SidebarItem = {
 
 export const sidebarItems: SidebarItem[] = [
   {
-    label: 'Integrations',
-    icon: <ViewModuleIcon />,
+    label: 'Profile',
+    icon: <AccountCircleIcon />,
     href: '/dashboard/message',
     section: 'General',
   },
@@ -31,12 +30,6 @@ export const sidebarItems: SidebarItem[] = [
     label: 'Instagram',
     icon: <InstagramIcon />,
     href: '/dashboard/message/instagram',
-    section: 'Messages',
-  },
-  {
-    label: 'Messenger',
-    icon: <MapsUgcIcon/>,
-    href: '/dashboard/message/messenger',
     section: 'Messages',
   },
   {

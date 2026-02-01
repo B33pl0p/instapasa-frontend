@@ -191,24 +191,23 @@ export default function ProductPage() {
   };
 
   return (
-    <Box sx={{ py: 4, px: 3, backgroundColor: 'background.default', minHeight: '100vh' }}>
-      <Container maxWidth="xl">
+    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
         {/* Header Section */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
               Products
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body1" color="textSecondary">
-                Manage your product inventory
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="body2" color="text.secondary">
+                Manage your product catalog
               </Typography>
               {totalCount > 0 && (
                 <Chip
                   label={`${totalCount} ${totalCount === 1 ? 'product' : 'products'}`}
-                  color="primary"
-                  variant="outlined"
                   size="small"
+                  sx={{ height: 20, fontSize: '11px' }}
                 />
               )}
             </Box>
@@ -218,18 +217,18 @@ export default function ProductPage() {
             color="primary"
             startIcon={<AddIcon />}
             onClick={() => router.push('/dashboard/products/create')}
-            size="large"
           >
             Add Product
           </Button>
         </Box>
 
         {/* Filter View Buttons */}
-        <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+        <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
           <Button
             variant={viewMode === 'all' ? 'contained' : 'outlined'}
             color={viewMode === 'all' ? 'primary' : 'inherit'}
             onClick={() => setViewMode('all')}
+            size="small"
           >
             All Products
           </Button>
@@ -237,13 +236,15 @@ export default function ProductPage() {
             variant={viewMode === 'active' ? 'contained' : 'outlined'}
             color={viewMode === 'active' ? 'success' : 'inherit'}
             onClick={() => setViewMode('active')}
+            size="small"
           >
-            Active Only
+            Active
           </Button>
           <Button
             variant={viewMode === 'low-stock' ? 'contained' : 'outlined'}
             color={viewMode === 'low-stock' ? 'warning' : 'inherit'}
             onClick={() => setViewMode('low-stock')}
+            size="small"
           >
             Low Stock
           </Button>
@@ -254,38 +255,56 @@ export default function ProductPage() {
           <Alert
             severity="error"
             onClose={() => dispatch(clearError())}
-            sx={{ mb: 3 }}
+            sx={{ mb: 2 }}
           >
             {error}
           </Alert>
         )}
 
+        {/* Success Notification */}
+        {showNotification && (
+          <Alert
+            severity={showNotification.type}
+            onClose={() => setShowNotification(null)}
+            sx={{ mb: 2 }}
+          >
+            {showNotification.message}
+          </Alert>
+        )}
+
         {/* Filters */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <ProductFilterComponent filters={filters} onFilterChange={handleFilterChange} />
         </Box>
 
-        {/* Bulk Actions Card */}
+        {/* Bulk Actions Bar */}
         {selectedItems.length > 0 && (
-          <Card sx={{ mb: 3, backgroundColor: 'info.lighter' }}>
-            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {selectedItems.length} item(s) selected
+          <Card sx={{ mb: 2, backgroundColor: 'rgba(0, 149, 246, 0.08)' }}>
+            <CardContent sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              py: 1.5,
+              '&:last-child': { pb: 1.5 }
+            }}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {selectedItems.length} selected
               </Typography>
               <Button
-                variant="contained"
+                variant="outlined"
                 color="error"
+                size="small"
                 startIcon={<DeleteIcon />}
                 onClick={handleBulkDelete}
               >
-                Delete ({selectedItems.length})
+                Delete
               </Button>
             </CardContent>
           </Card>
         )}
 
         {/* Product Table */}
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2 }}>
           <ModernProductTable
             products={items}
             selectedItems={selectedItems}

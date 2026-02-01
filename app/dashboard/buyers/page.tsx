@@ -121,41 +121,40 @@ export default function BuyersPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <Box sx={{ py: 4, px: 3, backgroundColor: 'background.default', minHeight: '100vh' }}>
-      <Container maxWidth="xl">
+    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
         {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-              Buyer Management
+            <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
+              Buyers
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="body1" color="textSecondary">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="body2" color="text.secondary">
                 View and manage your customers
               </Typography>
               {total > 0 && (
                 <Chip
                   label={`${total} ${total === 1 ? 'buyer' : 'buyers'}`}
-                  color="primary"
-                  variant="outlined"
                   size="small"
+                  sx={{ height: 20, fontSize: '11px' }}
                 />
               )}
             </Box>
           </Box>
           <Button
             variant="outlined"
+            size="small"
             startIcon={<RefreshIcon />}
             onClick={handleRefresh}
             disabled={loading || statsLoading}
-            size="large"
           >
             Refresh
           </Button>
         </Box>
 
         {/* Stats Cards */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
           <BuyerStatsCards stats={stats} loading={statsLoading} onFilterClick={handleFilterClick} />
         </Box>
 
@@ -164,38 +163,38 @@ export default function BuyersPage() {
           <Alert
             severity="error"
             onClose={() => {}}
-            sx={{ mb: 3 }}
+            sx={{ mb: 2 }}
           >
             {error}
           </Alert>
         )}
 
-        {/* Filters and Search */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+        {/* Search and Filters */}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
           <TextField
             placeholder="Search by name, username, or phone..."
             value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
+            size="small"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon />
+                  <SearchIcon fontSize="small" />
                 </InputAdornment>
               ),
             }}
             sx={{ flexGrow: 1 }}
-            size="medium"
           />
         </Stack>
 
         {/* Status Filters */}
-        <Box sx={{ mb: 3 }}>
-          <ButtonGroup variant="outlined">
+        <Box sx={{ mb: 2 }}>
+          <ButtonGroup variant="outlined" size="small">
             <Button
               variant={statusFilter === 'all' ? 'contained' : 'outlined'}
               onClick={() => handleFilterClick('all')}
             >
-              All Buyers
+              All
             </Button>
             <Button
               variant={statusFilter === 'frequent' ? 'contained' : 'outlined'}

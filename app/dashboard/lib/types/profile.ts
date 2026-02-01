@@ -10,7 +10,15 @@ export interface SellerProfile {
   contact_person_role: string | null;
   instagram_connected: boolean;
   instagram_username: string | null;
-  instagram_profile_picture_url: string | null;
+  instagram_id: string | null;
+  name: string | null;
+  profile_picture_url: string | null;
+  followers: number | null;
+  following: number | null;
+  posts: number | null;
+  instagram_page_id: string | null;
+  instagram_page_access_token: string | null;
+  webhooks_subscribed: boolean;
   status: string;
   created_at: string;
   updated_at: string;

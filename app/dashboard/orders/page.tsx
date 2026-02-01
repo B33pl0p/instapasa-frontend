@@ -338,25 +338,17 @@ export default function OrdersPage() {
   const someSelected = selectedOrders.length > 0 && selectedOrders.length < filteredOrders.length;
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
-      {/* Left Sidebar - Filters */}
-      <Paper
-        sx={{
-          width: 280,
-          flexShrink: 0,
-          p: 3,
-          borderRadius: 0,
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          overflowY: 'auto',
-        }}
-      >
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-          Filters
-        </Typography>
+    <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        {/* Header */}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Orders
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage customer orders and fulfillment
+          </Typography>
+        </Box>
 
         {/* Buyer Filter */}
         <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -456,28 +448,31 @@ export default function OrdersPage() {
             Clear Filters
           </Button>
         )}
-      </Paper>
 
-      {/* Main Content */}
-      <Container maxWidth="xl" sx={{ py: 4, flex: 1 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-              Orders
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {filteredOrders.length} {selectedStatuses.length > 0 ? 'filtered' : 'total'} orders
-            </Typography>
-          </Box>
+        {/* Search */}
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search orders..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ mb: 3 }}
+        />
 
-          {/* Bulk Actions */}
-          {selectedOrders.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
-                {selectedOrders.length} selected
-              </Typography>
-              <Button
+        {/* Bulk Actions */}
+        {selectedOrders.length > 0 && (
+          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Typography variant="body2" color="primary" sx={{ fontWeight: 600 }}>
+              {selectedOrders.length} selected
+            </Typography>
+            <Button
                 variant="contained"
                 endIcon={<MoreVertIcon />}
                 onClick={(e) => setBulkActionAnchor(e.currentTarget)}
@@ -500,7 +495,6 @@ export default function OrdersPage() {
               </Menu>
             </Box>
           )}
-        </Box>
 
         {/* Orders Content */}
         {loading ? (
