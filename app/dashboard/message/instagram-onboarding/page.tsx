@@ -29,6 +29,7 @@ interface Page {
   page_name: string;
   instagram_business_id: string;
   instagram_username: string | null;
+  page_access_token: string;
 }
 
 interface PagesResponse {
@@ -121,8 +122,8 @@ export default function InstagramOnboardingPage() {
 
   // Step 3: Connect selected page
   const handleConnectPage = async (page: Page) => {
-    if (!userToken) {
-      setError('Missing user token. Please try again.');
+    if (!page.page_access_token) {
+      setError('Missing page access token. Please try again.');
       return;
     }
 
@@ -132,9 +133,9 @@ export default function InstagramOnboardingPage() {
 
     try {
       const response = await apiClient.post('/auth/meta/connect-page', {
-        user_token: userToken,
         page_id: page.page_id,
         instagram_business_id: page.instagram_business_id,
+        page_access_token: page.page_access_token,
       });
 
       setConnectionData(response.data);
