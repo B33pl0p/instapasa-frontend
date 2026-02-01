@@ -279,6 +279,10 @@ const instagramMessagesSlice = createSlice({
         const messages = data.messages || [];
         const businessUsername = data.instagram_username || null;
         
+        console.log('✅ Messages fetched for conversation:', conversationId);
+        console.log('📨 Number of messages:', messages.length);
+        console.log('📨 Messages:', messages);
+        
         // Cache the messages by conversation_id
         state.messageCache[conversationId] = {
           messages,

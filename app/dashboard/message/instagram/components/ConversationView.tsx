@@ -115,6 +115,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     
     if (conversationId) {
       // Always fetch fresh messages when opening a conversation
+      console.log('🔄 Fetching messages for conversation:', conversationId);
       dispatch(fetchMessages({ conversationId, forceRefresh: true }));
     }
   }, [conversationId, dispatch]);

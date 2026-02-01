@@ -178,8 +178,8 @@ export default function InstagramLayout({
               {conversations.map((conversation, index) => {
                 const participantName = getParticipantName(conversation);
                 const isSelected = selectedConversationId === conversation.conversation_id;
-                // Ensure unique key - use index as fallback if conversation_id is missing/duplicate
-                const uniqueKey = conversation.conversation_id || `conv-${index}-${conversation.updated_time}`;
+                // Ensure unique key - include updated_time to force re-render when conversation updates
+                const uniqueKey = `${conversation.conversation_id}-${conversation.updated_time}`;
                 
                 // Find related order
                 const buyerId = conversation.buyer_id || conversation.participants.find(p => p.username !== businessUsername)?.id;
