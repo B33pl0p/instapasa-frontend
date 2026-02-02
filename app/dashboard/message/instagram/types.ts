@@ -21,6 +21,9 @@ export interface Conversation {
   last_message: LastMessage;
   buyer_id?: string;
   buyer_username?: string;
+  ai_paused?: boolean;
+  needs_human_attention?: boolean;
+  handover_reason?: string | null;
 }
 
 export interface MessagesOverviewResponse {

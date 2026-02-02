@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { Conversation, Message } from '../types';
+import AIHandoverControls from './AIHandoverControls';
 
 interface ConversationHeaderProps {
   conversation: Conversation | undefined;
@@ -130,7 +131,15 @@ export default function ConversationHeader({
           </Stack>
 
           {/* Right: Actions */}
-          <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+          <Stack direction="row" spacing={1} sx={{ flexShrink: 0, alignItems: 'center' }}>
+            {/* AI Handover Controls */}
+            <AIHandoverControls
+              conversationId={conversation.conversation_id}
+              aiPaused={conversation.ai_paused || false}
+              needsHumanAttention={conversation.needs_human_attention || false}
+              handoverReason={conversation.handover_reason}
+            />
+
             {/* Refresh Button */}
             <Tooltip title="Refresh conversation">
               <IconButton

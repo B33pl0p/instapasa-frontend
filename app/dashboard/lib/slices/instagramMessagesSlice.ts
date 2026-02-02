@@ -171,6 +171,62 @@ export const sendQRCode = createAsyncThunk(
   }
 );
 
+// AI Handover: Pause AI
+export const pauseAI = createAsyncThunk(
+  'instagramMessages/pauseAI',
+  async (
+    { conversationId, reason = 'manual' }: { conversationId: string; reason?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post(
+        `/dashboard/conversations/${conversationId}/pause-ai`,
+        { reason }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to pause AI');
+    }
+  }
+);
+
+// AI Handover: Resume AI
+export const resumeAI = createAsyncThunk(
+  'instagramMessages/resumeAI',
+  async (conversationId: string, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.post(
+        `/dashboard/conversations/${conversationId}/resume-ai`
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to resume AI');
+    }
+  }
+);
+
+// AI Handover: Mark Resolved
+export const markResolved = createAsyncThunk(
+  'instagramMessages/markResolved',
+  async (
+    { conversationId, resumeAI = true }: { conversationId: string; resumeAI?: boolean },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await apiClient.post(
+        `/dashboard/conversations/${conversationId}/mark-resolved`,
+        { resume_ai: resumeAI }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to mark resolved');
+    }
+  }
+);
+
 const instagramMessagesSlice = createSlice({
   name: 'instagramMessages',
   initialState,
@@ -248,6 +304,9 @@ const instagramMessagesSlice = createSlice({
               messages: conversation.messages,
               businessUsername: conversation.instagram_username || null,
               fetchedAt: Date.now(),
+              hasMore: false,
+              total: conversation.messages.length,
+              offset: 0,
             };
           }
         });
@@ -355,6 +414,9 @@ const instagramMessagesSlice = createSlice({
             messages,
             businessUsername,
             fetchedAt: Date.now(),
+            hasMore: item.data.has_more || false,
+            total: item.data.total || messages.length,
+            offset: 0,
           };
           
           // If this is the current conversation, update it too
@@ -379,6 +441,53 @@ const instagramMessagesSlice = createSlice({
         // Message will be added to conversation via WebSocket or polling
       })
       .addCase(sendQRCode.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // Pause AI
+    builder
+      .addCase(pauseAI.fulfilled, (state, action) => {
+        const { conversation_id, ai_paused, needs_human_attention, handover_reason } = action.payload;
+        const conversation = state.conversations.find(c => c.conversation_id === conversation_id);
+        if (conversation) {
+          conversation.ai_paused = ai_paused;
+          conversation.needs_human_attention = needs_human_attention;
+          conversation.handover_reason = handover_reason;
+        }
+      })
+      .addCase(pauseAI.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // Resume AI
+    builder
+      .addCase(resumeAI.fulfilled, (state, action) => {
+        const { conversation_id, ai_paused, needs_human_attention } = action.payload;
+        const conversation = state.conversations.find(c => c.conversation_id === conversation_id);
+        if (conversation) {
+          conversation.ai_paused = ai_paused;
+          conversation.needs_human_attention = needs_human_attention;
+          conversation.handover_reason = null;
+        }
+      })
+      .addCase(resumeAI.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // Mark Resolved
+    builder
+      .addCase(markResolved.fulfilled, (state, action) => {
+        const { conversation_id, ai_paused, needs_human_attention } = action.payload;
+        const conversation = state.conversations.find(c => c.conversation_id === conversation_id);
+        if (conversation) {
+          conversation.ai_paused = ai_paused;
+          conversation.needs_human_attention = needs_human_attention;
+          if (!needs_human_attention) {
+            conversation.handover_reason = null;
+          }
+        }
+      })
+      .addCase(markResolved.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },

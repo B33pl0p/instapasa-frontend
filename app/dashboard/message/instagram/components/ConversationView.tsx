@@ -19,7 +19,7 @@ import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import CloseIcon from '@mui/icons-material/Close';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
-import { fetchMessages, setCurrentConversation, sendQRCode } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
+import { fetchMessages, setCurrentConversation, sendQRCode, pauseAI } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import { fetchOrders } from '@/app/dashboard/lib/slices/orderSlice';
 import { fetchBusinessConfig } from '@/app/dashboard/lib/slices/businessConfigSlice';
 import apiClient from '@/app/dashboard/lib/apiClient';
@@ -190,6 +190,17 @@ export default function ConversationView({ conversationId }: ConversationViewPro
         attachment_type: attachmentPreview.type
       });
 
+      // Auto-pause AI when seller sends a manual message
+      if (!conversation.ai_paused) {
+        try {
+          await dispatch(pauseAI({ conversationId, reason: 'manual' })).unwrap();
+          showToast('AI paused - Manual reply sent', 'info');
+        } catch (error) {
+          console.error('Failed to pause AI:', error);
+          // Don't fail the message send if pause fails
+        }
+      }
+
       // Clear input and preview
       setMessageInput('');
       setAttachmentPreview(null);
@@ -247,6 +258,17 @@ export default function ConversationView({ conversationId }: ConversationViewPro
         recipient_user_id: recipientUserId,
         platform: 'instagram'
       });
+
+      // Auto-pause AI when seller sends a manual message
+      if (!conversation.ai_paused) {
+        try {
+          await dispatch(pauseAI({ conversationId, reason: 'manual' })).unwrap();
+          showToast('AI paused - Manual reply sent', 'info');
+        } catch (error) {
+          console.error('Failed to pause AI:', error);
+          // Don't fail the message send if pause fails
+        }
+      }
 
       // Clear input
       setMessageInput('');

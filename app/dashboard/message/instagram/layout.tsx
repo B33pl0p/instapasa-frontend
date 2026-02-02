@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchConversations, refreshAllCachedMessages } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import { useTheme } from '@mui/material/styles';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography, Badge, Chip } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -97,6 +97,19 @@ export default function InstagramLayout({
     return date.toLocaleDateString();
   };
 
+  // Sort conversations: needs_human_attention first, then by updated_time
+  const sortedConversations = [...conversations].sort((a, b) => {
+    // Prioritize conversations needing attention
+    if (a.needs_human_attention && !b.needs_human_attention) return -1;
+    if (!a.needs_human_attention && b.needs_human_attention) return 1;
+    
+    // Then sort by updated time (most recent first)
+    return new Date(b.updated_time).getTime() - new Date(a.updated_time).getTime();
+  });
+
+  // Count conversations needing attention
+  const needsAttentionCount = conversations.filter(c => c.needs_human_attention).length;
+
   return (
     <Box sx={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
       {/* Left Panel - Conversation List (Hidden on mobile when conversation selected) */}
@@ -127,9 +140,19 @@ export default function InstagramLayout({
             alignItems: 'center', 
             justifyContent: 'space-between',
           }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.15rem' }}>
-              Instagram Chats
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.15rem' }}>
+                Instagram Chats
+              </Typography>
+              {needsAttentionCount > 0 && (
+                <Chip 
+                  label={needsAttentionCount} 
+                  color="error" 
+                  size="small"
+                  sx={{ height: 20, fontSize: '0.75rem', fontWeight: 'bold' }}
+                />
+              )}
+            </Box>
             <Tooltip title="Refresh conversations">
               <IconButton
                 size="medium"
@@ -175,7 +198,7 @@ export default function InstagramLayout({
             </Box>
           ) : (
             <Box sx={{ flex: 1, overflowY: 'auto', minHeight: 0, p: 1.5 }}>
-              {conversations.map((conversation, index) => {
+              {sortedConversations.map((conversation, index) => {
                 const participantName = getParticipantName(conversation);
                 const isSelected = selectedConversationId === conversation.conversation_id;
                 // Ensure unique key - include updated_time to force re-render when conversation updates
@@ -204,7 +227,25 @@ export default function InstagramLayout({
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, minWidth: 0 }}>
-                      <AccountCircleIcon sx={{ width: 48, height: 48, color: 'text.secondary', flexShrink: 0 }} />
+                      <Box sx={{ position: 'relative' }}>
+                        <AccountCircleIcon sx={{ width: 48, height: 48, color: 'text.secondary', flexShrink: 0 }} />
+                        {conversation.needs_human_attention && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 0,
+                              right: 0,
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              bgcolor: 'error.main',
+                              border: '2px solid',
+                              borderColor: 'background.paper',
+                              boxShadow: 1,
+                            }}
+                          />
+                        )}
+                      </Box>
                       <Box sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, minWidth: 0 }}>
                           <Typography
