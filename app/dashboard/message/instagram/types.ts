@@ -61,4 +61,8 @@ export interface ConversationDetailResponse {
   platform: string;
   conversation_id: string;
   messages: Message[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+  has_more?: boolean;
 }

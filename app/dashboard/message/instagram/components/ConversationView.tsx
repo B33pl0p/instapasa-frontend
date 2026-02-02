@@ -37,7 +37,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { showToast } = useToast();
-  const { messages, businessUsername, messageLoading, error, messageCache, conversations } = useAppSelector(
+  const { messages, businessUsername, messageLoading, loadingOlderMessages, error, messageCache, conversations, hasMore } = useAppSelector(
     (state) => state.instagramMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
@@ -114,9 +114,12 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     dispatch(setCurrentConversation(conversationId));
     
     if (conversationId) {
-      // Always fetch fresh messages when opening a conversation
-      console.log('🔄 Fetching messages for conversation:', conversationId);
-      dispatch(fetchMessages({ conversationId, forceRefresh: true }));
+      // Check if messages are already cached
+      const isCached = !!messageCache[conversationId];
+      console.log('🔄 Loading conversation:', conversationId, isCached ? '(cached)' : '(fetching from backend)');
+      
+      // Only force refresh if not cached, otherwise use cached messages
+      dispatch(fetchMessages({ conversationId, forceRefresh: !isCached }));
     }
   }, [conversationId, dispatch]);
 
@@ -261,6 +264,12 @@ export default function ConversationView({ conversationId }: ConversationViewPro
     }
   };
 
+  const handleRefreshConversation = () => {
+    if (conversationId) {
+      dispatch(fetchMessages({ conversationId, forceRefresh: true, offset: 0 }));
+    }
+  };
+
   if (!conversationId) {
     return (
       <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.paper' }}>
@@ -298,6 +307,8 @@ export default function ConversationView({ conversationId }: ConversationViewPro
         businessUsername={businessUsername}
         onSendQRClick={() => setQrModalOpen(true)}
         qrCodesAvailable={businessConfig.payment_qr_codes.length > 0}
+        onRefresh={handleRefreshConversation}
+        isRefreshing={messageLoading}
       />
 
       {/* QR Code Modal */}
@@ -417,6 +428,24 @@ export default function ConversationView({ conversationId }: ConversationViewPro
           minHeight: 0,
         }}
       >
+        {/* Load More Button */}
+        {hasMore && conversationId && !messageLoading && (
+          <Box sx={{ p: 2, textAlign: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              disabled={loadingOlderMessages}
+              onClick={() => {
+                const currentOffset = messageCache[conversationId]?.offset || 0;
+                dispatch(fetchMessages({ conversationId, offset: currentOffset, forceRefresh: false }));
+              }}
+              startIcon={loadingOlderMessages ? <CircularProgress size={16} /> : null}
+            >
+              {loadingOlderMessages ? 'Loading...' : 'Load Older Messages'}
+            </Button>
+          </Box>
+        )}
+        
         <MessageBox 
           messages={messages} 
           businessUsername={businessUsername}

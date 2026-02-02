@@ -8,6 +8,9 @@ interface MessageCache {
     messages: Message[];
     businessUsername: string | null;
     fetchedAt: number;
+    hasMore: boolean;
+    total: number;
+    offset: number;
   };
 }
 
@@ -20,10 +23,12 @@ interface InstagramMessagesState {
   loading: boolean;
   conversationLoading: boolean;
   messageLoading: boolean;
+  loadingOlderMessages: boolean;
   syncing: boolean;
   error: string | null;
   lastSyncedAt: string | null;
   conversationsLoaded: boolean;
+  hasMore: boolean;
 }
 
 const initialState: InstagramMessagesState = {
@@ -35,10 +40,12 @@ const initialState: InstagramMessagesState = {
   loading: false,
   conversationLoading: false,
   messageLoading: false,
+  loadingOlderMessages: false,
   syncing: false,
   error: null,
   lastSyncedAt: null,
   conversationsLoaded: false,
+  hasMore: false,
 };
 
 // Async thunks
@@ -66,7 +73,7 @@ export const fetchConversations = createAsyncThunk(
   'instagramMessages/fetchConversations',
   async (forceRefresh: boolean = false, { rejectWithValue }) => {
     try {
-      const response = await apiClient.get(`/dashboard/conversations?limit=100&platform=instagram&force_refresh=${forceRefresh}`);
+      const response = await apiClient.get(`/dashboard/conversations?limit=20&platform=instagram&force_refresh=${forceRefresh}`);
       return response.data;
     } catch (error) {
       const axiosError = error as { response?: { data?: { detail?: string } } };
@@ -82,7 +89,7 @@ export const refreshAllCachedMessages = createAsyncThunk(
     try {
       const messagePromises = conversationIds.map(conversationId =>
         apiClient.get(
-          `/dashboard/messages/${conversationId}?platform=instagram&force_refresh=true`
+          `/dashboard/messages/${conversationId}?platform=instagram&force_refresh=true&limit=20`
         )
       );
       const responses = await Promise.all(messagePromises);
@@ -103,7 +110,7 @@ export const initialSyncConversationsWithMessages = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Fetch conversations with all messages for recent conversations
-      const response = await apiClient.get('/dashboard/conversations?limit=100&platform=instagram&include_messages=true');
+      const response = await apiClient.get('/dashboard/conversations?limit=20&platform=instagram&include_messages=true');
       return response.data;
     } catch (error) {
       const axiosError = error as { response?: { data?: { detail?: string } } };
@@ -116,15 +123,16 @@ export const initialSyncConversationsWithMessages = createAsyncThunk(
 export const fetchMessages = createAsyncThunk(
   'instagramMessages/fetchMessages',
   async (
-    { conversationId, forceRefresh = false }: { conversationId: string; forceRefresh?: boolean },
+    { conversationId, forceRefresh = false, offset = 0 }: { conversationId: string; forceRefresh?: boolean; offset?: number },
     { rejectWithValue }
   ) => {
     try {
       const response = await apiClient.get<ConversationDetailResponse>(
-        `/dashboard/messages/${conversationId}?platform=instagram&force_refresh=${forceRefresh}`
+        `/dashboard/messages/${conversationId}?platform=instagram&force_refresh=${forceRefresh}&limit=20&offset=${offset}`
       );
       return {
         conversationId,
+        offset,
         data: response.data,
       };
     } catch (error) {
@@ -269,35 +277,62 @@ const instagramMessagesSlice = createSlice({
 
     // Fetch full messages (lazy loading - only on demand)
     builder
-      .addCase(fetchMessages.pending, (state) => {
-        state.messageLoading = true;
+      .addCase(fetchMessages.pending, (state, action) => {
+        const offset = action.meta.arg.offset || 0;
+        if (offset === 0) {
+          state.messageLoading = true;
+        } else {
+          state.loadingOlderMessages = true;
+        }
         state.error = null;
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
         state.messageLoading = false;
-        const { conversationId, data } = action.payload;
+        state.loadingOlderMessages = false;
+        const { conversationId, offset, data } = action.payload;
         const messages = data.messages || [];
         const businessUsername = data.instagram_username || null;
+        const hasMore = data.has_more || false;
+        const total = data.total || 0;
         
         console.log('✅ Messages fetched for conversation:', conversationId);
         console.log('📨 Number of messages:', messages.length);
-        console.log('📨 Messages:', messages);
+        console.log('📨 Has more:', hasMore, 'Total:', total, 'Offset:', offset);
         
-        // Cache the messages by conversation_id
-        state.messageCache[conversationId] = {
-          messages,
-          businessUsername,
-          fetchedAt: Date.now(),
-        };
+        // If offset is 0, replace messages, otherwise append to existing
+        if (offset === 0) {
+          state.messageCache[conversationId] = {
+            messages,
+            businessUsername,
+            fetchedAt: Date.now(),
+            hasMore,
+            total,
+            offset: messages.length,
+          };
+        } else {
+          // Append older messages to the beginning of the array
+          const existingCache = state.messageCache[conversationId];
+          if (existingCache) {
+            state.messageCache[conversationId] = {
+              ...existingCache,
+              messages: [...messages, ...existingCache.messages],
+              hasMore,
+              offset: existingCache.offset + messages.length,
+            };
+          }
+        }
         
         // Set as current if this is the current conversation
         if (state.currentConversationId === conversationId) {
-          state.messages = messages;
-          state.businessUsername = businessUsername;
+          const cache = state.messageCache[conversationId];
+          state.messages = cache.messages;
+          state.businessUsername = cache.businessUsername;
+          state.hasMore = cache.hasMore;
         }
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.messageLoading = false;
+        state.loadingOlderMessages = false;
         state.error = action.payload as string;
       });
 

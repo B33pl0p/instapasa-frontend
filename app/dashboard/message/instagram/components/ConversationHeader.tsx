@@ -7,7 +7,11 @@ import {
   Stack,
   Avatar,
   Button,
+  IconButton,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { Conversation, Message } from '../types';
 
 interface ConversationHeaderProps {
@@ -16,6 +20,8 @@ interface ConversationHeaderProps {
   businessUsername: string | null;
   onSendQRClick: () => void;
   qrCodesAvailable: boolean;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export default function ConversationHeader({
@@ -24,6 +30,8 @@ export default function ConversationHeader({
   businessUsername,
   onSendQRClick,
   qrCodesAvailable,
+  onRefresh,
+  isRefreshing = false,
 }: ConversationHeaderProps) {
   if (!conversation) {
     return null;
@@ -121,24 +129,45 @@ export default function ConversationHeader({
             </Box>
           </Stack>
 
-          {/* Right: Send QR Button */}
-          {qrCodesAvailable && (
-            <Button
-              onClick={onSendQRClick}
-              variant="contained"
-              size="medium"
-              sx={{
-                flexShrink: 0,
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 3,
-                boxShadow: 2,
-              }}
-            >
-              Send QR
-            </Button>
-          )}
+          {/* Right: Actions */}
+          <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+            {/* Refresh Button */}
+            <Tooltip title="Refresh conversation">
+              <IconButton
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                size="medium"
+                sx={{
+                  color: 'text.secondary',
+                  '&:hover': { bgcolor: 'action.hover' },
+                }}
+              >
+                {isRefreshing ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <RefreshIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+
+            {/* Send QR Button */}
+            {qrCodesAvailable && (
+              <Button
+                onClick={onSendQRClick}
+                variant="contained"
+                size="medium"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  boxShadow: 2,
+                }}
+              >
+                Send QR
+              </Button>
+            )}
+          </Stack>
         </Stack>
       </Box>
     </Paper>
