@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
-import { fetchConversations, refreshAllCachedMessages } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
+import { fetchConversations, refreshAllCachedMessages, fetchPendingAttentionConversations } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
 import { useTheme } from '@mui/material/styles';
 import { Box, CircularProgress, Typography, Badge, Chip } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -35,6 +35,23 @@ export default function InstagramLayout({
       dispatch(fetchConversations(false));
     }
   }, [dispatch, conversationsLoaded, conversationLoading]);
+
+  // Poll for pending attention conversations every 15 seconds
+  useEffect(() => {
+    // Initial fetch
+    if (conversationsLoaded) {
+      dispatch(fetchPendingAttentionConversations());
+    }
+
+    // Set up polling interval
+    const pollInterval = setInterval(() => {
+      if (conversationsLoaded) {
+        dispatch(fetchPendingAttentionConversations());
+      }
+    }, 15000); // Poll every 15 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [dispatch, conversationsLoaded]);
 
   // Refresh conversations list and all cached messages
   const handleRefresh = async () => {
@@ -187,7 +204,7 @@ export default function InstagramLayout({
           ) : error ? (
             <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', p: 2 }}>
               <Typography variant="caption" color="error" align="center">
-                {error}
+                {typeof error === 'string' ? error : error?.msg || 'An error occurred'}
               </Typography>
             </Box>
           ) : conversations.length === 0 ? (

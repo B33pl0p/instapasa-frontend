@@ -5,15 +5,8 @@ import {
   Box,
   Button,
   IconButton,
-  Menu,
-  MenuItem,
   Chip,
   Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
 } from '@mui/material';
 import {
   SmartToy as AIIcon,
@@ -24,6 +17,7 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch } from '@/app/dashboard/lib/hooks';
 import { pauseAI, resumeAI, markResolved } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
+import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
 
 interface AIHandoverControlsProps {
   conversationId: string;
@@ -39,25 +33,19 @@ const AIHandoverControls: React.FC<AIHandoverControlsProps> = ({
   handoverReason,
 }) => {
   const dispatch = useAppDispatch();
-  const [pauseMenuAnchor, setPauseMenuAnchor] = useState<null | HTMLElement>(null);
-  const [reasonDialogOpen, setReasonDialogOpen] = useState(false);
-  const [customReason, setCustomReason] = useState('');
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  const handlePauseClick = (event: React.MouseEvent<HTMLElement>) => {
-    setPauseMenuAnchor(event.currentTarget);
-  };
-
-  const handlePauseClose = () => {
-    setPauseMenuAnchor(null);
-  };
-
-  const handlePauseAI = async (reason?: string) => {
-    handlePauseClose();
+  const handlePauseAI = async () => {
     setLoading(true);
     try {
-      await dispatch(pauseAI({ conversationId, reason })).unwrap();
-    } catch (error) {
+      await dispatch(pauseAI(conversationId)).unwrap();
+      showToast('AI paused successfully', 'success');
+    } catch (error: any) {
+      const errorMessage = typeof error === 'string' 
+        ? error 
+        : error?.message || error?.msg || 'Failed to pause AI';
+      showToast(errorMessage, 'error');
       console.error('Failed to pause AI:', error);
     } finally {
       setLoading(false);
@@ -68,7 +56,12 @@ const AIHandoverControls: React.FC<AIHandoverControlsProps> = ({
     setLoading(true);
     try {
       await dispatch(resumeAI(conversationId)).unwrap();
-    } catch (error) {
+      showToast('AI resumed successfully', 'success');
+    } catch (error: any) {
+      const errorMessage = typeof error === 'string' 
+        ? error 
+        : error?.message || error?.msg || 'Failed to resume AI';
+      showToast(errorMessage, 'error');
       console.error('Failed to resume AI:', error);
     } finally {
       setLoading(false);
@@ -79,17 +72,16 @@ const AIHandoverControls: React.FC<AIHandoverControlsProps> = ({
     setLoading(true);
     try {
       await dispatch(markResolved({ conversationId, resumeAI })).unwrap();
-    } catch (error) {
+      showToast('Conversation marked as resolved', 'success');
+    } catch (error: any) {
+      const errorMessage = typeof error === 'string' 
+        ? error 
+        : error?.message || error?.msg || 'Failed to mark as resolved';
+      showToast(errorMessage, 'error');
       console.error('Failed to mark resolved:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCustomReasonSubmit = () => {
-    setReasonDialogOpen(false);
-    handlePauseAI(customReason);
-    setCustomReason('');
   };
 
   const getStatusChip = () => {
@@ -155,7 +147,7 @@ const AIHandoverControls: React.FC<AIHandoverControlsProps> = ({
       ) : (
         <Tooltip title="Pause AI responses">
           <IconButton
-            onClick={handlePauseClick}
+            onClick={handlePauseAI}
             disabled={loading}
             color="warning"
             size="small"
@@ -194,51 +186,6 @@ const AIHandoverControls: React.FC<AIHandoverControlsProps> = ({
           </Tooltip>
         </>
       )}
-
-      <Menu
-        anchorEl={pauseMenuAnchor}
-        open={Boolean(pauseMenuAnchor)}
-        onClose={handlePauseClose}
-      >
-        <MenuItem onClick={() => handlePauseAI('manual')}>
-          Manual Intervention
-        </MenuItem>
-        <MenuItem onClick={() => handlePauseAI('complaint')}>
-          Customer Complaint
-        </MenuItem>
-        <MenuItem onClick={() => handlePauseAI('explicit_request')}>
-          Customer Requested Human
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handlePauseClose();
-            setReasonDialogOpen(true);
-          }}
-        >
-          Custom Reason...
-        </MenuItem>
-      </Menu>
-
-      <Dialog open={reasonDialogOpen} onClose={() => setReasonDialogOpen(false)}>
-        <DialogTitle>Pause AI - Custom Reason</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Reason"
-            fullWidth
-            value={customReason}
-            onChange={(e) => setCustomReason(e.target.value)}
-            placeholder="Enter custom reason for pausing AI"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setReasonDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCustomReasonSubmit} variant="contained">
-            Pause AI
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

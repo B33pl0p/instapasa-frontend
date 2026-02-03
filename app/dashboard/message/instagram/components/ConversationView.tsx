@@ -193,7 +193,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       // Auto-pause AI when seller sends a manual message
       if (!conversation.ai_paused) {
         try {
-          await dispatch(pauseAI({ conversationId, reason: 'manual' })).unwrap();
+          await dispatch(pauseAI(conversationId)).unwrap();
           showToast('AI paused - Manual reply sent', 'info');
         } catch (error) {
           console.error('Failed to pause AI:', error);
@@ -262,7 +262,7 @@ export default function ConversationView({ conversationId }: ConversationViewPro
       // Auto-pause AI when seller sends a manual message
       if (!conversation.ai_paused) {
         try {
-          await dispatch(pauseAI({ conversationId, reason: 'manual' })).unwrap();
+          await dispatch(pauseAI(conversationId)).unwrap();
           showToast('AI paused - Manual reply sent', 'info');
         } catch (error) {
           console.error('Failed to pause AI:', error);
@@ -305,7 +305,9 @@ export default function ConversationView({ conversationId }: ConversationViewPro
   if (error) {
     return (
       <Box sx={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', backgroundColor: 'background.paper', p: 2 }}>
-        <Typography variant="body2" color="error" align="center">{error}</Typography>
+        <Typography variant="body2" color="error" align="center">
+          {typeof error === 'string' ? error : (error as any)?.msg || 'An error occurred'}
+        </Typography>
       </Box>
     );
   }

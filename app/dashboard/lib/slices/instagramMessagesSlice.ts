@@ -82,6 +82,20 @@ export const fetchConversations = createAsyncThunk(
   }
 );
 
+// Fetch conversations needing attention (for polling)
+export const fetchPendingAttentionConversations = createAsyncThunk(
+  'instagramMessages/fetchPendingAttentionConversations',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await apiClient.get('/dashboard/conversations/pending-attention?platform=instagram');
+      return response.data;
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } };
+      return rejectWithValue(axiosError.response?.data?.detail || 'Failed to fetch pending conversations');
+    }
+  }
+);
+
 // Refresh all cached messages for all conversations
 export const refreshAllCachedMessages = createAsyncThunk(
   'instagramMessages/refreshAllCachedMessages',
@@ -174,14 +188,10 @@ export const sendQRCode = createAsyncThunk(
 // AI Handover: Pause AI
 export const pauseAI = createAsyncThunk(
   'instagramMessages/pauseAI',
-  async (
-    { conversationId, reason = 'manual' }: { conversationId: string; reason?: string },
-    { rejectWithValue }
-  ) => {
+  async (conversationId: string, { rejectWithValue }) => {
     try {
       const response = await apiClient.post(
-        `/dashboard/conversations/${conversationId}/pause-ai`,
-        { reason }
+        `/dashboard/conversations/${conversationId}/pause-ai`
       );
       return response.data;
     } catch (error) {
@@ -217,7 +227,7 @@ export const markResolved = createAsyncThunk(
     try {
       const response = await apiClient.post(
         `/dashboard/conversations/${conversationId}/mark-resolved`,
-        { resume_ai: resumeAI }
+        resumeAI
       );
       return response.data;
     } catch (error) {
@@ -332,6 +342,22 @@ const instagramMessagesSlice = createSlice({
         state.conversationLoading = false;
         state.error = action.payload as string;
         state.conversations = [];
+      });
+
+    // Fetch pending attention conversations (polling)
+    builder
+      .addCase(fetchPendingAttentionConversations.fulfilled, (state, action) => {
+        // Update existing conversations with attention flags
+        const pendingConversations = Array.isArray(action.payload) ? action.payload : [];
+        pendingConversations.forEach((pendingConvo: Conversation) => {
+          const existingConvo = state.conversations.find(c => c.conversation_id === pendingConvo.conversation_id);
+          if (existingConvo) {
+            existingConvo.needs_human_attention = pendingConvo.needs_human_attention;
+            existingConvo.handover_reason = pendingConvo.handover_reason;
+            existingConvo.ai_paused = pendingConvo.ai_paused;
+            existingConvo.updated_time = pendingConvo.updated_time;
+          }
+        });
       });
 
     // Fetch full messages (lazy loading - only on demand)
