@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/app/dashboard/lib/hooks';
 import { fetchConversations, refreshAllCachedMessages, fetchPendingAttentionConversations } from '@/app/dashboard/lib/slices/instagramMessagesSlice';
@@ -11,6 +11,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import { useToast } from '@/app/dashboard/lib/components/ToastContainer';
 
 export default function InstagramLayout({
   children,
@@ -21,12 +22,17 @@ export default function InstagramLayout({
   const searchParams = useSearchParams();
   const selectedConversationId = searchParams.get('conversation') || undefined;
   const theme = useTheme();
+  const { showToast } = useToast();
+  const previousNeedsAttentionCount = useRef(0);
 
   const dispatch = useAppDispatch();
   const { conversations, businessUsername, conversationLoading, error, conversationsLoaded, messageCache } = useAppSelector(
     (state) => state.instagramMessages
   );
   const orders = useAppSelector((state) => state.orders.orders);
+
+  // Count conversations needing attention
+  const needsAttentionCount = conversations.filter(c => c.needs_human_attention).length;
 
   // LAZY LOADING: Only fetch conversations list on mount (lightweight overview)
   useEffect(() => {
@@ -36,22 +42,69 @@ export default function InstagramLayout({
     }
   }, [dispatch, conversationsLoaded, conversationLoading]);
 
-  // Poll for pending attention conversations every 15 seconds
+  // Poll for pending attention conversations every 5 seconds (only when page is visible)
   useEffect(() => {
     // Initial fetch
     if (conversationsLoaded) {
       dispatch(fetchPendingAttentionConversations());
     }
 
-    // Set up polling interval
-    const pollInterval = setInterval(() => {
-      if (conversationsLoaded) {
+    // Check if page is visible
+    const isPageVisible = () => !document.hidden;
+
+    // Polling function
+    const pollPendingConversations = () => {
+      if (conversationsLoaded && isPageVisible()) {
         dispatch(fetchPendingAttentionConversations());
       }
-    }, 15000); // Poll every 15 seconds
+    };
 
-    return () => clearInterval(pollInterval);
+    // Set up polling interval (5 seconds)
+    const pollInterval = setInterval(pollPendingConversations, 5000);
+
+    // Handle visibility change - poll immediately when page becomes visible
+    const handleVisibilityChange = () => {
+      if (isPageVisible() && conversationsLoaded) {
+        dispatch(fetchPendingAttentionConversations());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [dispatch, conversationsLoaded]);
+
+  // Show notification when new conversations need attention
+  useEffect(() => {
+    if (conversationsLoaded && needsAttentionCount > previousNeedsAttentionCount.current) {
+      const newCount = needsAttentionCount - previousNeedsAttentionCount.current;
+      showToast(
+        `${newCount} conversation${newCount > 1 ? 's' : ''} need${newCount === 1 ? 's' : ''} your attention!`,
+        'warning'
+      );
+      
+      // Browser notification (if permission granted)
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Customer Needs Attention', {
+          body: `${newCount} conversation${newCount > 1 ? 's' : ''} require human response`,
+          icon: '/favicon.ico',
+          tag: 'conversation-attention',
+          requireInteraction: false,
+        });
+      }
+    }
+    previousNeedsAttentionCount.current = needsAttentionCount;
+  }, [needsAttentionCount, conversationsLoaded, showToast]);
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // Refresh conversations list and all cached messages
   const handleRefresh = async () => {
@@ -123,9 +176,6 @@ export default function InstagramLayout({
     // Then sort by updated time (most recent first)
     return new Date(b.updated_time).getTime() - new Date(a.updated_time).getTime();
   });
-
-  // Count conversations needing attention
-  const needsAttentionCount = conversations.filter(c => c.needs_human_attention).length;
 
   return (
     <Box sx={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', backgroundColor: 'background.default' }}>
