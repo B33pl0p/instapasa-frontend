@@ -254,7 +254,7 @@ export default function InstagramLayout({
           ) : error ? (
             <Box sx={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', p: 2 }}>
               <Typography variant="caption" color="error" align="center">
-                {typeof error === 'string' ? error : error?.msg || 'An error occurred'}
+                {error}
               </Typography>
             </Box>
           ) : conversations.length === 0 ? (
