@@ -514,11 +514,11 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
                         {item.product_name}
                       </Typography>
                       <Typography variant="caption" color="textSecondary">
-                        Quantity: {item.quantity} × Rs. {item.price.toFixed(2)}
+                        Quantity: {item.quantity} × Rs {item.price.toFixed(2)}
                       </Typography>
                     </Box>
                     <Typography variant="body2" sx={{ fontWeight: 'semibold', color: 'text.primary' }}>
-                      Rs. {(item.quantity * item.price).toFixed(2)}
+                      Rs {(item.quantity * item.price).toFixed(2)}
                     </Typography>
                   </Box>
                 ))}
@@ -529,7 +529,7 @@ export default function OrderDetailModal({ orderId, onClose }: OrderDetailModalP
                     Total:
                   </Typography>
                   <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'text.primary' }}>
-                    Rs. {currentOrder.total.toFixed(2)}
+                    Rs {currentOrder.total.toFixed(2)}
                   </Typography>
                 </Box>
               </Box>

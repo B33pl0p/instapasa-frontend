@@ -197,7 +197,7 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                         {product.name}
                       </Typography>
                       <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
-                        Rs. {product.price ? product.price.toFixed(2) : '-'}
+                        Rs {product.price ? product.price.toFixed(2) : '-'}
                       </Typography>
                     </Box>
                   </Box>
@@ -394,7 +394,7 @@ export const ModernProductTable: React.FC<ModernProductTableProps> = ({
                 )}
                 <TableCell>
                   <Typography variant={isTablet ? 'caption' : 'body2'} sx={{ fontWeight: 600 }}>
-                    {product.price ? `Rs. ${product.price.toFixed(2)}` : '-'}
+                    {product.price ? `Rs ${product.price.toFixed(2)}` : '-'}
                   </Typography>
                 </TableCell>
                 {!isTablet && (

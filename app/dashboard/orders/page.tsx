@@ -643,7 +643,7 @@ export default function OrdersPage() {
                       </Stack>
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>
-                      Rs. {order.total.toFixed(2)}
+                      Rs {order.total.toFixed(2)}
                     </TableCell>
                     <TableCell>
                       <Chip

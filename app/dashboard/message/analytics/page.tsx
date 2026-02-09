@@ -185,7 +185,7 @@ export default function Analytics() {
               <Box>
                 <MetricCard
                   title="Total Revenue"
-                  value={`₹${analytics.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                  value={`Rs ${analytics.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
                   icon={<CurrencyRupeeIcon sx={{ fontSize: 28 }} />}
                   subtext={`${analytics.total_orders_sold} orders`}
                   color="success"
@@ -196,7 +196,7 @@ export default function Analytics() {
                   title="Total Orders"
                   value={analytics.total_orders_sold}
                   icon={<ShoppingCartIcon sx={{ fontSize: 28 }} />}
-                  subtext={`Avg: ₹${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                  subtext={`Avg: Rs ${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
                   color="primary"
                 />
               </Box>
@@ -232,7 +232,7 @@ export default function Analytics() {
                           Revenue
                         </Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          ₹{analytics.best_selling_product.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                          Rs {analytics.best_selling_product.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                         </Typography>
                       </Box>
                       <Box>
@@ -253,7 +253,7 @@ export default function Analytics() {
             <Box sx={{ mb: 4 }}>
               <MetricCard
                 title="Average Order Value"
-                value={`₹${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
+                value={`Rs ${analytics.average_order_value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`}
                 icon={<CurrencyRupeeIcon sx={{ fontSize: 28 }} />}
                 color="warning"
               />
@@ -353,7 +353,7 @@ export default function Analytics() {
                         <TableRow key={index} hover>
                           <TableCell>{product.product_name}</TableCell>
                           <TableCell align="right">
-                            ₹{product.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                            Rs {product.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                           </TableCell>
                           <TableCell align="right">{product.units_sold}</TableCell>
                         </TableRow>

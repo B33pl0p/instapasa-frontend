@@ -784,7 +784,7 @@ export default function VariantBuilder({ value, onChange, category }: VariantBui
                     <TableCell>Attributes</TableCell>
                     <TableCell align="right">Stock</TableCell>
                     {showPriceAdjustment && (
-                      <TableCell align="right">Price Adjustment (₹)</TableCell>
+                      <TableCell align="right">Price Adjustment (Rs)</TableCell>
                     )}
                     <TableCell align="center">Actions</TableCell>
                   </TableRow>
