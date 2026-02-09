@@ -227,7 +227,7 @@ export const markResolved = createAsyncThunk(
     try {
       const response = await apiClient.post(
         `/dashboard/conversations/${conversationId}/mark-resolved`,
-        resumeAI
+        { resume_ai: resumeAI }
       );
       return response.data;
     } catch (error) {
