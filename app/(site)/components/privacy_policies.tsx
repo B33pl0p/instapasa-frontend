@@ -1,7 +1,7 @@
 export default function PrivacyPolicies() {
   return (
 
-    <section className="flex flex-col items-start max-w-6xl mx-auto px-4 md:px-16 py-4 md:py-8">
+    <section className="flex flex-col items-start max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24 py-4 md:py-8">
         <div className="flex w-full gap-4 items-start">
          <div className="text-xl md:text-[36px] font-bold leading-[1.2]">
            Privacy Policy
@@ -9,7 +9,7 @@ export default function PrivacyPolicies() {
         </div>
     
         <div className="flex py-4 md:py-16 text-xs md:text-[18px]">
-          Hi, we are Lakhey Labs.
+          Hi, we are InstaPasa by Lakhey Labs.
           <br/> This Privacy Policy explains how we handle information when people chat with Instagram accounts that use our chatbot (the “Service”). 
           The bot helps Instagram marketers and businesses in Nepal reply to their customers.
         </div>
@@ -107,7 +107,7 @@ export default function PrivacyPolicies() {
 </ul>
 
 
-  <section className="max-w-6xl mx-auto py-8">
+  <section className="max-w-[1400px] mx-auto py-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24">
  <ul className="list-disc px-4">
     <h2 id="what-our-chatbot-does" className="text-lg md:text-2xl font-bold mb-2">
      <li> What our chatbot does </li>
@@ -223,7 +223,7 @@ After about 90 days, we delete or anonymize this data unless we need to keep it 
 <h2 className="text-lg md:text-2xl font-bold mt-8 mb-2">
       Contact Us
    </h2>
-      Company name: Lakhey Labs <br />
+      Company name: InstaPasa (Lakhey Labs) <br />
       Email: lakheylabs@gmail.com<br />
       Address: Kalanki 14, Kathmandu, Nepal
       </section>

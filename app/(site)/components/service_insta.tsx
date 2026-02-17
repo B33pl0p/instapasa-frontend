@@ -3,7 +3,7 @@ import InstagramLoginButton from "../components/instagramLoginButton";
 
 export default function Instaservice() {
   return (
-    <div className="flex flex-col items-start max-w-7xl mx-auto px-4 md:px-16 py-4 md:py-8">
+    <div className="flex flex-col items-start max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24 py-4 md:py-8">
 
           <div className="flex text-[36px] items-start gap-4 py-8 font-bold font-sans leading-[1.2] tracking-[-0.72px]">
             Instagram Chat Bot
@@ -17,7 +17,7 @@ export default function Instaservice() {
               </div>
 
               <p className="text-semibold leading-[1.45] tracking-[-0.11]">
-                At Lakhey Labs, we build AI-powered chatbots specially designed for Instagram-based businesses that want to save time, respond faster, and convert more customers — without hiring extra staff.
+                At InstaPasa by Lakhey Labs, we build AI-powered chatbots specially designed for Instagram-based businesses that want to save time, respond faster, and convert more customers — without hiring extra staff.
                 <br /> <br />
                 Our 24/7 Instagram bots use RAG (Retrieval-Augmented Generation) technology, meaning they answer questions using your real business information, not generic scripts.
                 <br /> <br />

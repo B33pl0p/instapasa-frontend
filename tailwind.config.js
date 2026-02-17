@@ -9,9 +9,14 @@ export default {
     extend: {
       screens: {
         'xs': '380px',
+        '3xl': '1920px',
       },
       spacing: {
         safe: 'max(1rem, env(safe-area-inset-bottom))',
+      },
+      maxWidth: {
+        '8xl': '1440px',
+        '9xl': '1600px',
       },
     },
   },

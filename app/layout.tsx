@@ -11,8 +11,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lakhey Labs",
-  description: "We Build, Your Dreams",
+  title: "InstaPasa - Instagram E-Commerce Made Easy",
+  description: "Transform your Instagram into a complete e-commerce platform with chat-based shopping and automated order management",
+  icons: {
+    icon: "/instaPasaLogo.png",
+    shortcut: "/instaPasaLogo.png",
+    apple: "/instaPasaLogo.png",
+  },
 };
 
 export const viewport: Viewport = {

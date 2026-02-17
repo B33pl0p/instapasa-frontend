@@ -9,7 +9,7 @@ export default function PrivacyHero() {
     }}
   >
     <div className="flex flex-col w-full py-4 md:py-4 justify-center items-center gap-4 md:gap-8 rounded-lg bg-[rgba(255,255,255,0.13)]">
-     <div className="text-xl md:text-[32px] font-bold leading-[1.1]"> We Build,  Your Dreams
+     <div className="text-xl md:text-[32px] font-bold leading-[1.1]"> Instagram E-Commerce Made Easy
      </div>
     </div>
 

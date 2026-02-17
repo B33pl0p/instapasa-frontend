@@ -1,160 +1,348 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import mobile from "@/public/mobile.png";
+import { useState, useEffect } from "react";
 
 export default function FeatureSection() {
+  const [isVisible, setIsVisible] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentDashboardSlide, setCurrentDashboardSlide] = useState(0);
+
+  const screenshots = [
+    { src: "/mockups/screen1products.png", alt: "Product Catalog Dashboard", label: "Products" },
+    { src: "/mockups/screen2productdetails.png", alt: "Product Details Management", label: "Product Details" },
+    { src: "/mockups/screen3ordercreated.png", alt: "Order Creation & Tracking", label: "Order Created" },
+    { src: "/mockups/screen4brandimage.png", alt: "Brand & Business Settings", label: "Brand Settings" }
+  ];
+
+  const dashboardScreenshots = [
+    { src: "/dashboards/peroducts_section.png", alt: "Product Management Dashboard", label: "Products Management" },
+    { src: "/dashboards/orders_section.png", alt: "Order Tracking Dashboard", label: "Orders & Tracking" },
+    { src: "/dashboards/buyer_mgmt_section.png", alt: "Customer Management Dashboard", label: "Customer Management" },
+    { src: "/dashboards/analytics_section.png", alt: "Analytics Dashboard", label: "Analytics & Insights" },
+    { src: "/dashboards/messageandAIescalation.png", alt: "Message & AI Dashboard", label: "Messages & AI" },
+    { src: "/dashboards/business_congif.png", alt: "Business Configuration", label: "Business Config" }
+  ];
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % screenshots.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [screenshots.length]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDashboardSlide((prev) => (prev + 1) % dashboardScreenshots.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [dashboardScreenshots.length]);
+
   return (
-    <section className="py-16 sm:py-20 px-4 sm:px-6 md:px-12 bg-gradient-to-b from-[#161616] to-[#1a1a1a]">
-      <div className="container mx-auto">
-        {/* TOP SECTION */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center mb-16 sm:mb-20">
-          {/* TEXT */}
-          <div className="order-2 lg:order-1 text-center lg:text-left">
-            <div className="inline-block px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-full mb-4 sm:mb-6">
-              <span className="text-purple-400 text-xs sm:text-sm font-semibold">Instagram Shopping Made Easy</span>
+    <section className="py-20 sm:py-32 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24 bg-black">
+      <div className="max-w-[1600px] mx-auto">
+        
+        {/* Problem Statement */}
+        <div className="text-center mb-20">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+            Stop Losing Money<br className="hidden sm:block" />
+            <span className="text-gray-500">While You Sleep</span>
+          </h2>
+          <p className="text-lg sm:text-xl text-gray-400 max-w-4xl mx-auto">
+            Every ignored DM is lost revenue. Every delayed response sends customers to competitors.
+            <br className="hidden sm:block" />
+            Your Instagram shouldn't have business hours.
+          </p>
+        </div>
+
+        {/* Main Feature: AI Automation */}
+        <div className="mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-16 items-center">
+            <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+              <div className="inline-block px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
+                <span className="text-blue-400 text-sm font-semibold">AI Automation</span>
+              </div>
+              
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+                Your 24/7<br />Sales Assistant
+              </h3>
+
+              <p className="text-lg text-gray-400 mb-8">
+                AI that doesn't just reply—it *sells*. Shows products, handles questions, takes orders, 
+                and knows when to hand off to you for the personal touch.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 mt-1">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Smart Product Recommendations</h4>
+                    <p className="text-gray-500 text-sm">AI shows relevant products with images, prices, and variants right in chat</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 mt-1">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Intelligent Handover</h4>
+                    <p className="text-gray-500 text-sm">AI flags tricky situations. You jump in, resolve it, hand back to AI</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 mt-1">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Instant Checkout</h4>
+                    <p className="text-gray-500 text-sm">Cart → Payment QR → Order confirmed. All in Instagram. No apps needed</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Chat Screenshots Slideshow */}
+            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
+              <div className="bg-gradient-to-br from-blue-950/20 to-transparent border border-blue-500/20 rounded-xl p-4 lg:p-6 flex flex-col items-center">
+                {/* Mobile Frame */}
+                <div className="relative w-full max-w-sm lg:max-w-md xl:max-w-lg">
+                  {/* Current Slide Label */}
+                  <div className="mb-3 text-center">
+                    <p className="text-blue-400 text-sm font-semibold">{screenshots[currentSlide].label}</p>
+                  </div>
+                  
+                  {/* Slideshow Images */}
+                  <div className="relative aspect-[9/19.5] rounded-xl overflow-hidden shadow-2xl">
+                    {screenshots.map((screenshot, index) => (
+                      <div
+                        key={index}
+                        className={`absolute inset-0 transition-opacity duration-1000 ${
+                          index === currentSlide ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
+                        <Image
+                          src={screenshot.src}
+                          alt={screenshot.alt}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Slide Indicators */}
+                  <div className="flex justify-center gap-2 mt-3">
+                    {screenshots.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentSlide(index)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentSlide 
+                            ? 'bg-blue-400 w-8' 
+                            : 'bg-gray-600 hover:bg-gray-500'
+                        }`}
+                        aria-label={`Go to slide ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dashboard Preview */}
+        <div className="mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 xl:gap-12 items-center">
+            
+            {/* Dashboard Screenshots Slideshow */}
+            <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'} order-2 lg:order-1 lg:col-span-2`}>
+              <div className="bg-gradient-to-br from-blue-950/20 to-transparent border border-blue-500/20 rounded-2xl p-3 lg:p-4 flex flex-col items-center">
+                {/* Desktop Frame */}
+                <div className="relative w-full">
+                  {/* Current Slide Label */}
+                  <div className="mb-3 mt-1">
+                    <p className="text-blue-400 text-base font-semibold">{dashboardScreenshots[currentDashboardSlide].label}</p>
+                  </div>
+                  
+                  {/* Slideshow Images */}
+                  <div className="relative aspect-[16/9] rounded-xl overflow-hidden shadow-2xl">
+                    {dashboardScreenshots.map((screenshot, index) => (
+                      <div
+                        key={index}
+                        className={`absolute inset-0 transition-opacity duration-1000 ${
+                          index === currentDashboardSlide ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
+                        <Image
+                          src={screenshot.src}
+                          alt={screenshot.alt}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Slide Indicators */}
+                  <div className="flex justify-center gap-2 mt-3">
+                    {dashboardScreenshots.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentDashboardSlide(index)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentDashboardSlide 
+                            ? 'bg-blue-400 w-8' 
+                            : 'bg-gray-600 hover:bg-gray-500'
+                        }`}
+                        aria-label={`Go to dashboard slide ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'} order-1 lg:order-2 lg:col-span-1`}>
+              <div className="inline-block px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
+                <span className="text-blue-400 text-sm font-semibold">Complete Business Dashboard</span>
+              </div>
+              
+              <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+                Run Your Entire<br />Business From One Place
+              </h3>
+
+              <p className="text-lg text-gray-400 mb-8">
+                Products. Orders. Customers. Analytics. Everything you need to scale your 
+                Instagram business without drowning in spreadsheets.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 mt-1">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Product Catalog with Variants</h4>
+                    <p className="text-gray-500 text-sm">Sizes, colors, SKUs—manage everything. Stock updates automatically in chat</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 mt-1">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Order Management</h4>
+                    <p className="text-gray-500 text-sm">Pending → Processing → Shipped → Delivered. Track every order in real-time</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 mt-1">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white mb-1">Know Your Customers</h4>
+                    <p className="text-gray-500 text-sm">Tag VIPs, track spending, identify at-risk buyers. Real relationship management</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Analytics Section */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <div className="inline-block px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full mb-6">
+              <span className="text-blue-400 text-sm font-semibold">Real Analytics</span>
             </div>
             
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 sm:mb-6 leading-tight">
-              Turn Your Instagram into a{" "}
-              <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Full E-Commerce Store
-              </span>
-            </h2>
+            <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+              Know Your Numbers.<br />Grow Your Business.
+            </h3>
 
-            <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8 leading-relaxed">
-              Your customers can browse products, place orders, and complete checkout - all without leaving Instagram DMs. 
-              No apps to download, no external links, just seamless shopping through chat.
+            <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+              Stop guessing. See exactly what's working—revenue, best sellers, 
+              customer patterns, conversion rates, everything that matters.
             </p>
+          </div>
 
-            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-1">
-                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white mb-1 text-sm sm:text-base">Interactive Product Catalog</h4>
-                  <p className="text-gray-400 text-xs sm:text-sm">Customers browse your products with images, descriptions, and pricing right in chat</p>
-                </div>
+          {/* Analytics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 hover:border-blue-500/30 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
               </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-1">
-                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white mb-1 text-sm sm:text-base">One-Tap Ordering</h4>
-                  <p className="text-gray-400 text-xs sm:text-sm">Simple, conversational ordering flow with instant order confirmation</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-1">
-                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white mb-1 text-sm sm:text-base">Payment QR Codes</h4>
-                  <p className="text-gray-400 text-xs sm:text-sm">Integrated with eSewa, Khalti, FonePay and other popular payment methods</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center mt-1">
-                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white mb-1 text-sm sm:text-base">Order Management Dashboard</h4>
-                  <p className="text-gray-400 text-xs sm:text-sm">Track orders, manage inventory, and monitor sales in real-time</p>
-                </div>
-              </div>
+              <h4 className="text-white font-semibold mb-2">Sales Metrics</h4>
+              <p className="text-gray-500 text-sm">Total revenue, order count, average order value, best-selling products</p>
             </div>
 
-            <Link href="/services" className="inline-block group bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-500/30">
-              <span className="flex items-center gap-2 justify-center sm:justify-start">
-                Start Your Instagram Store
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 hover:border-blue-500/30 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                 </svg>
-              </span>
+              </div>
+              <h4 className="text-white font-semibold mb-2">Customer Insights</h4>
+              <p className="text-gray-500 text-sm">VIP buyers, at-risk customers, repeat rate, spending patterns</p>
+            </div>
+
+            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 hover:border-blue-500/30 transition-all">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <h4 className="text-white font-semibold mb-2">Chat Performance</h4>
+              <p className="text-gray-500 text-sm">Conversion rate, abandoned chats, most asked questions</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Final CTA */}
+        <div className="text-center">
+          <div className="bg-gradient-to-br from-blue-950/20 to-transparent border border-blue-500/20 rounded-3xl p-8 sm:p-12 max-w-5xl mx-auto">
+            <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
+              Ready to Never Miss<br />Another Sale?
+            </h3>
+            <p className="text-lg text-gray-400 mb-8 max-w-3xl mx-auto">
+              Join Instagram sellers who sleep better knowing their AI is closing deals 24/7.
+              <br className="hidden sm:block" />
+              Setup takes 10 minutes. First 100 orders free.
+            </p>
+            <Link 
+              href="/signup"
+              className="inline-block px-10 py-5 bg-white text-black font-bold text-lg rounded-full hover:scale-105 transition-transform">
+              Start Free Trial →
             </Link>
           </div>
-
-          {/* IMAGE */}
-          <div className="order-1 lg:order-2 relative">
-            <div className="relative w-full max-w-md mx-auto lg:max-w-none aspect-square lg:h-[500px] rounded-2xl overflow-hidden bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/20 shadow-2xl">
-              <Image
-                src={mobile}
-                alt="Instagram shopping interface"
-                fill
-                className="object-cover"
-                priority
-              />
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent"></div>
-            </div>
-            
-            {/* Floating card */}
-            <div className="absolute -bottom-6 -left-6 bg-[#1a1a1a] border border-purple-500/30 rounded-xl p-4 shadow-xl hidden lg:block">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">3x</div>
-                  <div className="text-xs text-gray-400">Conversion Rate</div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* BOTTOM GRID - Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
-          <div className="group bg-gradient-to-br from-[#1a1a1a] to-[#161616] border border-gray-800 hover:border-purple-500/50 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:transform hover:scale-105">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-              <svg className="w-6 sm:w-7 h-6 sm:h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h4 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-white">Chat-Based Checkout</h4>
-            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-              Customers complete purchases through natural conversation. No complicated forms or external websites needed.
-            </p>
-          </div>
-
-          <div className="group bg-gradient-to-br from-[#1a1a1a] to-[#161616] border border-gray-800 hover:border-purple-500/50 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:transform hover:scale-105">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-              <svg className="w-6 sm:w-7 h-6 sm:h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-            </div>
-            <h4 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-white">Real-Time Inventory</h4>
-            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-              Automatic stock updates. Customers always see accurate availability and you manage everything from your dashboard.
-            </p>
-          </div>
-
-          <div className="group bg-gradient-to-br from-[#1a1a1a] to-[#161616] border border-gray-800 hover:border-purple-500/50 rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:transform hover:scale-105">
-            <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
-              <svg className="w-6 sm:w-7 h-6 sm:h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-              </svg>
-            </div>
-            <h4 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-white">Automated Fulfillment</h4>
-            <p className="text-gray-400 text-sm sm:text-base leading-relaxed">
-              From order confirmation to delivery tracking, keep your customers updated every step of the way automatically.
-            </p>
-          </div>
-        </div>
       </div>
     </section>
   );

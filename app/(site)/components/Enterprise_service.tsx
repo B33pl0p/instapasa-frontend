@@ -3,7 +3,7 @@ import InstagramLoginButton from "./instagramLoginButton";
 
 export default function Enterpriseservice() {
   return (
-    <div className="flex flex-col w-full max-w-7xl mx-auto px-4 md:px-16 py-4 md:py-8">
+    <div className="flex flex-col w-full max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24 py-4 md:py-8">
 
           <div className="flex text-[36px] items-center gap-4 py-8 font-bold font-sans leading-[1.2] tracking-[-0.72px]">
             Enterprise Chat Bot
@@ -17,7 +17,7 @@ export default function Enterpriseservice() {
               </div>
 
               <p className="text-semibold leading-[1.45] tracking-[-0.11]">
-                Lakhey Labs provides enterprise-grade AI chatbot solutions for companies, institutions, and organizations that need reliable, and secure AI solutions to interact with customers 24/7.                   
+                InstaPasa by Lakhey Labs provides enterprise-grade AI chatbot solutions for companies, institutions, and organizations that need reliable, and secure AI solutions to interact with customers 24/7.                   
               </p>
               <button className="flex px-4 py-2 items-center gap-2 rounded-lg bg-[#8A38F5] hover:scale-110">
                 Enterprise solution

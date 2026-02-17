@@ -1,4 +1,4 @@
-# Lakhey Labs - Instagram Sellers Pitch Deck
+# InstaPasa - Instagram Sellers Pitch Deck
 ## **A Story-Driven Presentation for Instagram Business Owners**
 
 ---
@@ -128,7 +128,7 @@ Instead of:
 ---
 
 ## **SLIDE 6: This Is Real**
-### Meet Lakhey Labs
+### Meet InstaPasa
 
 **We built what Sita needed.**  
 **What YOU need.**
@@ -158,14 +158,14 @@ It knows:
 ## **SLIDE 7: How Sita's Life Changed**
 ### 30 Days Later
 
-**Before Lakhey Labs:**
+**Before InstaPasa:**
 - 50+ messages/day manually handled
 - 5 hours on phone
 - 8-12 sales/day
 - Stressed, exhausted
 - Monthly revenue: NPR 80,000
 
-**After Lakhey Labs:**
+**After InstaPasa:**
 - 80-100 messages/day (60% handled by AI)
 - 2 hours managing orders
 - 18-25 sales/day
@@ -232,7 +232,7 @@ It knows:
 ⏱️ **Time to complete order: 2-3 days**  
 😤 **Frustration level: HIGH**
 
-### AFTER (With Lakhey Labs):
+### AFTER (With InstaPasa):
 1. Message at 10 PM: "Hi"
 2. Instant menu appears
 3. Click "Browse Products"
@@ -386,7 +386,7 @@ It knows:
 
 ---
 
-**With Lakhey Labs:**
+**With InstaPasa:**
 
 **Investment: NPR 5,000/month**
 
@@ -447,7 +447,7 @@ The sellers who automate NOW will dominate their niche.
 - Still stressed, overwhelmed
 - Revenue: Staying flat or declining
 
-### **PATH 2: Start with Lakhey Labs Today**
+### **PATH 2: Start with InstaPasa Today**
 *6 months from now:*
 - AI handles routine conversations
 - You sleep peacefully
@@ -494,7 +494,7 @@ The sellers who automate NOW will dominate their niche.
 ## **SLIDE 18: Join 200+ Nepali Sellers**
 ### You're Not Alone
 
-**Already selling smarter with Lakhey Labs:**
+**Already selling smarter with InstaPasa:**
 - Fashion boutiques
 - Handicraft stores  
 - Beauty product sellers

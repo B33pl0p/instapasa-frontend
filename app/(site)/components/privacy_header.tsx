@@ -4,9 +4,9 @@ export default function PrivacyHeader() {
   return (
     <main>
       {<header>
-     <div className="max-w-6xl mx-auto px-4 md:px-16 py-4 md:py-6 flex-row md:flex items-center justify-between">
+     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-24 py-4 md:py-6 flex-row md:flex items-center justify-between">
        <div className="text-2xl md:text-[52px] font-black leading-[1.1] md:tracking-[-0.05em]">
-         Lakhey Labs
+         InstaPasa
        </div>
 
         <nav className="flex gap-6 text-sm md:text-sm text-gray-300">
